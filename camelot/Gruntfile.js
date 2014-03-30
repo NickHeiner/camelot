@@ -8,7 +8,11 @@ module.exports = function (grunt) {
         jshint: {
             lib: {
                 options: {
-                    node: true
+                    node: true,
+                    globals: {
+                        WinJS: true,
+                        Windows: true
+                    }
                 },
                 files: {
                     src: [
