@@ -54,7 +54,7 @@
       <SubType>Designer</SubType>
     </AppxManifest>
     <Content Include="build\build.js" />
-    <Content Include="css\foundation.css" />
+    <Content Include="build\main.css" />
     <Content Include="default.html" />
     <Content Include="Gruntfile.js" />
     <Content Include="images\logo.png" />
@@ -63,9 +63,10 @@
     <Content Include="images\storelogo.png" />
     <Content Include="js\angular-module.js" />
     <Content Include="js\default.js" />
-    <Content Include="css\default.css" />
+    <Content Include="scss\default.scss" />
     <Content Include="js\route.js" />
     <Content Include="package.json" />
+    <Content Include="readme.md" />
     <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />
     <None Include="chivarly.js_TemporaryKey.pfx" />

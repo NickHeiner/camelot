@@ -5,6 +5,19 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
 
+        sass: {
+            dist: {
+                files: {
+                    'build/main.css': 'scss/*.scss'
+                },
+                options: {
+                    includePaths: [
+                        'node_modules/zurb-foundation/scss'
+                    ]
+                }
+            }
+        },
+
         jshint: {
             lib: {
                 options: {
@@ -34,6 +47,11 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('test', 'jshint');
-    grunt.registerTask('build', 'browserify');
+
+    grunt.registerTask('build', [
+        'browserify:dist',
+        'sass:dist'
+    ]);
+
     grunt.registerTask('default', ['test', 'build']);
 };
