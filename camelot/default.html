@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html ng-app ng-csp>
+<html ng-app="camelot" ng-csp>
 <head>
     <meta charset="utf-8" />
     <title>chivarly.js</title>
@@ -14,7 +14,7 @@
 
     <script src="/build/build.js"></script>
 </head>
-<body>
+<body ng-controller="CamelotCtrl">
     <h1>Windows 8 in js</h1>
     <input ng-model="user.name" />
     <p>Hello, {{user.name}}</p>
