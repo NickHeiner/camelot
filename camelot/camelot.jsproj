@@ -68,6 +68,7 @@
     <Content Include="js\route.js" />
     <Content Include="package.json" />
     <Content Include="readme.md" />
+    <Content Include="templates\johnson-box.html" />
     <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />
     <None Include="chivarly.js_TemporaryKey.pfx" />
