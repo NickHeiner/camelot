@@ -14,11 +14,16 @@
 
     <script src="/build/build.js"></script>
 </head>
-<body ng-controller="CamelotCtrl">
+<body>
     <h1>Windows 8 in js</h1>
     <input ng-model="user.name" />
     <p>Hello, {{user.name}}</p>
     <p ng-repeat="char in user.name">Letter {{$index}}: {{char}}</p>
+
+    <a href="#game">We like sports</a>
+    <a href="#home">and we don't care who knows</a>
+
+    <div ng-view></div>
 
 </body>
 </html>

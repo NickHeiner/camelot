@@ -1,7 +1,5 @@
 ﻿'use strict';
 
-require('../vendor/angular');
-
 // For an introduction to the Blank template, see the following documentation:
 // http://go.microsoft.com/fwlink/?LinkId=232509
 

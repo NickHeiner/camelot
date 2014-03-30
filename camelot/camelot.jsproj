@@ -61,9 +61,12 @@
     <Content Include="images\smalllogo.png" />
     <Content Include="images\splashscreen.png" />
     <Content Include="images\storelogo.png" />
+    <Content Include="js\angular-module.js" />
     <Content Include="js\default.js" />
     <Content Include="css\default.css" />
+    <Content Include="js\route.js" />
     <Content Include="package.json" />
+    <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />
     <None Include="chivarly.js_TemporaryKey.pfx" />
   </ItemGroup>
