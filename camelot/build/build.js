@@ -3,7 +3,7 @@ require('../vendor/angular');
 require('../vendor/angular-route');
 
 module.exports = angular.module('camelot', ['ngRoute']);
-},{"../vendor/angular":5,"../vendor/angular-route":4}],2:[function(require,module,exports){
+},{"../vendor/angular":6,"../vendor/angular-route":5}],2:[function(require,module,exports){
 'use strict';
 
 // For an introduction to the Blank template, see the following documentation:
@@ -39,6 +39,19 @@ app.oncheckpoint = function (args) {
 app.start();
 
 },{}],3:[function(require,module,exports){
+var ngModule = require('../angular-module');
+
+console.log('directive');
+
+ngModule.directive('johnsonBox', function () {
+
+    console.log('inner directive');
+
+    return {
+        template: "<p>What's in your johnson box?</p>"
+    };
+});
+},{"../angular-module":1}],4:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -58,7 +71,7 @@ ngModule.config(function ($routeProvider) {
         });
 
 });
-},{"../vendor/angular":5,"../vendor/angular-route":4,"./angular-module.js":1}],4:[function(require,module,exports){
+},{"../vendor/angular":6,"../vendor/angular-route":5,"./angular-module.js":1}],5:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -987,7 +1000,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -22916,4 +22929,4 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}]},{},[1,2,3]);
+},{}]},{},[1,2,3,4]);

@@ -63,6 +63,7 @@
     <Content Include="images\storelogo.png" />
     <Content Include="js\angular-module.js" />
     <Content Include="js\default.js" />
+    <Content Include="js\directives\johnson-box.js" />
     <Content Include="scss\default.scss" />
     <Content Include="js\route.js" />
     <Content Include="package.json" />
