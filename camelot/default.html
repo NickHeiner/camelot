@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html ng-app ng-csp>
+<head>
+    <meta charset="utf-8" />
+    <title>chivarly.js</title>
+
+    <!-- WinJS references -->
+    <link href="//Microsoft.WinJS.1.0/css/ui-dark.css" rel="stylesheet" />
+    <script src="//Microsoft.WinJS.1.0/js/base.js"></script>
+    <script src="//Microsoft.WinJS.1.0/js/ui.js"></script>
+
+    <!-- chivarly.js references -->
+    <link href="/css/default.css" rel="stylesheet" />
+
+    <script src="/build/build.js"></script>
+</head>
+<body>
+    <h1>Windows 8 in js</h1>
+    <input ng-model="user.name" />
+    <p>Hello, {{user.name}}</p>
+    <p ng-repeat="char in user.name">Letter {{$index}}: {{char}}</p>
+
+</body>
+</html>

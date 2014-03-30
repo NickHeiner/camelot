@@ -1,4 +1,4 @@
-chivalry.js
+camelot
 ===========
 
-Chivalry game in WinJS
+Camelot game in WinJS
