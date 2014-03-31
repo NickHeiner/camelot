@@ -4,7 +4,7 @@
   margin-right: auto;
   margin-top: 0;
   margin-bottom: 0;
-  max-width: 62.5rem;
+  max-width: 93.75rem;
   *zoom: 1; }
   .row:before, .row:after {
     content: " ";
@@ -4541,7 +4541,7 @@ meta.foundation-mq-topbar {
     .top-bar.expanded {
       background: #333; }
   .contain-to-grid .top-bar {
-    max-width: 62.5rem;
+    max-width: 93.75rem;
     margin: 0 auto;
     margin-bottom: 0; }
   .top-bar-section {
@@ -5317,6 +5317,21 @@ th.hide-for-touch {
 
 .touch th.show-for-touch {
   display: table-cell !important; }
+
+.profile-pic {
+  width: 10em;
+  height: 10em;
+  border-radius: 5em; }
+
+.user-name {
+  margin-top: 2.5em; }
+
+.app-title {
+  margin-top: 2.5em; }
+
+
+.johnson-box {
+  padding-top: 0px; }
 
 
 @media screen and (-ms-view-state: fullscreen-landscape) { }

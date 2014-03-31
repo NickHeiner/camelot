@@ -1,7 +1,38 @@
 ﻿$include-html-type-classes: false;
 $include-html-global-classes: false;
 
+@import 'foundation/_functions';
+
+$row-width: rem-calc(1500);
+
 @import 'foundation';
+
+$show-row-borders: false;
+$profile-pic-height: 10em;
+
+.profile-pic {
+	width: $profile-pic-height;
+	height: $profile-pic-height;
+	border-radius: $profile-pic-height / 2;
+}
+
+.user-name {
+	margin-top: $profile-pic-height / 4;
+}
+
+.app-title {
+	margin-top: $profile-pic-height / 4;	
+}
+
+.row {
+	@if $show-row-borders {
+		border: 1px solid red;
+	}
+}
+
+.johnson-box {
+	padding-top: 0px;
+}	
 
 body {
 }

@@ -2,33 +2,34 @@
 <html ng-app="camelot">
 <head>
     <meta charset="utf-8" />
-    <title>chivarly.js</title>
+    <title>Camelot</title>
 
     <!-- WinJS references -->
     <link href="//Microsoft.WinJS.1.0/css/ui-dark.css" rel="stylesheet" />
     <script src="//Microsoft.WinJS.1.0/js/base.js"></script>
     <script src="//Microsoft.WinJS.1.0/js/ui.js"></script>
 
-    <!-- chivarly.js references -->
     <link href="/build/main.css" rel="stylesheet" />
-
-    <script>
-
-    </script>
     <script src="/build/build.js"></script>
 </head>
 <body ng-controller="CamelotCtrl">
 
     <div class="row">
-          <div class="large-9 columns">
-              <h1>Camelot</h1>
-          </div>
-          <div class="large-3 columns">
-              <div johnson-box user="user"></div>
-          </div>
+        <div class="small-3 columns">
+            <h1 class="app-title">Camelot</h1>
+        </div>
+
+        <div class="small-2 small-offset-6 columns">
+            <div johnson-box user="user"></div>
+        </div>
+
+        <!-- For some reason, the last column is always positioned below the rest of the content. Hmm. 
+             This is a stupid hack to fix it.
+        -->
+        <div class="small-1 columns"></div>
     </div>
 
-    <div ng-view></div>
+    <!--<div ng-view></div>-->
 
 </body>
 </html>
