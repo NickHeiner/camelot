@@ -63,6 +63,7 @@
     <Content Include="images\storelogo.png" />
     <Content Include="js\angular-module.js" />
     <Content Include="js\controllers\camelot-ctrl.js" />
+    <Content Include="js\controllers\home-ctrl.js" />
     <Content Include="js\default.js" />
     <Content Include="js\directives\johnson-box.js" />
     <Content Include="js\evil.js" />
@@ -70,6 +71,8 @@
     <Content Include="js\route.js" />
     <Content Include="package.json" />
     <Content Include="readme.md" />
+    <Content Include="templates\game.html" />
+    <Content Include="templates\home.html" />
     <Content Include="templates\johnson-box.html" />
     <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />

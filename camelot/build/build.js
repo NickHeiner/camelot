@@ -5,7 +5,7 @@ require('../vendor/angular');
 require('../vendor/angular-route');
 
 module.exports = angular.module('camelot', ['ngRoute']);
-},{"../vendor/angular":10,"../vendor/angular-route":9,"./evil":5}],2:[function(require,module,exports){
+},{"../vendor/angular":11,"../vendor/angular-route":10,"./evil":6}],2:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
 ngModule.controller('CamelotCtrl', function ($scope) {
@@ -15,6 +15,40 @@ ngModule.controller('CamelotCtrl', function ($scope) {
     };
 });
 },{"../angular-module":1}],3:[function(require,module,exports){
+var ngModule = require('../angular-module');
+
+ngModule.controller('HomeCtrl', function ($scope) {
+    $scope.games = [
+        {
+            playerA: {
+                name: 'Scott'
+            },
+            playerB: {
+                name: 'Nick'
+            },
+            waitingOn: 'playerB'
+        },
+        {
+            playerA: {
+                name: 'Nick'
+            },
+            playerB: {
+                name: 'Dad'
+            },
+            waitingOn: 'playerB'
+        },
+        {
+            playerA: {
+                name: 'Nick'
+            },
+            playerB: {
+                name: 'Katherine'
+            },
+            waitingOn: 'playerA'
+        }
+    ];
+});
+},{"../angular-module":1}],4:[function(require,module,exports){
 'use strict';
 
 // For an introduction to the Blank template, see the following documentation:
@@ -52,7 +86,7 @@ MSApp.execUnsafeLocalFunction(function () {
 });
 
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
 ngModule.directive('johnsonBox', function () {
@@ -64,7 +98,7 @@ ngModule.directive('johnsonBox', function () {
         }
     };
 });
-},{"../angular-module":1}],5:[function(require,module,exports){
+},{"../angular-module":1}],6:[function(require,module,exports){
 var _ = require('lodash');
 
 var $ = window.jQuery = require('jquery');
@@ -101,7 +135,7 @@ methodsToOverride.forEach(function (methodName) {
 
     });
 
-},{"jquery":7,"lodash":8}],6:[function(require,module,exports){
+},{"jquery":8,"lodash":9}],7:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -111,17 +145,18 @@ ngModule.config(function ($routeProvider) {
 
     $routeProvider
         .when('/game', {
-            template: '<h1>Game page</h1>'
+            templateUrl: 'templates/game.html'
         })
         .when('/home', {
-            template: '<h1>Home</h1>'
+            templateUrl: 'templates/home.html',
+            controller: 'HomeCtrl'
         })
         .otherwise({
             redirectTo: '/home'
         });
 
 });
-},{"../vendor/angular":10,"../vendor/angular-route":9,"./angular-module.js":1}],7:[function(require,module,exports){
+},{"../vendor/angular":11,"../vendor/angular-route":10,"./angular-module.js":1}],8:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -9234,7 +9269,7 @@ return jQuery;
 
 }));
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -16023,7 +16058,7 @@ return jQuery;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -16952,7 +16987,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -38881,4 +38916,4 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}]},{},[1,2,3,4,5,6]);
+},{}]},{},[1,2,3,4,5,6,7]);

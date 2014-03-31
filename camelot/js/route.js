@@ -7,10 +7,11 @@ ngModule.config(function ($routeProvider) {
 
     $routeProvider
         .when('/game', {
-            template: '<h1>Game page</h1>'
+            templateUrl: 'templates/game.html'
         })
         .when('/home', {
-            template: '<h1>Home</h1>'
+            templateUrl: 'templates/home.html',
+            controller: 'HomeCtrl'
         })
         .otherwise({
             redirectTo: '/home'
