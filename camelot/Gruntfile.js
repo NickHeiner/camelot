@@ -24,8 +24,10 @@ module.exports = function (grunt) {
                     node: true,
                     globals: {
                         WinJS: true,
+                        $: true,
                         Windows: true,
-                        angular: true
+                        angular: true,
+                        MSApp: true
                     }
                 },
                 files: {

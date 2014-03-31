@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "lodash": "^2.4.1",
-    "zurb-foundation": "https://github.com/zurb/foundation/tarball/v5.2.1"
+    "zurb-foundation": "https://github.com/zurb/foundation/tarball/v5.2.1",
+    "jquery": "^2.1.0"
   }
 }

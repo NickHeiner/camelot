@@ -30,4 +30,7 @@ app.oncheckpoint = function (args) {
     // args.setPromise().
 };
 
-app.start();
+MSApp.execUnsafeLocalFunction(function () {
+    app.start();
+});
+

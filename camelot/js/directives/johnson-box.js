@@ -3,6 +3,9 @@
 ngModule.directive('johnsonBox', function () {
 
     return {
-        templateUrl: 'templates/johnson-box.html'
+        templateUrl: 'templates/johnson-box.html',
+        scope: {
+            user: '='
+        }
     };
 });

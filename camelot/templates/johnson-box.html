@@ -1,1 +1,9 @@
-﻿<p>This is in your johnson box</p>
+﻿<div class="row">
+    <div ng-show="user">
+        <div class="large-8 columns">{{user.name}}</div>
+        <div class="large-4 columns"><img ng-src="{{user.avatarUri}}" /></div>
+    </div>
+    <div ng-hide="user">
+        <div class="large-12 columns">Not logged in.</div>        
+    </div>
+</div>
