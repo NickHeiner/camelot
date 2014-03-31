@@ -3,12 +3,28 @@ $include-html-global-classes: false;
 
 @import 'foundation/_functions';
 
-$row-width: rem-calc(1500);
+$include-html-grid-classes: false;
 
 @import 'foundation';
 
 $show-row-borders: false;
 $profile-pic-height: 10em;
+
+.app-grid {
+	padding: 2em;
+	display: -ms-grid;
+	-ms-grid-columns: auto 1fr auto;
+	-ms-grid-rows: auto auto;
+}
+
+.app-title {
+    -ms-grid-row: 1;
+    -ms-grid-column: 1;
+}
+.johnson-box {
+    -ms-grid-row: 1;
+    -ms-grid-column: 3;
+}
 
 .profile-pic {
 	width: $profile-pic-height;
@@ -16,23 +32,22 @@ $profile-pic-height: 10em;
 	border-radius: $profile-pic-height / 2;
 }
 
+.johnson-box-has-user-root {
+	display: -ms-grid;
+	-ms-grid-columns: auto auto;
+	-ms-grid-rows: $profile-pic-height / 2 auto 1fr;	
+}
+
 .user-name {
-	margin-top: $profile-pic-height / 4;
+	-ms-grid-row: 2;
+	-ms-grid-column: 1;
 }
 
-.app-title {
-	margin-top: $profile-pic-height / 4;	
+.user-avatar {
+	-ms-grid-row: 1;
+	-ms-grid-column: 2;
+	padding-left: 1em;
 }
-
-.row {
-	@if $show-row-borders {
-		border: 1px solid red;
-	}
-}
-
-.johnson-box {
-	padding-top: 0px;
-}	
 
 body {
 }

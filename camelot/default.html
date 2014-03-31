@@ -11,25 +11,12 @@
 
     <link href="/build/main.css" rel="stylesheet" />
     <script src="/build/build.js"></script>
+
 </head>
 <body ng-controller="CamelotCtrl">
-
-    <div class="row">
-        <div class="small-3 columns">
-            <h1 class="app-title">Camelot</h1>
-        </div>
-
-        <div class="small-2 small-offset-6 columns">
-            <div johnson-box user="user"></div>
-        </div>
-
-        <!-- For some reason, the last column is always positioned below the rest of the content. Hmm. 
-             This is a stupid hack to fix it.
-        -->
-        <div class="small-1 columns"></div>
+    <div class="app-grid">
+        <h1 class="app-title">Camelot</h1>
+        <div johnson-box user="user" class="johnson-box"></div>
     </div>
-
-    <!--<div ng-view></div>-->
-
 </body>
 </html>
