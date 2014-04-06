@@ -1,34 +1,8 @@
-﻿var ngModule = require('../angular-module');
+﻿var ngModule = require('../angular-module'),
+    _ = require('lodash');
 
-ngModule.controller('HomeCtrl', function ($scope) {
+ngModule.controller('HomeCtrl', function ($scope, bindModel) {
 
-    $scope.games = [
-        {
-            playerA: {
-                name: 'Scott'
-            },
-            playerB: {
-                name: 'Nick'
-            },
-            waitingOn: 'playerB'
-        },
-        {
-            playerA: {
-                name: 'Nick'
-            },
-            playerB: {
-                name: 'Dad'
-            },
-            waitingOn: 'playerB'
-        },
-        {
-            playerA: {
-                name: 'Nick'
-            },
-            playerB: {
-                name: 'Katherine'
-            },
-            waitingOn: 'playerA'
-        }
-    ];
+    bindModel(['games'], $scope, 'games', _.constant([]));
+
 });

@@ -21,41 +21,15 @@ ngModule.controller('CamelotCtrl', function ($scope, auth) {
     
 });
 },{"../angular-module":1}],3:[function(require,module,exports){
-var ngModule = require('../angular-module');
+var ngModule = require('../angular-module'),
+    _ = require('lodash');
 
-ngModule.controller('HomeCtrl', function ($scope) {
+ngModule.controller('HomeCtrl', function ($scope, bindModel) {
 
-    $scope.games = [
-        {
-            playerA: {
-                name: 'Scott'
-            },
-            playerB: {
-                name: 'Nick'
-            },
-            waitingOn: 'playerB'
-        },
-        {
-            playerA: {
-                name: 'Nick'
-            },
-            playerB: {
-                name: 'Dad'
-            },
-            waitingOn: 'playerB'
-        },
-        {
-            playerA: {
-                name: 'Nick'
-            },
-            playerB: {
-                name: 'Katherine'
-            },
-            waitingOn: 'playerA'
-        }
-    ];
+    bindModel(['games'], $scope, 'games', _.constant([]));
+
 });
-},{"../angular-module":1}],4:[function(require,module,exports){
+},{"../angular-module":1,"lodash":18}],4:[function(require,module,exports){
 'use strict';
 
 // For an introduction to the Blank template, see the following documentation:
