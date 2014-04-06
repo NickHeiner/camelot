@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html ng-app="camelot">
+<head>
+    <meta charset="utf-8" />
+    <title>Camelot</title>
+
+    <!-- WinJS references -->
+    <link href="//Microsoft.WinJS.1.0/css/ui-dark.css" rel="stylesheet" />
+    <script src="//Microsoft.WinJS.1.0/js/base.js"></script>
+    <script src="//Microsoft.WinJS.1.0/js/ui.js"></script>
+
+    <link href="/build/main.css" rel="stylesheet" />
+    <script src="/build/build.js"></script>
+
+</head>
+<body ng-controller="CamelotCtrl">
+    <div class="app-grid">
+        <h1 class="app-title">Camelot</h1>
+        <div johnson-box user="user" class="johnson-box"></div>
+    </div>
+
+    <div ng-view></div>
+</body>
+</html>
