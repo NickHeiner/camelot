@@ -3,19 +3,26 @@
     path = require('path');
 
 angularModule
+    /**
+     * Namespace different schema versions to avoid conflicts in the future. 
+     * I'm not sure if there's a better way to do this.
+     */
     .constant('SCHEMA_VERSION', '1')
-    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase) {
+    .factory('getFirebaseUrl', function () {
+        return function (pathname) {
+            return url.format({
+                pathname: pathname,
+                protocol: 'https',
+                host: 'camelot-nth.firebaseio.com'
+            });
+        };
+    })
+    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase, getFirebaseUrl) {
 
-        return function (childPath, $scope, scopeAttr) {
+        return function (childPath, $scope, scopeAttr, getDefault) {
             var pathname = path.join.apply(path, [SCHEMA_VERSION].concat(childPath)),
-                fullUrl = url.format({
-                    pathname: pathname,
-                    protocol: 'https',
-                    host: 'camelot-nth.firebaseio.com'
-                });
+                firebaseRef = new $window.Firebase(getFirebaseUrl(pathname));
 
-            var firebaseRef = new $window.Firebase(fullUrl);
-
-            $firebase(firebaseRef).bind($scope, scopeAttr);
+            $firebase(firebaseRef).$bind($scope, scopeAttr, getDefault);
         };
 });

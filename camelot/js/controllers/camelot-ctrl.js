@@ -1,6 +1,7 @@
 ﻿/// <reference path="///LiveSDKHTML/js/wl.js" />
 
-var ngModule = require('../angular-module');
+var ngModule = require('../angular-module'),
+    _ = require('lodash');
 
 ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
 
@@ -8,12 +9,13 @@ ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
     $scope.currentUserId = {};
 
     function getCurrentUser() {
+        $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
         return $scope.users[$scope.currentUserId.id];
     }
 
     $scope.getCurrentUser = getCurrentUser;
 
-    bindModel(['users'], $scope, 'users');
+    bindModel(['users'], $scope, 'users', _.constant({}));
 
     WL.init();
 
@@ -31,14 +33,14 @@ ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
             getCurrentUser().name = response.name;
         });
 
-        var updateUserPicturePromise = $q.when(WL.api({
-            path: 'me/picture',
-            method: 'GET'
-        })).then(function (response) {
-            getCurrentUser().avatarUri = response.location;
+        return updateUserNamePromise.then(function () {
+            return $q.when(WL.api({
+                path: 'me/picture',
+                method: 'GET'
+            })).then(function (response) {
+                getCurrentUser().avatarUri = response.location;
+            });
         });
-
-        return $q.all([updateUserNamePromise, updateUserPicturePromise]);
     });
     
 });

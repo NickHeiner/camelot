@@ -13,20 +13,23 @@ module.exports = angular.module('camelot', [
 },{"../vendor/angular":19,"../vendor/angular-route":18,"../vendor/angularfire":20,"../vendor/firebase":21,"./evil":6}],2:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
-var ngModule = require('../angular-module');
+var ngModule = require('../angular-module'),
+    _ = require('lodash');
 
 ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
 
     // This must be an object because $scope isn't the model itself; it points to the model.
     $scope.currentUserId = {};
+    $scope.users = {};
 
     function getCurrentUser() {
+        $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
         return $scope.users[$scope.currentUserId.id];
     }
 
     $scope.getCurrentUser = getCurrentUser;
 
-    bindModel(['users'], $scope, 'users');
+    bindModel(['users'], $scope, 'users', _.constant({}));
 
     WL.init();
 
@@ -44,18 +47,18 @@ ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
             getCurrentUser().name = response.name;
         });
 
-        var updateUserPicturePromise = $q.when(WL.api({
-            path: 'me/picture',
-            method: 'GET'
-        })).then(function (response) {
-            getCurrentUser().avatarUri = response.location;
+        return updateUserNamePromise.then(function () {
+            return $q.when(WL.api({
+                path: 'me/picture',
+                method: 'GET'
+            })).then(function (response) {
+                getCurrentUser().avatarUri = response.location;
+            });
         });
-
-        return $q.all([updateUserNamePromise, updateUserPicturePromise]);
     });
     
 });
-},{"../angular-module":1}],3:[function(require,module,exports){
+},{"../angular-module":1,"lodash":17}],3:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
 ngModule.controller('HomeCtrl', function ($scope) {
@@ -204,20 +207,27 @@ var angularModule = require('../angular-module'),
     path = require('path');
 
 angularModule
+    /**
+     * Namespace different schema versions to avoid conflicts in the future. 
+     * I'm not sure if there's a better way to do this.
+     */
     .constant('SCHEMA_VERSION', '1')
-    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase) {
+    .factory('getFirebaseUrl', function () {
+        return function (pathname) {
+            return url.format({
+                pathname: pathname,
+                protocol: 'https',
+                host: 'camelot-nth.firebaseio.com'
+            });
+        };
+    })
+    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase, getFirebaseUrl) {
 
-        return function (childPath, $scope, scopeAttr) {
+        return function (childPath, $scope, scopeAttr, getDefault) {
             var pathname = path.join.apply(path, [SCHEMA_VERSION].concat(childPath)),
-                fullUrl = url.format({
-                    pathname: pathname,
-                    protocol: 'https',
-                    host: 'camelot-nth.firebaseio.com'
-                });
+                firebaseRef = new $window.Firebase(getFirebaseUrl(pathname));
 
-            var firebaseRef = new $window.Firebase(fullUrl);
-
-            $firebase(firebaseRef).bind($scope, scopeAttr);
+            $firebase(firebaseRef).$bind($scope, scopeAttr, getDefault);
         };
 });
 },{"../angular-module":1,"path":10,"url":15}],9:[function(require,module,exports){
