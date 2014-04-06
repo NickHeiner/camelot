@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest">
-  <Identity Name="392d4b12-9ce8-42e4-b8cf-f82302d3c2da" Version="1.0.0.0" Publisher="CN=Nick" />
+  <Identity Name="23731NickHeiner.Camelot" Version="1.0.0.0" Publisher="CN=8204819B-4B45-464B-90E2-09C54A33232B" />
   <Properties>
-    <DisplayName>chivarly.js</DisplayName>
-    <PublisherDisplayName>Nick</PublisherDisplayName>
+    <DisplayName>Camelot</DisplayName>
+    <PublisherDisplayName>Nick Heiner</PublisherDisplayName>
     <Logo>images\storelogo.png</Logo>
   </Properties>
   <Prerequisites>

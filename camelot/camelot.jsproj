@@ -47,7 +47,8 @@
     <TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
     <TargetPlatformVersion>8.0</TargetPlatformVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <PackageCertificateKeyFile>chivarly.js_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>camelot_StoreKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>39897E42A6A654829F111657DA5D5FD5CCF917B7</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="package.appxmanifest">
@@ -55,6 +56,7 @@
     </AppxManifest>
     <Content Include="build\build.js" />
     <Content Include="build\main.css" />
+    <None Include="camelot_StoreKey.pfx" />
     <Content Include="default.html" />
     <Content Include="Gruntfile.js" />
     <Content Include="images\logo.png" />
@@ -67,6 +69,7 @@
     <Content Include="js\default.js" />
     <Content Include="js\directives\johnson-box.js" />
     <Content Include="js\evil.js" />
+    <None Include="Package.StoreAssociation.xml" />
     <Content Include="scss\default.scss" />
     <Content Include="js\route.js" />
     <Content Include="package.json" />
@@ -76,9 +79,9 @@
     <Content Include="templates\johnson-box.html" />
     <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />
-    <None Include="chivarly.js_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <SDKReference Include="LiveSDKHTML, Version=5.0" />
     <SDKReference Include="Microsoft.WinJS.1.0, Version=1.0" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).targets" />
