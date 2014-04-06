@@ -2,9 +2,18 @@
 
 var ngModule = require('../angular-module');
 
-ngModule.controller('CamelotCtrl', function ($scope, $q, $window) {
+ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
 
-    $scope.user = {};
+    // This must be an object because $scope isn't the model itself; it points to the model.
+    $scope.currentUserId = {};
+
+    function getCurrentUser() {
+        return $scope.users[$scope.currentUserId.id];
+    }
+
+    $scope.getCurrentUser = getCurrentUser;
+
+    bindModel(['users'], $scope, 'users');
 
     WL.init();
 
@@ -16,17 +25,20 @@ ngModule.controller('CamelotCtrl', function ($scope, $q, $window) {
             path: 'me',
             method: 'GET'
         })).then(function (response) {
-            $scope.user.name = response.name;
-            $scope.user.id = response.id;
+
+            $scope.currentUserId.id = response.id;
+
+            getCurrentUser().name = response.name;
         });
 
         var updateUserPicturePromise = $q.when(WL.api({
             path: 'me/picture',
             method: 'GET'
         })).then(function (response) {
-            $scope.user.avatarUri = response.location;
+            getCurrentUser().avatarUri = response.location;
         });
 
         return $q.all([updateUserNamePromise, updateUserPicturePromise]);
     });
+    
 });

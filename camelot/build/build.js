@@ -3,16 +3,30 @@ require('./evil');
 
 require('../vendor/angular');
 require('../vendor/angular-route');
+require('../vendor/firebase');
+require('../vendor/angularfire');
 
-module.exports = angular.module('camelot', ['ngRoute']);
-},{"../vendor/angular":11,"../vendor/angular-route":10,"./evil":6}],2:[function(require,module,exports){
+module.exports = angular.module('camelot', [
+    'ngRoute', 
+    'firebase'
+]);
+},{"../vendor/angular":19,"../vendor/angular-route":18,"../vendor/angularfire":20,"../vendor/firebase":21,"./evil":6}],2:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module');
 
-ngModule.controller('CamelotCtrl', function ($scope, $q, $window) {
+ngModule.controller('CamelotCtrl', function ($scope, $q, $window, bindModel) {
 
-    $scope.user = {};
+    // This must be an object because $scope isn't the model itself; it points to the model.
+    $scope.currentUserId = {};
+
+    function getCurrentUser() {
+        return $scope.users[$scope.currentUserId.id];
+    }
+
+    $scope.getCurrentUser = getCurrentUser;
+
+    bindModel(['users'], $scope, 'users');
 
     WL.init();
 
@@ -24,19 +38,22 @@ ngModule.controller('CamelotCtrl', function ($scope, $q, $window) {
             path: 'me',
             method: 'GET'
         })).then(function (response) {
-            $scope.user.name = response.name;
-            $scope.user.id = response.id;
+
+            $scope.currentUserId.id = response.id;
+
+            getCurrentUser().name = response.name;
         });
 
         var updateUserPicturePromise = $q.when(WL.api({
             path: 'me/picture',
             method: 'GET'
         })).then(function (response) {
-            $scope.user.avatarUri = response.location;
+            getCurrentUser().avatarUri = response.location;
         });
 
         return $q.all([updateUserNamePromise, updateUserPicturePromise]);
     });
+    
 });
 },{"../angular-module":1}],3:[function(require,module,exports){
 var ngModule = require('../angular-module');
@@ -160,7 +177,7 @@ methodsToOverride.forEach(function (methodName) {
 
     });
 
-},{"jquery":8,"lodash":9}],7:[function(require,module,exports){
+},{"jquery":16,"lodash":17}],7:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -181,7 +198,1642 @@ ngModule.config(function ($routeProvider) {
         });
 
 });
-},{"../vendor/angular":11,"../vendor/angular-route":10,"./angular-module.js":1}],8:[function(require,module,exports){
+},{"../vendor/angular":19,"../vendor/angular-route":18,"./angular-module.js":1}],8:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    url = require('url'),   
+    path = require('path');
+
+angularModule
+    .constant('SCHEMA_VERSION', '1')
+    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase) {
+
+        return function (childPath, $scope, scopeAttr) {
+            var pathname = path.join.apply(path, [SCHEMA_VERSION].concat(childPath)),
+                fullUrl = url.format({
+                    pathname: pathname,
+                    protocol: 'https',
+                    host: 'camelot-nth.firebaseio.com'
+                });
+
+            var firebaseRef = new $window.Firebase(fullUrl);
+
+            $firebase(firebaseRef).bind($scope, scopeAttr);
+        };
+});
+},{"../angular-module":1,"path":10,"url":15}],9:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.once = noop;
+process.off = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],10:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
+    }
+  }
+
+  return parts;
+}
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require("C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"))
+},{"C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":9}],11:[function(require,module,exports){
+(function (global){
+/*! http://mths.be/punycode v1.2.4 by @mathias */
+;(function(root) {
+
+	/** Detect free variables */
+	var freeExports = typeof exports == 'object' && exports;
+	var freeModule = typeof module == 'object' && module &&
+		module.exports == freeExports && module;
+	var freeGlobal = typeof global == 'object' && global;
+	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
+		root = freeGlobal;
+	}
+
+	/**
+	 * The `punycode` object.
+	 * @name punycode
+	 * @type Object
+	 */
+	var punycode,
+
+	/** Highest positive signed 32-bit float value */
+	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
+
+	/** Bootstring parameters */
+	base = 36,
+	tMin = 1,
+	tMax = 26,
+	skew = 38,
+	damp = 700,
+	initialBias = 72,
+	initialN = 128, // 0x80
+	delimiter = '-', // '\x2D'
+
+	/** Regular expressions */
+	regexPunycode = /^xn--/,
+	regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
+	regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
+
+	/** Error messages */
+	errors = {
+		'overflow': 'Overflow: input needs wider integers to process',
+		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
+		'invalid-input': 'Invalid input'
+	},
+
+	/** Convenience shortcuts */
+	baseMinusTMin = base - tMin,
+	floor = Math.floor,
+	stringFromCharCode = String.fromCharCode,
+
+	/** Temporary variable */
+	key;
+
+	/*--------------------------------------------------------------------------*/
+
+	/**
+	 * A generic error utility function.
+	 * @private
+	 * @param {String} type The error type.
+	 * @returns {Error} Throws a `RangeError` with the applicable error message.
+	 */
+	function error(type) {
+		throw RangeError(errors[type]);
+	}
+
+	/**
+	 * A generic `Array#map` utility function.
+	 * @private
+	 * @param {Array} array The array to iterate over.
+	 * @param {Function} callback The function that gets called for every array
+	 * item.
+	 * @returns {Array} A new array of values returned by the callback function.
+	 */
+	function map(array, fn) {
+		var length = array.length;
+		while (length--) {
+			array[length] = fn(array[length]);
+		}
+		return array;
+	}
+
+	/**
+	 * A simple `Array#map`-like wrapper to work with domain name strings.
+	 * @private
+	 * @param {String} domain The domain name.
+	 * @param {Function} callback The function that gets called for every
+	 * character.
+	 * @returns {Array} A new string of characters returned by the callback
+	 * function.
+	 */
+	function mapDomain(string, fn) {
+		return map(string.split(regexSeparators), fn).join('.');
+	}
+
+	/**
+	 * Creates an array containing the numeric code points of each Unicode
+	 * character in the string. While JavaScript uses UCS-2 internally,
+	 * this function will convert a pair of surrogate halves (each of which
+	 * UCS-2 exposes as separate characters) into a single code point,
+	 * matching UTF-16.
+	 * @see `punycode.ucs2.encode`
+	 * @see <http://mathiasbynens.be/notes/javascript-encoding>
+	 * @memberOf punycode.ucs2
+	 * @name decode
+	 * @param {String} string The Unicode input string (UCS-2).
+	 * @returns {Array} The new array of code points.
+	 */
+	function ucs2decode(string) {
+		var output = [],
+		    counter = 0,
+		    length = string.length,
+		    value,
+		    extra;
+		while (counter < length) {
+			value = string.charCodeAt(counter++);
+			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
+				// high surrogate, and there is a next character
+				extra = string.charCodeAt(counter++);
+				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
+					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
+				} else {
+					// unmatched surrogate; only append this code unit, in case the next
+					// code unit is the high surrogate of a surrogate pair
+					output.push(value);
+					counter--;
+				}
+			} else {
+				output.push(value);
+			}
+		}
+		return output;
+	}
+
+	/**
+	 * Creates a string based on an array of numeric code points.
+	 * @see `punycode.ucs2.decode`
+	 * @memberOf punycode.ucs2
+	 * @name encode
+	 * @param {Array} codePoints The array of numeric code points.
+	 * @returns {String} The new Unicode string (UCS-2).
+	 */
+	function ucs2encode(array) {
+		return map(array, function(value) {
+			var output = '';
+			if (value > 0xFFFF) {
+				value -= 0x10000;
+				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+				value = 0xDC00 | value & 0x3FF;
+			}
+			output += stringFromCharCode(value);
+			return output;
+		}).join('');
+	}
+
+	/**
+	 * Converts a basic code point into a digit/integer.
+	 * @see `digitToBasic()`
+	 * @private
+	 * @param {Number} codePoint The basic numeric code point value.
+	 * @returns {Number} The numeric value of a basic code point (for use in
+	 * representing integers) in the range `0` to `base - 1`, or `base` if
+	 * the code point does not represent a value.
+	 */
+	function basicToDigit(codePoint) {
+		if (codePoint - 48 < 10) {
+			return codePoint - 22;
+		}
+		if (codePoint - 65 < 26) {
+			return codePoint - 65;
+		}
+		if (codePoint - 97 < 26) {
+			return codePoint - 97;
+		}
+		return base;
+	}
+
+	/**
+	 * Converts a digit/integer into a basic code point.
+	 * @see `basicToDigit()`
+	 * @private
+	 * @param {Number} digit The numeric value of a basic code point.
+	 * @returns {Number} The basic code point whose value (when used for
+	 * representing integers) is `digit`, which needs to be in the range
+	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
+	 * used; else, the lowercase form is used. The behavior is undefined
+	 * if `flag` is non-zero and `digit` has no uppercase form.
+	 */
+	function digitToBasic(digit, flag) {
+		//  0..25 map to ASCII a..z or A..Z
+		// 26..35 map to ASCII 0..9
+		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+	}
+
+	/**
+	 * Bias adaptation function as per section 3.4 of RFC 3492.
+	 * http://tools.ietf.org/html/rfc3492#section-3.4
+	 * @private
+	 */
+	function adapt(delta, numPoints, firstTime) {
+		var k = 0;
+		delta = firstTime ? floor(delta / damp) : delta >> 1;
+		delta += floor(delta / numPoints);
+		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
+			delta = floor(delta / baseMinusTMin);
+		}
+		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+	}
+
+	/**
+	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
+	 * symbols.
+	 * @memberOf punycode
+	 * @param {String} input The Punycode string of ASCII-only symbols.
+	 * @returns {String} The resulting string of Unicode symbols.
+	 */
+	function decode(input) {
+		// Don't use UCS-2
+		var output = [],
+		    inputLength = input.length,
+		    out,
+		    i = 0,
+		    n = initialN,
+		    bias = initialBias,
+		    basic,
+		    j,
+		    index,
+		    oldi,
+		    w,
+		    k,
+		    digit,
+		    t,
+		    /** Cached calculation results */
+		    baseMinusT;
+
+		// Handle the basic code points: let `basic` be the number of input code
+		// points before the last delimiter, or `0` if there is none, then copy
+		// the first basic code points to the output.
+
+		basic = input.lastIndexOf(delimiter);
+		if (basic < 0) {
+			basic = 0;
+		}
+
+		for (j = 0; j < basic; ++j) {
+			// if it's not a basic code point
+			if (input.charCodeAt(j) >= 0x80) {
+				error('not-basic');
+			}
+			output.push(input.charCodeAt(j));
+		}
+
+		// Main decoding loop: start just after the last delimiter if any basic code
+		// points were copied; start at the beginning otherwise.
+
+		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
+
+			// `index` is the index of the next character to be consumed.
+			// Decode a generalized variable-length integer into `delta`,
+			// which gets added to `i`. The overflow checking is easier
+			// if we increase `i` as we go, then subtract off its starting
+			// value at the end to obtain `delta`.
+			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
+
+				if (index >= inputLength) {
+					error('invalid-input');
+				}
+
+				digit = basicToDigit(input.charCodeAt(index++));
+
+				if (digit >= base || digit > floor((maxInt - i) / w)) {
+					error('overflow');
+				}
+
+				i += digit * w;
+				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+
+				if (digit < t) {
+					break;
+				}
+
+				baseMinusT = base - t;
+				if (w > floor(maxInt / baseMinusT)) {
+					error('overflow');
+				}
+
+				w *= baseMinusT;
+
+			}
+
+			out = output.length + 1;
+			bias = adapt(i - oldi, out, oldi == 0);
+
+			// `i` was supposed to wrap around from `out` to `0`,
+			// incrementing `n` each time, so we'll fix that now:
+			if (floor(i / out) > maxInt - n) {
+				error('overflow');
+			}
+
+			n += floor(i / out);
+			i %= out;
+
+			// Insert `n` at position `i` of the output
+			output.splice(i++, 0, n);
+
+		}
+
+		return ucs2encode(output);
+	}
+
+	/**
+	 * Converts a string of Unicode symbols to a Punycode string of ASCII-only
+	 * symbols.
+	 * @memberOf punycode
+	 * @param {String} input The string of Unicode symbols.
+	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
+	 */
+	function encode(input) {
+		var n,
+		    delta,
+		    handledCPCount,
+		    basicLength,
+		    bias,
+		    j,
+		    m,
+		    q,
+		    k,
+		    t,
+		    currentValue,
+		    output = [],
+		    /** `inputLength` will hold the number of code points in `input`. */
+		    inputLength,
+		    /** Cached calculation results */
+		    handledCPCountPlusOne,
+		    baseMinusT,
+		    qMinusT;
+
+		// Convert the input in UCS-2 to Unicode
+		input = ucs2decode(input);
+
+		// Cache the length
+		inputLength = input.length;
+
+		// Initialize the state
+		n = initialN;
+		delta = 0;
+		bias = initialBias;
+
+		// Handle the basic code points
+		for (j = 0; j < inputLength; ++j) {
+			currentValue = input[j];
+			if (currentValue < 0x80) {
+				output.push(stringFromCharCode(currentValue));
+			}
+		}
+
+		handledCPCount = basicLength = output.length;
+
+		// `handledCPCount` is the number of code points that have been handled;
+		// `basicLength` is the number of basic code points.
+
+		// Finish the basic string - if it is not empty - with a delimiter
+		if (basicLength) {
+			output.push(delimiter);
+		}
+
+		// Main encoding loop:
+		while (handledCPCount < inputLength) {
+
+			// All non-basic code points < n have been handled already. Find the next
+			// larger one:
+			for (m = maxInt, j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+				if (currentValue >= n && currentValue < m) {
+					m = currentValue;
+				}
+			}
+
+			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
+			// but guard against overflow
+			handledCPCountPlusOne = handledCPCount + 1;
+			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+				error('overflow');
+			}
+
+			delta += (m - n) * handledCPCountPlusOne;
+			n = m;
+
+			for (j = 0; j < inputLength; ++j) {
+				currentValue = input[j];
+
+				if (currentValue < n && ++delta > maxInt) {
+					error('overflow');
+				}
+
+				if (currentValue == n) {
+					// Represent delta as a generalized variable-length integer
+					for (q = delta, k = base; /* no condition */; k += base) {
+						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
+						if (q < t) {
+							break;
+						}
+						qMinusT = q - t;
+						baseMinusT = base - t;
+						output.push(
+							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
+						);
+						q = floor(qMinusT / baseMinusT);
+					}
+
+					output.push(stringFromCharCode(digitToBasic(q, 0)));
+					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
+					delta = 0;
+					++handledCPCount;
+				}
+			}
+
+			++delta;
+			++n;
+
+		}
+		return output.join('');
+	}
+
+	/**
+	 * Converts a Punycode string representing a domain name to Unicode. Only the
+	 * Punycoded parts of the domain name will be converted, i.e. it doesn't
+	 * matter if you call it on a string that has already been converted to
+	 * Unicode.
+	 * @memberOf punycode
+	 * @param {String} domain The Punycode domain name to convert to Unicode.
+	 * @returns {String} The Unicode representation of the given Punycode
+	 * string.
+	 */
+	function toUnicode(domain) {
+		return mapDomain(domain, function(string) {
+			return regexPunycode.test(string)
+				? decode(string.slice(4).toLowerCase())
+				: string;
+		});
+	}
+
+	/**
+	 * Converts a Unicode string representing a domain name to Punycode. Only the
+	 * non-ASCII parts of the domain name will be converted, i.e. it doesn't
+	 * matter if you call it with a domain that's already in ASCII.
+	 * @memberOf punycode
+	 * @param {String} domain The domain name to convert, as a Unicode string.
+	 * @returns {String} The Punycode representation of the given domain name.
+	 */
+	function toASCII(domain) {
+		return mapDomain(domain, function(string) {
+			return regexNonASCII.test(string)
+				? 'xn--' + encode(string)
+				: string;
+		});
+	}
+
+	/*--------------------------------------------------------------------------*/
+
+	/** Define the public API */
+	punycode = {
+		/**
+		 * A string representing the current Punycode.js version number.
+		 * @memberOf punycode
+		 * @type String
+		 */
+		'version': '1.2.4',
+		/**
+		 * An object of methods to convert from JavaScript's internal character
+		 * representation (UCS-2) to Unicode code points, and back.
+		 * @see <http://mathiasbynens.be/notes/javascript-encoding>
+		 * @memberOf punycode
+		 * @type Object
+		 */
+		'ucs2': {
+			'decode': ucs2decode,
+			'encode': ucs2encode
+		},
+		'decode': decode,
+		'encode': encode,
+		'toASCII': toASCII,
+		'toUnicode': toUnicode
+	};
+
+	/** Expose `punycode` */
+	// Some AMD build optimizers, like r.js, check for specific condition patterns
+	// like the following:
+	if (
+		typeof define == 'function' &&
+		typeof define.amd == 'object' &&
+		define.amd
+	) {
+		define('punycode', function() {
+			return punycode;
+		});
+	} else if (freeExports && !freeExports.nodeType) {
+		if (freeModule) { // in Node.js or RingoJS v0.8.0+
+			freeModule.exports = punycode;
+		} else { // in Narwhal or RingoJS v0.7.0-
+			for (key in punycode) {
+				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
+			}
+		}
+	} else { // in Rhino or a web browser
+		root.punycode = punycode;
+	}
+
+}(this));
+
+}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],12:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+// If obj.hasOwnProperty has been overridden, then calling
+// obj.hasOwnProperty(prop) will break.
+// See: https://github.com/joyent/node/issues/1707
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+module.exports = function(qs, sep, eq, options) {
+  sep = sep || '&';
+  eq = eq || '=';
+  var obj = {};
+
+  if (typeof qs !== 'string' || qs.length === 0) {
+    return obj;
+  }
+
+  var regexp = /\+/g;
+  qs = qs.split(sep);
+
+  var maxKeys = 1000;
+  if (options && typeof options.maxKeys === 'number') {
+    maxKeys = options.maxKeys;
+  }
+
+  var len = qs.length;
+  // maxKeys <= 0 means that we should not limit keys count
+  if (maxKeys > 0 && len > maxKeys) {
+    len = maxKeys;
+  }
+
+  for (var i = 0; i < len; ++i) {
+    var x = qs[i].replace(regexp, '%20'),
+        idx = x.indexOf(eq),
+        kstr, vstr, k, v;
+
+    if (idx >= 0) {
+      kstr = x.substr(0, idx);
+      vstr = x.substr(idx + 1);
+    } else {
+      kstr = x;
+      vstr = '';
+    }
+
+    k = decodeURIComponent(kstr);
+    v = decodeURIComponent(vstr);
+
+    if (!hasOwnProperty(obj, k)) {
+      obj[k] = v;
+    } else if (isArray(obj[k])) {
+      obj[k].push(v);
+    } else {
+      obj[k] = [obj[k], v];
+    }
+  }
+
+  return obj;
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+},{}],13:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+'use strict';
+
+var stringifyPrimitive = function(v) {
+  switch (typeof v) {
+    case 'string':
+      return v;
+
+    case 'boolean':
+      return v ? 'true' : 'false';
+
+    case 'number':
+      return isFinite(v) ? v : '';
+
+    default:
+      return '';
+  }
+};
+
+module.exports = function(obj, sep, eq, name) {
+  sep = sep || '&';
+  eq = eq || '=';
+  if (obj === null) {
+    obj = undefined;
+  }
+
+  if (typeof obj === 'object') {
+    return map(objectKeys(obj), function(k) {
+      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
+      if (isArray(obj[k])) {
+        return obj[k].map(function(v) {
+          return ks + encodeURIComponent(stringifyPrimitive(v));
+        }).join(sep);
+      } else {
+        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
+      }
+    }).join(sep);
+
+  }
+
+  if (!name) return '';
+  return encodeURIComponent(stringifyPrimitive(name)) + eq +
+         encodeURIComponent(stringifyPrimitive(obj));
+};
+
+var isArray = Array.isArray || function (xs) {
+  return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+function map (xs, f) {
+  if (xs.map) return xs.map(f);
+  var res = [];
+  for (var i = 0; i < xs.length; i++) {
+    res.push(f(xs[i], i));
+  }
+  return res;
+}
+
+var objectKeys = Object.keys || function (obj) {
+  var res = [];
+  for (var key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
+  }
+  return res;
+};
+
+},{}],14:[function(require,module,exports){
+'use strict';
+
+exports.decode = exports.parse = require('./decode');
+exports.encode = exports.stringify = require('./encode');
+
+},{"./decode":12,"./encode":13}],15:[function(require,module,exports){
+/*jshint strict:true node:true es5:true onevar:true laxcomma:true laxbreak:true eqeqeq:true immed:true latedef:true*/
+(function () {
+  "use strict";
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var punycode = require('punycode');
+
+exports.parse = urlParse;
+exports.resolve = urlResolve;
+exports.resolveObject = urlResolveObject;
+exports.format = urlFormat;
+
+// Reference: RFC 3986, RFC 1808, RFC 2396
+
+// define these here so at least they only have to be
+// compiled once on the first module load.
+var protocolPattern = /^([a-z0-9.+-]+:)/i,
+    portPattern = /:[0-9]*$/,
+
+    // RFC 2396: characters reserved for delimiting URLs.
+    // We actually just auto-escape these.
+    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
+
+    // RFC 2396: characters not allowed for various reasons.
+    unwise = ['{', '}', '|', '\\', '^', '~', '`'].concat(delims),
+
+    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
+    autoEscape = ['\''].concat(delims),
+    // Characters that are never ever allowed in a hostname.
+    // Note that any invalid chars are also handled, but these
+    // are the ones that are *expected* to be seen, so we fast-path
+    // them.
+    nonHostChars = ['%', '/', '?', ';', '#']
+      .concat(unwise).concat(autoEscape),
+    nonAuthChars = ['/', '@', '?', '#'].concat(delims),
+    hostnameMaxLen = 255,
+    hostnamePartPattern = /^[a-zA-Z0-9][a-z0-9A-Z_-]{0,62}$/,
+    hostnamePartStart = /^([a-zA-Z0-9][a-z0-9A-Z_-]{0,62})(.*)$/,
+    // protocols that can allow "unsafe" and "unwise" chars.
+    unsafeProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that never have a hostname.
+    hostlessProtocol = {
+      'javascript': true,
+      'javascript:': true
+    },
+    // protocols that always have a path component.
+    pathedProtocol = {
+      'http': true,
+      'https': true,
+      'ftp': true,
+      'gopher': true,
+      'file': true,
+      'http:': true,
+      'ftp:': true,
+      'gopher:': true,
+      'file:': true
+    },
+    // protocols that always contain a // bit.
+    slashedProtocol = {
+      'http': true,
+      'https': true,
+      'ftp': true,
+      'gopher': true,
+      'file': true,
+      'http:': true,
+      'https:': true,
+      'ftp:': true,
+      'gopher:': true,
+      'file:': true
+    },
+    querystring = require('querystring');
+
+function urlParse(url, parseQueryString, slashesDenoteHost) {
+  if (url && typeof(url) === 'object' && url.href) return url;
+
+  if (typeof url !== 'string') {
+    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
+  }
+
+  var out = {},
+      rest = url;
+
+  // trim before proceeding.
+  // This is to support parse stuff like "  http://foo.com  \n"
+  rest = rest.trim();
+
+  var proto = protocolPattern.exec(rest);
+  if (proto) {
+    proto = proto[0];
+    var lowerProto = proto.toLowerCase();
+    out.protocol = lowerProto;
+    rest = rest.substr(proto.length);
+  }
+
+  // figure out if it's got a host
+  // user@server is *always* interpreted as a hostname, and url
+  // resolution will treat //foo/bar as host=foo,path=bar because that's
+  // how the browser resolves relative URLs.
+  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
+    var slashes = rest.substr(0, 2) === '//';
+    if (slashes && !(proto && hostlessProtocol[proto])) {
+      rest = rest.substr(2);
+      out.slashes = true;
+    }
+  }
+
+  if (!hostlessProtocol[proto] &&
+      (slashes || (proto && !slashedProtocol[proto]))) {
+    // there's a hostname.
+    // the first instance of /, ?, ;, or # ends the host.
+    // don't enforce full RFC correctness, just be unstupid about it.
+
+    // If there is an @ in the hostname, then non-host chars *are* allowed
+    // to the left of the first @ sign, unless some non-auth character
+    // comes *before* the @-sign.
+    // URLs are obnoxious.
+    var atSign = rest.indexOf('@');
+    if (atSign !== -1) {
+      var auth = rest.slice(0, atSign);
+
+      // there *may be* an auth
+      var hasAuth = true;
+      for (var i = 0, l = nonAuthChars.length; i < l; i++) {
+        if (auth.indexOf(nonAuthChars[i]) !== -1) {
+          // not a valid auth.  Something like http://foo.com/bar@baz/
+          hasAuth = false;
+          break;
+        }
+      }
+
+      if (hasAuth) {
+        // pluck off the auth portion.
+        out.auth = decodeURIComponent(auth);
+        rest = rest.substr(atSign + 1);
+      }
+    }
+
+    var firstNonHost = -1;
+    for (var i = 0, l = nonHostChars.length; i < l; i++) {
+      var index = rest.indexOf(nonHostChars[i]);
+      if (index !== -1 &&
+          (firstNonHost < 0 || index < firstNonHost)) firstNonHost = index;
+    }
+
+    if (firstNonHost !== -1) {
+      out.host = rest.substr(0, firstNonHost);
+      rest = rest.substr(firstNonHost);
+    } else {
+      out.host = rest;
+      rest = '';
+    }
+
+    // pull out port.
+    var p = parseHost(out.host);
+    var keys = Object.keys(p);
+    for (var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      out[key] = p[key];
+    }
+
+    // we've indicated that there is a hostname,
+    // so even if it's empty, it has to be present.
+    out.hostname = out.hostname || '';
+
+    // if hostname begins with [ and ends with ]
+    // assume that it's an IPv6 address.
+    var ipv6Hostname = out.hostname[0] === '[' &&
+        out.hostname[out.hostname.length - 1] === ']';
+
+    // validate a little.
+    if (out.hostname.length > hostnameMaxLen) {
+      out.hostname = '';
+    } else if (!ipv6Hostname) {
+      var hostparts = out.hostname.split(/\./);
+      for (var i = 0, l = hostparts.length; i < l; i++) {
+        var part = hostparts[i];
+        if (!part) continue;
+        if (!part.match(hostnamePartPattern)) {
+          var newpart = '';
+          for (var j = 0, k = part.length; j < k; j++) {
+            if (part.charCodeAt(j) > 127) {
+              // we replace non-ASCII char with a temporary placeholder
+              // we need this to make sure size of hostname is not
+              // broken by replacing non-ASCII by nothing
+              newpart += 'x';
+            } else {
+              newpart += part[j];
+            }
+          }
+          // we test again with ASCII char only
+          if (!newpart.match(hostnamePartPattern)) {
+            var validParts = hostparts.slice(0, i);
+            var notHost = hostparts.slice(i + 1);
+            var bit = part.match(hostnamePartStart);
+            if (bit) {
+              validParts.push(bit[1]);
+              notHost.unshift(bit[2]);
+            }
+            if (notHost.length) {
+              rest = '/' + notHost.join('.') + rest;
+            }
+            out.hostname = validParts.join('.');
+            break;
+          }
+        }
+      }
+    }
+
+    // hostnames are always lower case.
+    out.hostname = out.hostname.toLowerCase();
+
+    if (!ipv6Hostname) {
+      // IDNA Support: Returns a puny coded representation of "domain".
+      // It only converts the part of the domain name that
+      // has non ASCII characters. I.e. it dosent matter if
+      // you call it with a domain that already is in ASCII.
+      var domainArray = out.hostname.split('.');
+      var newOut = [];
+      for (var i = 0; i < domainArray.length; ++i) {
+        var s = domainArray[i];
+        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
+            'xn--' + punycode.encode(s) : s);
+      }
+      out.hostname = newOut.join('.');
+    }
+
+    out.host = (out.hostname || '') +
+        ((out.port) ? ':' + out.port : '');
+    out.href += out.host;
+
+    // strip [ and ] from the hostname
+    if (ipv6Hostname) {
+      out.hostname = out.hostname.substr(1, out.hostname.length - 2);
+      if (rest[0] !== '/') {
+        rest = '/' + rest;
+      }
+    }
+  }
+
+  // now rest is set to the post-host stuff.
+  // chop off any delim chars.
+  if (!unsafeProtocol[lowerProto]) {
+
+    // First, make 100% sure that any "autoEscape" chars get
+    // escaped, even if encodeURIComponent doesn't think they
+    // need to be.
+    for (var i = 0, l = autoEscape.length; i < l; i++) {
+      var ae = autoEscape[i];
+      var esc = encodeURIComponent(ae);
+      if (esc === ae) {
+        esc = escape(ae);
+      }
+      rest = rest.split(ae).join(esc);
+    }
+  }
+
+
+  // chop off from the tail first.
+  var hash = rest.indexOf('#');
+  if (hash !== -1) {
+    // got a fragment string.
+    out.hash = rest.substr(hash);
+    rest = rest.slice(0, hash);
+  }
+  var qm = rest.indexOf('?');
+  if (qm !== -1) {
+    out.search = rest.substr(qm);
+    out.query = rest.substr(qm + 1);
+    if (parseQueryString) {
+      out.query = querystring.parse(out.query);
+    }
+    rest = rest.slice(0, qm);
+  } else if (parseQueryString) {
+    // no query string, but parseQueryString still requested
+    out.search = '';
+    out.query = {};
+  }
+  if (rest) out.pathname = rest;
+  if (slashedProtocol[proto] &&
+      out.hostname && !out.pathname) {
+    out.pathname = '/';
+  }
+
+  //to support http.request
+  if (out.pathname || out.search) {
+    out.path = (out.pathname ? out.pathname : '') +
+               (out.search ? out.search : '');
+  }
+
+  // finally, reconstruct the href based on what has been validated.
+  out.href = urlFormat(out);
+  return out;
+}
+
+// format a parsed object into a url string
+function urlFormat(obj) {
+  // ensure it's an object, and not a string url.
+  // If it's an obj, this is a no-op.
+  // this way, you can call url_format() on strings
+  // to clean up potentially wonky urls.
+  if (typeof(obj) === 'string') obj = urlParse(obj);
+
+  var auth = obj.auth || '';
+  if (auth) {
+    auth = encodeURIComponent(auth);
+    auth = auth.replace(/%3A/i, ':');
+    auth += '@';
+  }
+
+  var protocol = obj.protocol || '',
+      pathname = obj.pathname || '',
+      hash = obj.hash || '',
+      host = false,
+      query = '';
+
+  if (obj.host !== undefined) {
+    host = auth + obj.host;
+  } else if (obj.hostname !== undefined) {
+    host = auth + (obj.hostname.indexOf(':') === -1 ?
+        obj.hostname :
+        '[' + obj.hostname + ']');
+    if (obj.port) {
+      host += ':' + obj.port;
+    }
+  }
+
+  if (obj.query && typeof obj.query === 'object' &&
+      Object.keys(obj.query).length) {
+    query = querystring.stringify(obj.query);
+  }
+
+  var search = obj.search || (query && ('?' + query)) || '';
+
+  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
+
+  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
+  // unless they had them to begin with.
+  if (obj.slashes ||
+      (!protocol || slashedProtocol[protocol]) && host !== false) {
+    host = '//' + (host || '');
+    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
+  } else if (!host) {
+    host = '';
+  }
+
+  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
+  if (search && search.charAt(0) !== '?') search = '?' + search;
+
+  return protocol + host + pathname + search + hash;
+}
+
+function urlResolve(source, relative) {
+  return urlFormat(urlResolveObject(source, relative));
+}
+
+function urlResolveObject(source, relative) {
+  if (!source) return relative;
+
+  source = urlParse(urlFormat(source), false, true);
+  relative = urlParse(urlFormat(relative), false, true);
+
+  // hash is always overridden, no matter what.
+  source.hash = relative.hash;
+
+  if (relative.href === '') {
+    source.href = urlFormat(source);
+    return source;
+  }
+
+  // hrefs like //foo/bar always cut to the protocol.
+  if (relative.slashes && !relative.protocol) {
+    relative.protocol = source.protocol;
+    //urlParse appends trailing / to urls like http://www.example.com
+    if (slashedProtocol[relative.protocol] &&
+        relative.hostname && !relative.pathname) {
+      relative.path = relative.pathname = '/';
+    }
+    relative.href = urlFormat(relative);
+    return relative;
+  }
+
+  if (relative.protocol && relative.protocol !== source.protocol) {
+    // if it's a known url protocol, then changing
+    // the protocol does weird things
+    // first, if it's not file:, then we MUST have a host,
+    // and if there was a path
+    // to begin with, then we MUST have a path.
+    // if it is file:, then the host is dropped,
+    // because that's known to be hostless.
+    // anything else is assumed to be absolute.
+    if (!slashedProtocol[relative.protocol]) {
+      relative.href = urlFormat(relative);
+      return relative;
+    }
+    source.protocol = relative.protocol;
+    if (!relative.host && !hostlessProtocol[relative.protocol]) {
+      var relPath = (relative.pathname || '').split('/');
+      while (relPath.length && !(relative.host = relPath.shift()));
+      if (!relative.host) relative.host = '';
+      if (!relative.hostname) relative.hostname = '';
+      if (relPath[0] !== '') relPath.unshift('');
+      if (relPath.length < 2) relPath.unshift('');
+      relative.pathname = relPath.join('/');
+    }
+    source.pathname = relative.pathname;
+    source.search = relative.search;
+    source.query = relative.query;
+    source.host = relative.host || '';
+    source.auth = relative.auth;
+    source.hostname = relative.hostname || relative.host;
+    source.port = relative.port;
+    //to support http.request
+    if (source.pathname !== undefined || source.search !== undefined) {
+      source.path = (source.pathname ? source.pathname : '') +
+                    (source.search ? source.search : '');
+    }
+    source.slashes = source.slashes || relative.slashes;
+    source.href = urlFormat(source);
+    return source;
+  }
+
+  var isSourceAbs = (source.pathname && source.pathname.charAt(0) === '/'),
+      isRelAbs = (
+          relative.host !== undefined ||
+          relative.pathname && relative.pathname.charAt(0) === '/'
+      ),
+      mustEndAbs = (isRelAbs || isSourceAbs ||
+                    (source.host && relative.pathname)),
+      removeAllDots = mustEndAbs,
+      srcPath = source.pathname && source.pathname.split('/') || [],
+      relPath = relative.pathname && relative.pathname.split('/') || [],
+      psychotic = source.protocol &&
+          !slashedProtocol[source.protocol];
+
+  // if the url is a non-slashed url, then relative
+  // links like ../.. should be able
+  // to crawl up to the hostname, as well.  This is strange.
+  // source.protocol has already been set by now.
+  // Later on, put the first path part into the host field.
+  if (psychotic) {
+
+    delete source.hostname;
+    delete source.port;
+    if (source.host) {
+      if (srcPath[0] === '') srcPath[0] = source.host;
+      else srcPath.unshift(source.host);
+    }
+    delete source.host;
+    if (relative.protocol) {
+      delete relative.hostname;
+      delete relative.port;
+      if (relative.host) {
+        if (relPath[0] === '') relPath[0] = relative.host;
+        else relPath.unshift(relative.host);
+      }
+      delete relative.host;
+    }
+    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
+  }
+
+  if (isRelAbs) {
+    // it's absolute.
+    source.host = (relative.host || relative.host === '') ?
+                      relative.host : source.host;
+    source.hostname = (relative.hostname || relative.hostname === '') ?
+                      relative.hostname : source.hostname;
+    source.search = relative.search;
+    source.query = relative.query;
+    srcPath = relPath;
+    // fall through to the dot-handling below.
+  } else if (relPath.length) {
+    // it's relative
+    // throw away the existing file, and take the new path instead.
+    if (!srcPath) srcPath = [];
+    srcPath.pop();
+    srcPath = srcPath.concat(relPath);
+    source.search = relative.search;
+    source.query = relative.query;
+  } else if ('search' in relative) {
+    // just pull out the search.
+    // like href='?foo'.
+    // Put this after the other two cases because it simplifies the booleans
+    if (psychotic) {
+      source.hostname = source.host = srcPath.shift();
+      //occationaly the auth can get stuck only in host
+      //this especialy happens in cases like
+      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+      var authInHost = source.host && source.host.indexOf('@') > 0 ?
+                       source.host.split('@') : false;
+      if (authInHost) {
+        source.auth = authInHost.shift();
+        source.host = source.hostname = authInHost.shift();
+      }
+    }
+    source.search = relative.search;
+    source.query = relative.query;
+    //to support http.request
+    if (source.pathname !== undefined || source.search !== undefined) {
+      source.path = (source.pathname ? source.pathname : '') +
+                    (source.search ? source.search : '');
+    }
+    source.href = urlFormat(source);
+    return source;
+  }
+  if (!srcPath.length) {
+    // no path at all.  easy.
+    // we've already handled the other stuff above.
+    delete source.pathname;
+    //to support http.request
+    if (!source.search) {
+      source.path = '/' + source.search;
+    } else {
+      delete source.path;
+    }
+    source.href = urlFormat(source);
+    return source;
+  }
+  // if a url ENDs in . or .., then it must get a trailing slash.
+  // however, if it ends in anything else non-slashy,
+  // then it must NOT get a trailing slash.
+  var last = srcPath.slice(-1)[0];
+  var hasTrailingSlash = (
+      (source.host || relative.host) && (last === '.' || last === '..') ||
+      last === '');
+
+  // strip single dots, resolve double dots to parent dir
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = srcPath.length; i >= 0; i--) {
+    last = srcPath[i];
+    if (last == '.') {
+      srcPath.splice(i, 1);
+    } else if (last === '..') {
+      srcPath.splice(i, 1);
+      up++;
+    } else if (up) {
+      srcPath.splice(i, 1);
+      up--;
+    }
+  }
+
+  // if the path is allowed to go above the root, restore leading ..s
+  if (!mustEndAbs && !removeAllDots) {
+    for (; up--; up) {
+      srcPath.unshift('..');
+    }
+  }
+
+  if (mustEndAbs && srcPath[0] !== '' &&
+      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
+    srcPath.unshift('');
+  }
+
+  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
+    srcPath.push('');
+  }
+
+  var isAbsolute = srcPath[0] === '' ||
+      (srcPath[0] && srcPath[0].charAt(0) === '/');
+
+  // put the host back
+  if (psychotic) {
+    source.hostname = source.host = isAbsolute ? '' :
+                                    srcPath.length ? srcPath.shift() : '';
+    //occationaly the auth can get stuck only in host
+    //this especialy happens in cases like
+    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
+    var authInHost = source.host && source.host.indexOf('@') > 0 ?
+                     source.host.split('@') : false;
+    if (authInHost) {
+      source.auth = authInHost.shift();
+      source.host = source.hostname = authInHost.shift();
+    }
+  }
+
+  mustEndAbs = mustEndAbs || (source.host && srcPath.length);
+
+  if (mustEndAbs && !isAbsolute) {
+    srcPath.unshift('');
+  }
+
+  source.pathname = srcPath.join('/');
+  //to support request.http
+  if (source.pathname !== undefined || source.search !== undefined) {
+    source.path = (source.pathname ? source.pathname : '') +
+                  (source.search ? source.search : '');
+  }
+  source.auth = relative.auth || source.auth;
+  source.slashes = source.slashes || relative.slashes;
+  source.href = urlFormat(source);
+  return source;
+}
+
+function parseHost(host) {
+  var out = {};
+  var port = portPattern.exec(host);
+  if (port) {
+    port = port[0];
+    if (port !== ':') {
+      out.port = port.substr(1);
+    }
+    host = host.substr(0, host.length - port.length);
+  }
+  if (host) out.hostname = host;
+  return out;
+}
+
+}());
+
+},{"punycode":11,"querystring":14}],16:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -9294,7 +10946,7 @@ return jQuery;
 
 }));
 
-},{}],9:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -16083,7 +17735,7 @@ return jQuery;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -17012,7 +18664,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],11:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -38941,4 +40593,1174 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}]},{},[1,2,3,4,5,6,7]);
+},{}],20:[function(require,module,exports){
+// AngularFire is an officially supported AngularJS binding for Firebase.
+// The bindings let you associate a Firebase URL with a model (or set of
+// models), and they will be transparently kept in sync across all clients
+// currently using your app. The 2-way data binding offered by AngularJS works
+// as normal, except that the changes are also sent to all other clients
+// instead of just a server.
+//
+//      AngularFire 0.7.2-pre
+//      http://angularfire.com
+//      License: MIT
+
+"use strict";
+
+(function () {
+
+    var AngularFire, AngularFireAuth;
+
+    // Define the `firebase` module under which all AngularFire
+    // services will live.
+    angular.module("firebase", []).value("Firebase", Firebase);
+
+    // Define the `$firebase` service that provides synchronization methods.
+    angular.module("firebase").factory("$firebase", ["$q", "$parse", "$timeout",
+      function ($q, $parse, $timeout) {
+          // The factory returns an object containing the value of the data at
+          // the Firebase location provided, as well as several methods. It
+          // takes a single argument:
+          //
+          //   * `ref`: A Firebase reference. Queries or limits may be applied.
+          return function (ref) {
+              var af = new AngularFire($q, $parse, $timeout, ref);
+              return af.construct();
+          };
+      }
+    ]);
+
+    // Define the `orderByPriority` filter that sorts objects returned by
+    // $firebase in the order of priority. Priority is defined by Firebase,
+    // for more info see: https://www.firebase.com/docs/ordered-data.html
+    angular.module("firebase").filter("orderByPriority", function () {
+        return function (input) {
+            var sorted = [];
+            if (input) {
+                if (!input.$getIndex || typeof input.$getIndex != "function") {
+                    // input is not an angularFire instance
+                    if (angular.isArray(input)) {
+                        // If input is an array, copy it
+                        sorted = input.slice(0);
+                    } else if (angular.isObject(input)) {
+                        // If input is an object, map it to an array
+                        angular.forEach(input, function (prop) {
+                            sorted.push(prop);
+                        });
+                    }
+                } else {
+                    // input is an angularFire instance
+                    var index = input.$getIndex();
+                    if (index.length > 0) {
+                        for (var i = 0; i < index.length; i++) {
+                            var val = input[index[i]];
+                            if (val) {
+                                if (angular.isObject(val)) {
+                                    val.$id = index[i];
+                                }
+                                sorted.push(val);
+                            }
+                        }
+                    }
+                }
+            }
+            return sorted;
+        };
+    });
+
+    // Shim Array.indexOf for IE compatibility.
+    if (!Array.prototype.indexOf) {
+        Array.prototype.indexOf = function (searchElement, fromIndex) {
+            if (this === undefined || this === null) {
+                throw new TypeError("'this' is null or not defined");
+            }
+            // Hack to convert object.length to a UInt32
+            // jshint -W016
+            var length = this.length >>> 0;
+            fromIndex = +fromIndex || 0;
+            // jshint +W016
+
+            if (Math.abs(fromIndex) === Infinity) {
+                fromIndex = 0;
+            }
+
+            if (fromIndex < 0) {
+                fromIndex += length;
+                if (fromIndex < 0) {
+                    fromIndex = 0;
+                }
+            }
+
+            for (; fromIndex < length; fromIndex++) {
+                if (this[fromIndex] === searchElement) {
+                    return fromIndex;
+                }
+            }
+
+            return -1;
+        };
+    }
+
+    // The `AngularFire` object that implements synchronization.
+    AngularFire = function ($q, $parse, $timeout, ref) {
+        this._q = $q;
+        this._parse = $parse;
+        this._timeout = $timeout;
+
+        // set to true when $bind is called, this tells us whether we need
+        // to synchronize a $scope variable during data change events
+        // and also whether we will need to $watch the variable for changes
+        // we can only $bind to a single instance at a time
+        this._bound = false;
+
+        // true after the initial loading event completes, see _getInitialValue()
+        this._loaded = false;
+
+        // stores the list of keys if our data is an object, see $getIndex()
+        this._index = [];
+
+        // An object storing handlers used for different events.
+        this._on = {
+            value: [],
+            change: [],
+            loaded: [],
+            child_added: [],
+            child_moved: [],
+            child_changed: [],
+            child_removed: []
+        };
+
+        if (typeof ref == "string") {
+            throw new Error("Please provide a Firebase reference instead " +
+              "of a URL, eg: new Firebase(url)");
+        }
+        this._fRef = ref;
+    };
+
+    AngularFire.prototype = {
+        // This function is called by the factory to create a new explicit sync
+        // point between a particular model and a Firebase location.
+        construct: function () {
+            var self = this;
+            var object = {};
+
+            // Set the $id val equal to the Firebase reference's name() function.
+            object.$id = self._fRef.ref().name();
+
+            // Establish a 3-way data binding (implicit sync) with the specified
+            // Firebase location and a model on $scope. To be used from a controller
+            // to automatically synchronize *all* local changes. It takes three
+            // arguments:
+            //
+            //    * `$scope`   : The scope with which the bound model is associated.
+            //    * `name`     : The name of the model.
+            //    * `defaultFn`: A function that provides a default value if the
+            //                   remote value is not set. Optional.
+            //
+            // This function also returns a promise, which, when resolved, will be
+            // provided an `unbind` method, a function which you can call to stop
+            // watching the local model for changes.
+            object.$bind = function (scope, name, defaultFn) {
+                return self._bind(scope, name, defaultFn);
+            };
+
+            // Add an object to the remote data. Adding an object is the
+            // equivalent of calling `push()` on a Firebase reference. It takes
+            // one argument:
+            //
+            //    * `item`: The object or primitive to add.
+            //
+            // This function returns a promise that will be resolved when the data
+            // has been successfully written to the server. If the promise is
+            // resolved, it will be provided with a reference to the newly added
+            // object or primitive. The key name can be extracted using `ref.name()`.
+            // If the promise fails, it will resolve to an error.
+            object.$add = function (item) {
+                var ref;
+                var deferred = self._q.defer();
+
+                function _addCb(err) {
+                    if (err) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve(ref);
+                    }
+                }
+
+                if (typeof item == "object") {
+                    ref = self._fRef.ref().push(self._parseObject(item), _addCb);
+                } else {
+                    ref = self._fRef.ref().push(item, _addCb);
+                }
+
+                return deferred.promise;
+            };
+
+            // Save the current state of the object (or a child) to the remote.
+            // Takes a single optional argument:
+            //
+            //    * `key`: Specify a child key to save the data for. If no key is
+            //             specified, the entire object's current state will
+            //             be saved.
+            //
+            // This function returns a promise that will be resolved when the
+            // data has been successfully saved to the server.
+            object.$save = function (key) {
+                var deferred = self._q.defer();
+
+                function _saveCb(err) {
+                    if (err) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve();
+                    }
+                }
+
+                if (key) {
+                    var obj = self._parseObject(self._object[key]);
+                    self._fRef.ref().child(key).set(obj, _saveCb);
+                } else {
+                    self._fRef.ref().set(self._parseObject(self._object), _saveCb);
+                }
+
+                return deferred.promise;
+            };
+
+            // Set the current state of the object to the specified value. Calling
+            // this is the equivalent of calling `set()` on a Firebase reference.
+            // Takes a single mandatory argument:
+            //
+            //    * `newValue`: The value which should overwrite data stored at
+            //                  this location.
+            //
+            // This function returns a promise that will be resolved when the
+            // data has been successfully saved to the server.
+            object.$set = function (newValue) {
+                var deferred = self._q.defer();
+                self._fRef.ref().set(self._parseObject(newValue), function (err) {
+                    if (err) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve();
+                    }
+                });
+                return deferred.promise;
+            };
+
+            // Non-destructively update only a subset of keys for the current object.
+            // This is the equivalent of calling `update()` on a Firebase reference.
+            // Takes a single mandatory argument:
+            //
+            //    * `newValue`: The set of keys and values that must be updated for
+            //                  this location.
+            //
+            // This function returns a promise that will be resolved when the data
+            // has been successfully saved to the server.
+            object.$update = function (newValue) {
+                var deferred = self._q.defer();
+                self._fRef.ref().update(self._parseObject(newValue), function (err) {
+                    if (err) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve();
+                    }
+                });
+                return deferred.promise;
+            };
+
+            // Update a value within a transaction. Calling this is the
+            // equivalent of calling `transaction()` on a Firebase reference.
+            //
+            //  * `updateFn`:     A developer-supplied function which will be passed
+            //                    the current data stored at this location (as a
+            //                    Javascript object). The function should return the
+            //                    new value it would like written (as a Javascript
+            //                    object). If "undefined" is returned (i.e. you
+            //                    "return;" with no arguments) the transaction will
+            //                    be aborted and the data at this location will not
+            //                    be modified.
+            //  * `applyLocally`: By default, events are raised each time the
+            //                    transaction update function runs. So if it is run
+            //                    multiple times, you may see intermediate states.
+            //                    You can set this to false to suppress these
+            //                    intermediate states and instead wait until the
+            //                    transaction has completed before events are raised.
+            //
+            //  This function returns a promise that will be resolved when the
+            //  transaction function has completed. A successful transaction is
+            //  resolved with the snapshot. If the transaction is aborted,
+            //  the promise will be resolved with null.
+            object.$transaction = function (updateFn, applyLocally) {
+                var deferred = self._q.defer();
+                self._fRef.ref().transaction(updateFn,
+                  function (err, committed, snapshot) {
+                      if (err) {
+                          deferred.reject(err);
+                      } else if (!committed) {
+                          deferred.resolve(null);
+                      } else {
+                          deferred.resolve(snapshot);
+                      }
+                  },
+                applyLocally);
+
+                return deferred.promise;
+            };
+
+            // Remove this object from the remote data. Calling this is the
+            // equivalent of calling `remove()` on a Firebase reference. This
+            // function takes a single optional argument:
+            //
+            //    * `key`: Specify a child key to remove. If no key is specified, the
+            //             entire object will be removed from the remote data store.
+            //
+            // This function returns a promise that will be resolved when the
+            // object has been successfully removed from the server.
+            object.$remove = function (key) {
+                var deferred = self._q.defer();
+
+                function _removeCb(err) {
+                    if (err) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve();
+                    }
+                }
+
+                if (key) {
+                    self._fRef.ref().child(key).remove(_removeCb);
+                } else {
+                    self._fRef.ref().remove(_removeCb);
+                }
+
+                return deferred.promise;
+            };
+
+            // Get an AngularFire wrapper for a named child. This function takes
+            // one mandatory argument:
+            //
+            //    * `key`: The key name that will point to the child reference to be
+            //             returned.
+            object.$child = function (key) {
+                var af = new AngularFire(
+                  self._q, self._parse, self._timeout, self._fRef.ref().child(key)
+                );
+                return af.construct();
+            };
+
+            // Attach an event handler for when the object is changed. You can attach
+            // handlers for all Firebase events like "child_added", "value", and
+            // "child_removed". Additionally, the following events, specific to
+            // AngularFire, can be listened to.
+            //
+            //  - "change": The provided function will be called whenever the local
+            //              object is modified because the remote data was updated.
+            //  - "loaded": This function will be called *once*, when the initial
+            //              data has been loaded. 'object' will be an empty
+            //              object ({}) until this function is called.
+            object.$on = function (type, callback) {
+                if (self._on.hasOwnProperty(type)) {
+                    self._sendInitEvent(type, callback);
+                    // One exception if made for the 'loaded' event. If we already loaded
+                    // data (perhaps because it was synced), simply fire the callback.
+                    if (type !== "loaded" || !this._loaded) {
+                        self._on[type].push(callback);
+                    }
+                } else {
+                    throw new Error("Invalid event type " + type + " specified");
+                }
+                return object;
+            };
+
+            // Detach an event handler from a specified event type. If no callback
+            // is specified, all event handlers for the specified event type will
+            // be detached.
+            //
+            // If no type if provided, synchronization for this instance of $firebase
+            // will be turned off complete.
+            object.$off = function (type, callback) {
+                if (self._on.hasOwnProperty(type)) {
+                    if (callback) {
+                        var index = self._on[type].indexOf(callback);
+                        if (index !== -1) {
+                            self._on[type].splice(index, 1);
+                        }
+                    } else {
+                        self._on[type] = [];
+                    }
+                } else {
+                    self._fRef.off();
+                }
+            };
+
+            // Authenticate this Firebase reference with a custom auth token.
+            // Refer to the Firebase documentation on "Custom Login" for details.
+            // Returns a promise that will be resolved when authentication is
+            // successfully completed.
+            object.$auth = function (token) {
+                var deferred = self._q.defer();
+                self._fRef.auth(token, function (err, obj) {
+                    if (err !== null) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve(obj);
+                    }
+                }, function (rej) {
+                    deferred.reject(rej);
+                });
+                return deferred.promise;
+            };
+
+            // Return the current index, which is a list of key names in an array,
+            // ordered by their Firebase priority.
+            object.$getIndex = function () {
+                return angular.copy(self._index);
+            };
+
+            // Return the reference used by this object.
+            object.$getRef = function () {
+                return self._fRef.ref();
+            };
+
+            self._object = object;
+            self._getInitialValue();
+
+            return self._object;
+        },
+
+        // This function is responsible for fetching the initial data for the
+        // given reference and attaching appropriate child event handlers.
+        _getInitialValue: function () {
+            var self = this;
+
+            // store changes to children and update the index of keys appropriately
+            function _processSnapshot(snapshot, prevChild) {
+                var key = snapshot.name();
+                var val = snapshot.val();
+
+                // If the item already exists in the index, remove it first.
+                var curIdx = self._index.indexOf(key);
+                if (curIdx !== -1) {
+                    self._index.splice(curIdx, 1);
+                }
+
+                // Update index. This is used by $getIndex and orderByPriority.
+                if (prevChild) {
+                    var prevIdx = self._index.indexOf(prevChild);
+                    self._index.splice(prevIdx + 1, 0, key);
+                } else {
+                    self._index.unshift(key);
+                }
+
+                // Store the priority of the current property as "$priority". Changing
+                // the value of this property will also update the priority of the
+                // object (see _parseObject).
+                if (!_isPrimitive(val) && snapshot.getPriority() !== null) {
+                    val.$priority = snapshot.getPriority();
+                }
+                self._updateModel(key, val);
+            }
+
+            // Helper function to attach and broadcast events.
+            function _handleAndBroadcastEvent(type, handler) {
+                return function (snapshot, prevChild) {
+                    handler(snapshot, prevChild);
+                    self._broadcastEvent(type, self._makeEventSnapshot(snapshot.name(), snapshot.val(), prevChild));
+                };
+            }
+
+            function _handleFirebaseEvent(type, handler) {
+                self._fRef.on(type, _handleAndBroadcastEvent(type, handler));
+            }
+            _handleFirebaseEvent("child_added", _processSnapshot);
+            _handleFirebaseEvent("child_moved", _processSnapshot);
+            _handleFirebaseEvent("child_changed", _processSnapshot);
+            _handleFirebaseEvent("child_removed", function (snapshot) {
+                // Remove from index.
+                var key = snapshot.name();
+                var idx = self._index.indexOf(key);
+                self._index.splice(idx, 1);
+
+                // Remove from local model.
+                self._updateModel(key, null);
+            });
+
+            function _isPrimitive(v) {
+                return v === null || typeof (v) !== 'object';
+            }
+
+            function _initialLoad(value) {
+                // Call handlers for the "loaded" event.
+                self._loaded = true;
+                self._broadcastEvent("loaded", value);
+            }
+
+            function handleNullValues(value) {
+                // NULLs are handled specially. If there's a 3-way data binding
+                // on a local primitive, then update that, otherwise switch to object
+                // binding using child events.
+                if (self._bound && value === null) {
+                    var local = self._parseObject(self._parse(self._name)(self._scope));
+                    switch (typeof local) {
+                        // Primitive defaults.
+                        case "string":
+                        case "undefined":
+                            value = "";
+                            break;
+                        case "number":
+                            value = 0;
+                            break;
+                        case "boolean":
+                            value = false;
+                            break;
+                    }
+                }
+
+                return value;
+            }
+
+            // We handle primitives and objects here together. There is no harm in having
+            // child_* listeners attached; if the data suddenly changes between an object
+            // and a primitive, the child_added/removed events will fire, and our data here
+            // will get updated accordingly so we should be able to transition without issue
+            self._fRef.on('value', function (snap) {
+                // primitive handling
+                var value = snap.val();
+                if (_isPrimitive(value)) {
+                    value = handleNullValues(value);
+                    self._updatePrimitive(value);
+                }
+                else {
+                    delete self._object.$value;
+                }
+
+                // broadcast the value event
+                self._broadcastEvent('value', self._makeEventSnapshot(snap.name(), value));
+
+                // broadcast initial loaded event once data and indices are set up appropriately
+                if (!self._loaded) {
+                    _initialLoad(value);
+                }
+            });
+        },
+
+        // Called whenever there is a remote change. Applies them to the local
+        // model for both explicit and implicit sync modes.
+        _updateModel: function (key, value) {
+            if (value == null) {
+                delete this._object[key];
+            } else {
+                this._object[key] = value;
+            }
+
+            // Call change handlers.
+            this._broadcastEvent("change", key);
+
+            // update Angular by forcing a compile event
+            this._triggerModelUpdate();
+        },
+
+        // this method triggers a self._timeout event, which forces Angular to run $apply()
+        // and compile the DOM content
+        _triggerModelUpdate: function () {
+            // since the timeout runs asynchronously, multiple updates could invoke this method
+            // before it is actually executed (this occurs when Firebase sends it's initial deluge of data
+            // back to our _getInitialValue() method, or when there are locally cached changes)
+            // We don't want to trigger it multiple times if we can help, creating multiple dirty checks
+            // and $apply operations, which are costly, so if one is already queued, we just wait for
+            // it to do its work.
+            if (!this._runningTimer) {
+                var self = this;
+                this._runningTimer = self._timeout(function () {
+                    self._runningTimer = null;
+
+                    // If there is an implicit binding, also update the local model.
+                    if (!self._bound) {
+                        return;
+                    }
+
+                    var current = self._object;
+                    var local = self._parse(self._name)(self._scope);
+                    // If remote value matches local value, don't do anything, otherwise
+                    // apply the change.
+                    if (!angular.equals(current, local)) {
+                        self._parse(self._name).assign(self._scope, angular.copy(current));
+                    }
+                });
+            }
+        },
+
+        // Called whenever there is a remote change for a primitive value.
+        _updatePrimitive: function (value) {
+            var self = this;
+            self._timeout(function () {
+                // Primitive values are represented as a special object
+                // {$value: value}. Only update if the remote value is different from
+                // the local value.
+                if (!self._object.$value ||
+                    !angular.equals(self._object.$value, value)) {
+                    self._object.$value = value;
+                }
+
+                // Call change handlers.
+                self._broadcastEvent("change");
+
+                // If there's an implicit binding, simply update the local scope model.
+                if (self._bound) {
+                    var local = self._parseObject(self._parse(self._name)(self._scope));
+                    if (!angular.equals(local, value)) {
+                        self._parse(self._name).assign(self._scope, value);
+                    }
+                }
+            });
+        },
+
+        // If event handlers for a specified event were attached, call them.
+        _broadcastEvent: function (evt, param) {
+            var cbs = this._on[evt] || [];
+            if (evt === 'loaded') {
+                this._on[evt] = []; // release memory
+            }
+            var self = this;
+
+            function _wrapTimeout(cb, param) {
+                self._timeout(function () {
+                    cb(param);
+                });
+            }
+
+            if (cbs.length > 0) {
+                for (var i = 0; i < cbs.length; i++) {
+                    if (typeof cbs[i] == "function") {
+                        _wrapTimeout(cbs[i], param);
+                    }
+                }
+            }
+        },
+
+        // triggers an initial event for loaded, value, and child_added events (which get immediate feedback)
+        _sendInitEvent: function (evt, callback) {
+            var self = this;
+            if (self._loaded && ['child_added', 'loaded', 'value'].indexOf(evt) > -1) {
+                self._timeout(function () {
+                    var parsedValue = self._object.hasOwnProperty('$value') ?
+                      self._object.$value : self._parseObject(self._object);
+                    switch (evt) {
+                        case 'loaded':
+                            callback(parsedValue);
+                            break;
+                        case 'value':
+                            callback(self._makeEventSnapshot(self._fRef.name(), parsedValue, null));
+                            break;
+                        case 'child_added':
+                            self._iterateChildren(parsedValue, function (name, val, prev) {
+                                callback(self._makeEventSnapshot(name, val, prev));
+                            });
+                            break;
+                        default: // not reachable
+                    }
+                });
+            }
+        },
+
+        // assuming data is an object, this method will iterate all
+        // child keys and invoke callback with (key, value, prevChild)
+        _iterateChildren: function (data, callback) {
+            if (this._loaded && angular.isObject(data)) {
+                var prev = null;
+                for (var key in data) {
+                    if (data.hasOwnProperty(key)) {
+                        callback(key, data[key], prev);
+                        prev = key;
+                    }
+                }
+            }
+        },
+
+        // creates a snapshot object compatible with _broadcastEvent notifications
+        _makeEventSnapshot: function (key, value, prevChild) {
+            if (angular.isUndefined(prevChild)) {
+                prevChild = null;
+            }
+            return {
+                snapshot: {
+                    name: key,
+                    value: value
+                },
+                prevChild: prevChild
+            };
+        },
+
+        // This function creates a 3-way binding between the provided scope model
+        // and Firebase. All changes made to the local model are saved to Firebase
+        // and changes to the remote data automatically appear on the local model.
+        _bind: function (scope, name, defaultFn) {
+            var self = this;
+            var deferred = self._q.defer();
+
+            // _updateModel or _updatePrimitive will take care of updating the local
+            // model if _bound is set to true.
+            self._name = name;
+            self._bound = true;
+            self._scope = scope;
+
+            // If the local model is an object, call an update to set local values.
+            var local = self._parse(name)(scope);
+            if (local !== undefined && typeof local == "object") {
+                self._fRef.ref().update(self._parseObject(local));
+            }
+
+            // When the scope is destroyed, unbind automatically.
+            scope.$on("$destroy", function () {
+                unbind();
+            });
+
+            // Once we receive the initial value, the promise will be resolved.
+            self._object.$on('loaded', function (value) {
+                self._timeout(function () {
+                    if (value === null && typeof defaultFn === 'function') {
+                        scope[name] = defaultFn();
+                    }
+                    else {
+                        scope[name] = value;
+                    }
+                    deferred.resolve(unbind);
+                });
+            });
+
+            // We're responsible for setting up scope.$watch to reflect local changes
+            // on the Firebase data.
+            var unbind = scope.$watch(name, function () {
+                // If the new local value matches the current remote value, we don't
+                // trigger a remote update.
+                var local = self._parseObject(self._parse(name)(scope));
+                if (self._object.$value !== undefined &&
+                    angular.equals(local, self._object.$value)) {
+                    return;
+                } else if (angular.equals(local, self._parseObject(self._object))) {
+                    return;
+                }
+
+                // If the local model is undefined or the remote data hasn't been
+                // loaded yet, don't update.
+                if (local === undefined || !self._loaded) {
+                    return;
+                }
+
+                // Use update if limits are in effect, set if not.
+                if (self._fRef.set) {
+                    self._fRef.set(local);
+                } else {
+                    self._fRef.ref().update(local);
+                }
+            }, true);
+
+            return deferred.promise;
+        },
+
+        // Parse a local model, removing all properties beginning with "$" and
+        // converting $priority to ".priority".
+        _parseObject: function (obj) {
+            function _findReplacePriority(item) {
+                for (var prop in item) {
+                    if (item.hasOwnProperty(prop)) {
+                        if (prop == "$priority") {
+                            item[".priority"] = item.$priority;
+                            delete item.$priority;
+                        } else if (typeof item[prop] == "object") {
+                            _findReplacePriority(item[prop]);
+                        }
+                    }
+                }
+                return item;
+            }
+
+            // We use toJson/fromJson to remove $$hashKey and others. Can be replaced
+            // by angular.copy, but only for later versions of AngularJS.
+            var newObj = _findReplacePriority(angular.copy(obj));
+            return angular.fromJson(angular.toJson(newObj));
+        }
+    };
+
+
+    // Defines the `$firebaseSimpleLogin` service that provides simple
+    // user authentication support for AngularFire.
+    angular.module("firebase").factory("$firebaseSimpleLogin", [
+      "$q", "$timeout", "$rootScope", function ($q, $t, $rs) {
+          // The factory returns an object containing the authentication state
+          // of the current user. This service takes one argument:
+          //
+          //   * `ref`     : A Firebase reference.
+          //
+          // The returned object has the following properties:
+          //
+          //  * `user`: Set to "null" if the user is currently logged out. This
+          //    value will be changed to an object when the user successfully logs
+          //    in. This object will contain details of the logged in user. The
+          //    exact properties will vary based on the method used to login, but
+          //    will at a minimum contain the `id` and `provider` properties.
+          //
+          // The returned object will also have the following methods available:
+          // $login(), $logout(), $createUser(), $changePassword(), $removeUser(),
+          // and $getCurrentUser().
+          return function (ref) {
+              var auth = new AngularFireAuth($q, $t, $rs, ref);
+              return auth.construct();
+          };
+      }
+    ]);
+
+    AngularFireAuth = function ($q, $t, $rs, ref) {
+        this._q = $q;
+        this._timeout = $t;
+        this._rootScope = $rs;
+        this._loginDeferred = null;
+        this._getCurrentUserDeferred = [];
+        this._currentUserData = undefined;
+
+        if (typeof ref == "string") {
+            throw new Error("Please provide a Firebase reference instead " +
+              "of a URL, eg: new Firebase(url)");
+        }
+        this._fRef = ref;
+    };
+
+    AngularFireAuth.prototype = {
+        construct: function () {
+            var object = {
+                user: null,
+                $login: this.login.bind(this),
+                $logout: this.logout.bind(this),
+                $createUser: this.createUser.bind(this),
+                $changePassword: this.changePassword.bind(this),
+                $removeUser: this.removeUser.bind(this),
+                $getCurrentUser: this.getCurrentUser.bind(this),
+                $sendPasswordResetEmail: this.sendPasswordResetEmail.bind(this)
+            };
+            this._object = object;
+
+            // Initialize Simple Login.
+            if (!window.FirebaseSimpleLogin) {
+                var err = new Error("FirebaseSimpleLogin is undefined. " +
+                  "Did you forget to include firebase-simple-login.js?");
+                this._rootScope.$broadcast("$firebaseSimpleLogin:error", err);
+                throw err;
+            }
+
+            var client = new FirebaseSimpleLogin(this._fRef,
+                                                 this._onLoginEvent.bind(this));
+            this._authClient = client;
+            return this._object;
+        },
+
+        // The login method takes a provider (for Simple Login) and authenticates
+        // the Firebase reference with which the service was initialized. This
+        // method returns a promise, which will be resolved when the login succeeds
+        // (and rejected when an error occurs).
+        login: function (provider, options) {
+            var deferred = this._q.defer();
+            var self = this;
+
+            // To avoid the promise from being fulfilled by our initial login state,
+            // make sure we have it before triggering the login and creating a new
+            // promise.
+            this.getCurrentUser().then(function () {
+                self._loginDeferred = deferred;
+                self._authClient.login(provider, options);
+            });
+
+            return deferred.promise;
+        },
+
+        // Unauthenticate the Firebase reference.
+        logout: function () {
+            // Tell the simple login client to log us out.
+            this._authClient.logout();
+
+            // Forget who we were, so that any getCurrentUser calls will wait for
+            // another user event.
+            delete this._currentUserData;
+        },
+
+        // Creates a user for Firebase Simple Login. Function 'cb' receives an
+        // error as the first argument and a Simple Login user object as the second
+        // argument. Note that this function only creates the user, if you wish to
+        // log in as the newly created user, call $login() after the promise for
+        // this method has been fulfilled.
+        createUser: function (email, password) {
+            var self = this;
+            var deferred = this._q.defer();
+
+            self._authClient.createUser(email, password, function (err, user) {
+                if (err) {
+                    self._rootScope.$broadcast("$firebaseSimpleLogin:error", err);
+                    deferred.reject(err);
+                } else {
+                    deferred.resolve(user);
+                }
+            });
+
+            return deferred.promise;
+        },
+
+        // Changes the password for a Firebase Simple Login user. Take an email,
+        // old password and new password as three mandatory arguments. Returns a
+        // promise.
+        changePassword: function (email, oldPassword, newPassword) {
+            var self = this;
+            var deferred = this._q.defer();
+
+            self._authClient.changePassword(email, oldPassword, newPassword,
+              function (err) {
+                  if (err) {
+                      self._rootScope.$broadcast("$firebaseSimpleLogin:error", err);
+                      deferred.reject(err);
+                  } else {
+                      deferred.resolve();
+                  }
+              }
+            );
+
+            return deferred.promise;
+        },
+
+        // Gets a promise for the current user info.
+        getCurrentUser: function () {
+            var self = this;
+            var deferred = this._q.defer();
+
+            if (self._currentUserData !== undefined) {
+                deferred.resolve(self._currentUserData);
+            } else {
+                self._getCurrentUserDeferred.push(deferred);
+            }
+
+            return deferred.promise;
+        },
+
+        // Remove a user for the listed email address. Returns a promise.
+        removeUser: function (email, password) {
+            var self = this;
+            var deferred = this._q.defer();
+
+            self._authClient.removeUser(email, password, function (err) {
+                if (err) {
+                    self._rootScope.$broadcast("$firebaseSimpleLogin:error", err);
+                    deferred.reject(err);
+                } else {
+                    deferred.resolve();
+                }
+            });
+
+            return deferred.promise;
+        },
+
+        // Send a password reset email to the user for an email + password account.
+        sendPasswordResetEmail: function (email) {
+            var self = this;
+            var deferred = this._q.defer();
+
+            self._authClient.sendPasswordResetEmail(email, function (err) {
+                if (err) {
+                    self._rootScope.$broadcast("$firebaseSimpleLogin:error", err);
+                    deferred.reject(err);
+                } else {
+                    deferred.resolve();
+                }
+            });
+
+            return deferred.promise;
+        },
+
+        // Internal callback for any Simple Login event.
+        _onLoginEvent: function (err, user) {
+            // HACK -- calls to logout() trigger events even if we're not logged in,
+            // making us get extra events. Throw them away. This should be fixed by
+            // changing Simple Login so that its callbacks refer directly to the
+            // action that caused them.
+            if (this._currentUserData === user && err === null) {
+                return;
+            }
+
+            var self = this;
+            if (err) {
+                if (self._loginDeferred) {
+                    self._loginDeferred.reject(err);
+                    self._loginDeferred = null;
+                }
+                self._rootScope.$broadcast("$firebaseSimpleLogin:error", err);
+            } else {
+                this._currentUserData = user;
+
+                self._timeout(function () {
+                    self._object.user = user;
+                    if (user) {
+                        self._rootScope.$broadcast("$firebaseSimpleLogin:login", user);
+                    } else {
+                        self._rootScope.$broadcast("$firebaseSimpleLogin:logout");
+                    }
+                    if (self._loginDeferred) {
+                        self._loginDeferred.resolve(user);
+                        self._loginDeferred = null;
+                    }
+                    while (self._getCurrentUserDeferred.length > 0) {
+                        var def = self._getCurrentUserDeferred.pop();
+                        def.resolve(user);
+                    }
+                });
+            }
+        }
+    };
+})();
+
+
+},{}],21:[function(require,module,exports){
+(function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
+function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
+else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
+function ka(a,b,c){a||g(Error());if(2<arguments.length){var d=Array.prototype.slice.call(arguments,2);return function(){var c=Array.prototype.slice.call(arguments);Array.prototype.unshift.apply(c,d);return a.apply(b,c)}}return function(){return a.apply(b,arguments)}}function v(a,b,c){v=Function.prototype.bind&&-1!=Function.prototype.bind.toString().indexOf("native code")?ja:ka;return v.apply(k,arguments)}function la(a,b){function c(){}c.prototype=b.prototype;a.Yd=b.prototype;a.prototype=new c};function ma(a){a=String(a);if(/^\s*$/.test(a)?0:/^[\],:{}\s\u2028\u2029]*$/.test(a.replace(/\\["\\\/bfnrtu]/g,"@").replace(/"[^"\\\n\r\u2028\u2029\x00-\x08\x10-\x1f\x80-\x9f]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,"]").replace(/(?:^|:|,)(?:[\s\u2028\u2029]*\[)+/g,"")))try{return eval("("+a+")")}catch(b){}g(Error("Invalid JSON string: "+a))}function na(){this.gc=aa}
+function oa(a,b,c){switch(typeof b){case "string":pa(b,c);break;case "number":c.push(isFinite(b)&&!isNaN(b)?b:"null");break;case "boolean":c.push(b);break;case "undefined":c.push("null");break;case "object":if(b==k){c.push("null");break}if("array"==fa(b)){var d=b.length;c.push("[");for(var e="",f=0;f<d;f++)c.push(e),e=b[f],oa(a,a.gc?a.gc.call(b,String(f),e):e,c),e=",";c.push("]");break}c.push("{");d="";for(f in b)Object.prototype.hasOwnProperty.call(b,f)&&(e=b[f],"function"!=typeof e&&(c.push(d),
+pa(f,c),c.push(":"),oa(a,a.gc?a.gc.call(b,f,e):e,c),d=","));c.push("}");break;case "function":break;default:g(Error("Unknown type: "+typeof b))}}var qa={'"':'\\"',"\\":"\\\\","/":"\\/","\b":"\\b","\f":"\\f","\n":"\\n","\r":"\\r","\t":"\\t","\x0B":"\\u000b"},ra=/\uffff/.test("\uffff")?/[\\\"\x00-\x1f\x7f-\uffff]/g:/[\\\"\x00-\x1f\x7f-\xff]/g;
+function pa(a,b){b.push('"',a.replace(ra,function(a){if(a in qa)return qa[a];var b=a.charCodeAt(0),e="\\u";16>b?e+="000":256>b?e+="00":4096>b&&(e+="0");return qa[a]=e+b.toString(16)}),'"')};function sa(a){return"undefined"!==typeof JSON&&t(JSON.parse)?JSON.parse(a):ma(a)}function w(a){if("undefined"!==typeof JSON&&t(JSON.stringify))a=JSON.stringify(a);else{var b=[];oa(new na,a,b);a=b.join("")}return a};function ta(a){for(var b=[],c=0,d=0;d<a.length;d++){var e=a.charCodeAt(d);55296<=e&&56319>=e&&(e-=55296,d++,y(d<a.length,"Surrogate pair missing trail surrogate."),e=65536+(e<<10)+(a.charCodeAt(d)-56320));128>e?b[c++]=e:(2048>e?b[c++]=e>>6|192:(65536>e?b[c++]=e>>12|224:(b[c++]=e>>18|240,b[c++]=e>>12&63|128),b[c++]=e>>6&63|128),b[c++]=e&63|128)}return b};function z(a,b,c,d){var e;d<b?e="at least "+b:d>c&&(e=0===c?"none":"no more than "+c);e&&g(Error(a+" failed: Was called with "+d+(1===d?" argument.":" arguments.")+" Expects "+e+"."))}function A(a,b,c){var d="";switch(b){case 1:d=c?"first":"First";break;case 2:d=c?"second":"Second";break;case 3:d=c?"third":"Third";break;case 4:d=c?"fourth":"Fourth";break;default:ua.assert(l,"errorPrefix_ called with argumentNumber > 4.  Need to update it?")}return a+" failed: "+(d+" argument ")}
+function B(a,b,c,d){(!d||t(c))&&"function"!=fa(c)&&g(Error(A(a,b,d)+"must be a valid function."))}function va(a,b,c){t(c)&&(!ia(c)||c===k)&&g(Error(A(a,b,j)+"must be a valid context object."))};function C(a,b){return Object.prototype.hasOwnProperty.call(a,b)}function wa(a,b){if(Object.prototype.hasOwnProperty.call(a,b))return a[b]};var ua={},xa=/[\[\].#$\/]/,ya=/[\[\].#$]/;function za(a){return u(a)&&0!==a.length&&!xa.test(a)}function Aa(a,b,c){(!c||t(b))&&Ba(A(a,1,c),b)}
+function Ba(a,b,c,d){c||(c=0);d||(d=[]);t(b)||g(Error(a+"contains undefined"+Ca(d)));"function"==fa(b)&&g(Error(a+"contains a function"+Ca(d)+" with contents: "+b.toString()));Da(b)&&g(Error(a+"contains "+b.toString()+Ca(d)));1E3<c&&g(new TypeError(a+"contains a cyclic object value ("+d.slice(0,100).join(".")+"...)"));u(b)&&(b.length>10485760/3&&10485760<ta(b).length)&&g(Error(a+"contains a string greater than 10485760 utf8 bytes"+Ca(d)+" ('"+b.substring(0,50)+"...')"));if(ia(b))for(var e in b)C(b,
+e)&&(".priority"!==e&&(".value"!==e&&".sv"!==e&&!za(e))&&g(Error(a+"contains an invalid key ("+e+")"+Ca(d)+'.  Keys must be non-empty strings and can\'t contain ".", "#", "$", "/", "[", or "]"')),d.push(e),Ba(a,b[e],c+1,d),d.pop())}function Ca(a){return 0==a.length?"":" in property '"+a.join(".")+"'"}function Ea(a,b){ia(b)||g(Error(A(a,1,l)+" must be an object containing the children to replace."));Aa(a,b,l)}
+function Fa(a,b,c,d){if(!d||t(c))c!==k&&(!ha(c)&&!u(c)&&(!ia(c)||!C(c,".sv")))&&g(Error(A(a,b,d)+"must be a valid firebase priority (a string, number, or null)."))}function Ga(a,b,c){if(!c||t(b))switch(b){case "value":case "child_added":case "child_removed":case "child_changed":case "child_moved":break;default:g(Error(A(a,1,c)+'must be a valid event type: "value", "child_added", "child_removed", "child_changed", or "child_moved".'))}}
+function Ha(a,b){t(b)&&!za(b)&&g(Error(A(a,2,j)+'was an invalid key: "'+b+'".  Firebase keys must be non-empty strings and can\'t contain ".", "#", "$", "/", "[", or "]").'))}function Ia(a,b){(!u(b)||0===b.length||ya.test(b))&&g(Error(A(a,1,l)+'was an invalid path: "'+b+'". Paths must be non-empty strings and can\'t contain ".", "#", "$", "[", or "]"'))}function D(a,b){".info"===E(b)&&g(Error(a+" failed: Can't modify data under /.info/"))};function F(a,b,c,d,e,f,h){this.n=a;this.path=b;this.Ca=c;this.da=d;this.va=e;this.Aa=f;this.Ra=h;t(this.da)&&(t(this.Aa)&&t(this.Ca))&&g("Query: Can't combine startAt(), endAt(), and limit().")}F.prototype.Nc=function(){z("Query.ref",0,0,arguments.length);return new H(this.n,this.path)};F.prototype.ref=F.prototype.Nc;
+F.prototype.Xa=function(a,b){z("Query.on",2,4,arguments.length);Ga("Query.on",a,l);B("Query.on",2,b,l);var c=Ja("Query.on",arguments[2],arguments[3]);this.n.Mb(this,a,b,c.cancel,c.T);return b};F.prototype.on=F.prototype.Xa;F.prototype.ub=function(a,b,c){z("Query.off",0,3,arguments.length);Ga("Query.off",a,j);B("Query.off",2,b,j);va("Query.off",3,c);this.n.fc(this,a,b,c)};F.prototype.off=F.prototype.ub;
+F.prototype.Ld=function(a,b){function c(h){f&&(f=l,e.ub(a,c),b.call(d.T,h))}z("Query.once",2,4,arguments.length);Ga("Query.once",a,l);B("Query.once",2,b,l);var d=Ja("Query.once",arguments[2],arguments[3]),e=this,f=j;this.Xa(a,c,function(b){e.ub(a,c);d.cancel&&d.cancel.call(d.T,b)})};F.prototype.once=F.prototype.Ld;
+F.prototype.Ed=function(a){z("Query.limit",1,1,arguments.length);(!ha(a)||Math.floor(a)!==a||0>=a)&&g("Query.limit: First argument must be a positive integer.");return new F(this.n,this.path,a,this.da,this.va,this.Aa,this.Ra)};F.prototype.limit=F.prototype.Ed;F.prototype.Ud=function(a,b){z("Query.startAt",0,2,arguments.length);Fa("Query.startAt",1,a,j);Ha("Query.startAt",b);t(a)||(b=a=k);return new F(this.n,this.path,this.Ca,a,b,this.Aa,this.Ra)};F.prototype.startAt=F.prototype.Ud;
+F.prototype.zd=function(a,b){z("Query.endAt",0,2,arguments.length);Fa("Query.endAt",1,a,j);Ha("Query.endAt",b);return new F(this.n,this.path,this.Ca,this.da,this.va,a,b)};F.prototype.endAt=F.prototype.zd;function Ka(a){var b={};t(a.da)&&(b.sp=a.da);t(a.va)&&(b.sn=a.va);t(a.Aa)&&(b.ep=a.Aa);t(a.Ra)&&(b.en=a.Ra);t(a.Ca)&&(b.l=a.Ca);t(a.da)&&(t(a.va)&&a.da===k&&a.va===k)&&(b.vf="l");return b}F.prototype.La=function(){var a=La(Ka(this));return"{}"===a?"default":a};
+function Ja(a,b,c){var d={};b&&c?(d.cancel=b,B(a,3,d.cancel,j),d.T=c,va(a,4,d.T)):b&&("object"===typeof b&&b!==k?d.T=b:"function"===typeof b?d.cancel=b:g(Error(A(a,3,j)+"must either be a cancel callback or a context object.")));return d};function J(a){if(a instanceof J)return a;if(1==arguments.length){this.m=a.split("/");for(var b=0,c=0;c<this.m.length;c++)0<this.m[c].length&&(this.m[b]=this.m[c],b++);this.m.length=b;this.Z=0}else this.m=arguments[0],this.Z=arguments[1]}function E(a){return a.Z>=a.m.length?k:a.m[a.Z]}function Ma(a){var b=a.Z;b<a.m.length&&b++;return new J(a.m,b)}s=J.prototype;s.toString=function(){for(var a="",b=this.Z;b<this.m.length;b++)""!==this.m[b]&&(a+="/"+this.m[b]);return a||"/"};
+s.parent=function(){if(this.Z>=this.m.length)return k;for(var a=[],b=this.Z;b<this.m.length-1;b++)a.push(this.m[b]);return new J(a,0)};s.F=function(a){for(var b=[],c=this.Z;c<this.m.length;c++)b.push(this.m[c]);if(a instanceof J)for(c=a.Z;c<a.m.length;c++)b.push(a.m[c]);else{a=a.split("/");for(c=0;c<a.length;c++)0<a[c].length&&b.push(a[c])}return new J(b,0)};s.f=function(){return this.Z>=this.m.length};
+function Na(a,b){var c=E(a);if(c===k)return b;if(c===E(b))return Na(Ma(a),Ma(b));g("INTERNAL ERROR: innerPath ("+b+") is not within outerPath ("+a+")")}s.contains=function(a){var b=0;if(this.m.length>a.m.length)return l;for(;b<this.m.length;){if(this.m[b]!==a.m[b])return l;++b}return j};function Oa(){this.children={};this.sc=0;this.value=k}function Pa(a,b,c){this.Da=a?a:"";this.Ab=b?b:k;this.z=c?c:new Oa}function K(a,b){for(var c=b instanceof J?b:new J(b),d=a,e;(e=E(c))!==k;)d=new Pa(e,d,wa(d.z.children,e)||new Oa),c=Ma(c);return d}s=Pa.prototype;s.k=function(){return this.z.value};function Qa(a,b){y("undefined"!==typeof b);a.z.value=b;Ra(a)}s.nb=function(){return 0<this.z.sc};s.f=function(){return this.k()===k&&!this.nb()};
+s.w=function(a){for(var b in this.z.children)a(new Pa(b,this,this.z.children[b]))};function Sa(a,b,c,d){c&&!d&&b(a);a.w(function(a){Sa(a,b,j,d)});c&&d&&b(a)}function Ta(a,b,c){for(a=c?a:a.parent();a!==k;){if(b(a))return j;a=a.parent()}return l}s.path=function(){return new J(this.Ab===k?this.Da:this.Ab.path()+"/"+this.Da)};s.name=ba("Da");s.parent=ba("Ab");
+function Ra(a){if(a.Ab!==k){var b=a.Ab,c=a.Da,d=a.f(),e=C(b.z.children,c);d&&e?(delete b.z.children[c],b.z.sc--,Ra(b)):!d&&!e&&(b.z.children[c]=a.z,b.z.sc++,Ra(b))}};function Ua(a,b){this.Oa=a?a:Va;this.ca=b?b:Wa}function Va(a,b){return a<b?-1:a>b?1:0}s=Ua.prototype;s.oa=function(a,b){return new Ua(this.Oa,this.ca.oa(a,b,this.Oa).copy(k,k,l,k,k))};s.remove=function(a){return new Ua(this.Oa,this.ca.remove(a,this.Oa).copy(k,k,l,k,k))};s.get=function(a){for(var b,c=this.ca;!c.f();){b=this.Oa(a,c.key);if(0===b)return c.value;0>b?c=c.left:0<b&&(c=c.right)}return k};
+function Xa(a,b){for(var c,d=a.ca,e=k;!d.f();){c=a.Oa(b,d.key);if(0===c){if(d.left.f())return e?e.key:k;for(d=d.left;!d.right.f();)d=d.right;return d.key}0>c?d=d.left:0<c&&(e=d,d=d.right)}g(Error("Attempted to find predecessor key for a nonexistent key.  What gives?"))}s.f=function(){return this.ca.f()};s.count=function(){return this.ca.count()};s.tb=function(){return this.ca.tb()};s.Va=function(){return this.ca.Va()};s.Ba=function(a){return this.ca.Ba(a)};s.Ma=function(a){return this.ca.Ma(a)};
+s.Ua=function(a){return new Ya(this.ca,a)};function Ya(a,b){this.md=b;for(this.Tb=[];!a.f();)this.Tb.push(a),a=a.left}function Za(a){if(0===a.Tb.length)return k;var b=a.Tb.pop(),c;c=a.md?a.md(b.key,b.value):{key:b.key,value:b.value};for(b=b.right;!b.f();)a.Tb.push(b),b=b.left;return c}function $a(a,b,c,d,e){this.key=a;this.value=b;this.color=c!=k?c:j;this.left=d!=k?d:Wa;this.right=e!=k?e:Wa}s=$a.prototype;
+s.copy=function(a,b,c,d,e){return new $a(a!=k?a:this.key,b!=k?b:this.value,c!=k?c:this.color,d!=k?d:this.left,e!=k?e:this.right)};s.count=function(){return this.left.count()+1+this.right.count()};s.f=o(l);s.Ba=function(a){return this.left.Ba(a)||a(this.key,this.value)||this.right.Ba(a)};s.Ma=function(a){return this.right.Ma(a)||a(this.key,this.value)||this.left.Ma(a)};function ab(a){return a.left.f()?a:ab(a.left)}s.tb=function(){return ab(this).key};
+s.Va=function(){return this.right.f()?this.key:this.right.Va()};s.oa=function(a,b,c){var d,e;e=this;d=c(a,e.key);e=0>d?e.copy(k,k,k,e.left.oa(a,b,c),k):0===d?e.copy(k,b,k,k,k):e.copy(k,k,k,k,e.right.oa(a,b,c));return db(e)};function eb(a){if(a.left.f())return Wa;!a.left.N()&&!a.left.left.N()&&(a=fb(a));a=a.copy(k,k,k,eb(a.left),k);return db(a)}
+s.remove=function(a,b){var c,d;c=this;if(0>b(a,c.key))!c.left.f()&&(!c.left.N()&&!c.left.left.N())&&(c=fb(c)),c=c.copy(k,k,k,c.left.remove(a,b),k);else{c.left.N()&&(c=gb(c));!c.right.f()&&(!c.right.N()&&!c.right.left.N())&&(c=hb(c),c.left.left.N()&&(c=gb(c),c=hb(c)));if(0===b(a,c.key)){if(c.right.f())return Wa;d=ab(c.right);c=c.copy(d.key,d.value,k,k,eb(c.right))}c=c.copy(k,k,k,k,c.right.remove(a,b))}return db(c)};s.N=ba("color");
+function db(a){a.right.N()&&!a.left.N()&&(a=ib(a));a.left.N()&&a.left.left.N()&&(a=gb(a));a.left.N()&&a.right.N()&&(a=hb(a));return a}function fb(a){a=hb(a);a.right.left.N()&&(a=a.copy(k,k,k,k,gb(a.right)),a=ib(a),a=hb(a));return a}function ib(a){var b;b=a.copy(k,k,j,k,a.right.left);return a.right.copy(k,k,a.color,b,k)}function gb(a){var b;b=a.copy(k,k,j,a.left.right,k);return a.left.copy(k,k,a.color,k,b)}
+function hb(a){var b,c;b=a.left.copy(k,k,!a.left.color,k,k);c=a.right.copy(k,k,!a.right.color,k,k);return a.copy(k,k,!a.color,b,c)}function jb(){}s=jb.prototype;s.copy=function(){return this};s.oa=function(a,b){return new $a(a,b,aa,aa,aa)};s.remove=function(){return this};s.count=o(0);s.f=o(j);s.Ba=o(l);s.Ma=o(l);s.tb=o(k);s.Va=o(k);s.N=o(l);var Wa=new jb;function kb(a){this.Pb=a;this.bc="firebase:"}kb.prototype.set=function(a,b){b==k?this.Pb.removeItem(this.bc+a):this.Pb.setItem(this.bc+a,w(b))};kb.prototype.get=function(a){a=this.Pb.getItem(this.bc+a);return a==k?k:sa(a)};kb.prototype.remove=function(a){this.Pb.removeItem(this.bc+a)};function lb(){this.ib={}}lb.prototype.set=function(a,b){b==k?delete this.ib[a]:this.ib[a]=b};lb.prototype.get=function(a){return C(this.ib,a)?this.ib[a]:k};lb.prototype.remove=function(a){delete this.ib[a]};function mb(a){try{if("undefined"!==typeof window&&"undefined"!==typeof window[a]){var b=window[a];b.setItem("firebase:sentinel","cache");b.removeItem("firebase:sentinel");return new kb(b)}}catch(c){}return new lb}var nb=mb("localStorage"),ob=mb("sessionStorage");function pb(a,b,c,d){this.host=a.toLowerCase();this.domain=this.host.substr(this.host.indexOf(".")+1);this.hc=b;this.Sb=c;this.fa=d||nb.get("host:"+a)||this.host}function qb(a,b){b!==a.fa&&(a.fa=b,"s-"===a.fa.substr(0,2)&&nb.set("host:"+a.host,a.fa))}pb.prototype.toString=function(){return(this.hc?"https://":"http://")+this.host};function rb(){};function sb(){this.B=[];this.rc=[];this.ud=[];this.Zb=[];this.Zb[0]=128;for(var a=1;64>a;++a)this.Zb[a]=0;this.reset()}la(sb,rb);sb.prototype.reset=function(){this.B[0]=1732584193;this.B[1]=4023233417;this.B[2]=2562383102;this.B[3]=271733878;this.B[4]=3285377520;this.Vc=this.ob=0};
+function tb(a,b){var c;c||(c=0);for(var d=a.ud,e=c;e<c+64;e+=4)d[e/4]=b[e]<<24|b[e+1]<<16|b[e+2]<<8|b[e+3];for(e=16;80>e;e++){var f=d[e-3]^d[e-8]^d[e-14]^d[e-16];d[e]=(f<<1|f>>>31)&4294967295}c=a.B[0];for(var h=a.B[1],i=a.B[2],m=a.B[3],n=a.B[4],p,e=0;80>e;e++)40>e?20>e?(f=m^h&(i^m),p=1518500249):(f=h^i^m,p=1859775393):60>e?(f=h&i|m&(h|i),p=2400959708):(f=h^i^m,p=3395469782),f=(c<<5|c>>>27)+f+n+p+d[e]&4294967295,n=m,m=i,i=(h<<30|h>>>2)&4294967295,h=c,c=f;a.B[0]=a.B[0]+c&4294967295;a.B[1]=a.B[1]+h&
+4294967295;a.B[2]=a.B[2]+i&4294967295;a.B[3]=a.B[3]+m&4294967295;a.B[4]=a.B[4]+n&4294967295}sb.prototype.update=function(a,b){t(b)||(b=a.length);var c=this.rc,d=this.ob,e=0;if(u(a))for(;e<b;)c[d++]=a.charCodeAt(e++),64==d&&(tb(this,c),d=0);else for(;e<b;)c[d++]=a[e++],64==d&&(tb(this,c),d=0);this.ob=d;this.Vc+=b};var ub=Array.prototype,vb=ub.forEach?function(a,b,c){ub.forEach.call(a,b,c)}:function(a,b,c){for(var d=a.length,e=u(a)?a.split(""):a,f=0;f<d;f++)f in e&&b.call(c,e[f],f,a)},wb=ub.map?function(a,b,c){return ub.map.call(a,b,c)}:function(a,b,c){for(var d=a.length,e=Array(d),f=u(a)?a.split(""):a,h=0;h<d;h++)h in f&&(e[h]=b.call(c,f[h],h,a));return e},xb=ub.every?function(a,b,c){return ub.every.call(a,b,c)}:function(a,b,c){for(var d=a.length,e=u(a)?a.split(""):a,f=0;f<d;f++)if(f in e&&!b.call(c,e[f],f,
+a))return l;return j};var yb,zb,Ab,Bb;function Cb(){return ca.navigator?ca.navigator.userAgent:k}Bb=Ab=zb=yb=l;var Db;if(Db=Cb()){var Eb=ca.navigator;yb=0==Db.indexOf("Opera");zb=!yb&&-1!=Db.indexOf("MSIE");Ab=!yb&&-1!=Db.indexOf("WebKit");Bb=!yb&&!Ab&&"Gecko"==Eb.product}var Fb=zb,Gb=Bb,Hb=Ab;var Ib;if(yb&&ca.opera){var Jb=ca.opera.version;"function"==typeof Jb&&Jb()}else Gb?Ib=/rv\:([^\);]+)(\)|;)/:Fb?Ib=/MSIE\s+([^\);]+)(\)|;)/:Hb&&(Ib=/WebKit\/(\S+)/),Ib&&Ib.exec(Cb());var Kb=k,Lb=k;
+function Mb(a,b){ga(a)||g(Error("encodeByteArray takes an array as a parameter"));if(!Kb){Kb={};Lb={};for(var c=0;65>c;c++)Kb[c]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=".charAt(c),Lb[c]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.".charAt(c)}for(var c=b?Lb:Kb,d=[],e=0;e<a.length;e+=3){var f=a[e],h=e+1<a.length,i=h?a[e+1]:0,m=e+2<a.length,n=m?a[e+2]:0,p=f>>2,f=(f&3)<<4|i>>4,i=(i&15)<<2|n>>6,n=n&63;m||(n=64,h||(i=64));d.push(c[p],c[f],c[i],c[n])}return d.join("")}
+;var Nb,Ob=1;Nb=function(){return Ob++};function y(a,b){a||g(Error("Firebase INTERNAL ASSERT FAILED:"+b))}function Pb(a){var b=ta(a),a=new sb;a.update(b);var b=[],c=8*a.Vc;56>a.ob?a.update(a.Zb,56-a.ob):a.update(a.Zb,64-(a.ob-56));for(var d=63;56<=d;d--)a.rc[d]=c&255,c/=256;tb(a,a.rc);for(d=c=0;5>d;d++)for(var e=24;0<=e;e-=8)b[c++]=a.B[d]>>e&255;return Mb(b)}
+function Qb(){for(var a="",b=0;b<arguments.length;b++)a=ga(arguments[b])?a+Qb.apply(k,arguments[b]):"object"===typeof arguments[b]?a+w(arguments[b]):a+arguments[b],a+=" ";return a}var Rb=k,Sb=j;function L(){Sb===j&&(Sb=l,Rb===k&&ob.get("logging_enabled")===j&&Tb(j));if(Rb){var a=Qb.apply(k,arguments);Rb(a)}}function Ub(a){return function(){L(a,arguments)}}
+function Vb(){if("undefined"!==typeof console){var a="FIREBASE INTERNAL ERROR: "+Qb.apply(k,arguments);"undefined"!==typeof console.error?console.error(a):console.log(a)}}function Wb(){var a=Qb.apply(k,arguments);g(Error("FIREBASE FATAL ERROR: "+a))}function M(){if("undefined"!==typeof console){var a="FIREBASE WARNING: "+Qb.apply(k,arguments);"undefined"!==typeof console.warn?console.warn(a):console.log(a)}}
+function Da(a){return ha(a)&&(a!=a||a==Number.POSITIVE_INFINITY||a==Number.NEGATIVE_INFINITY)}function Xb(a,b){return a!==b?a===k?-1:b===k?1:typeof a!==typeof b?"number"===typeof a?-1:1:a>b?1:-1:0}function Yb(a,b){if(a===b)return 0;var c=Zb(a),d=Zb(b);return c!==k?d!==k?c-d:-1:d!==k?1:a<b?-1:1}function $b(a,b){if(b&&a in b)return b[a];g(Error("Missing required key ("+a+") in object: "+w(b)))}
+function La(a){if("object"!==typeof a||a===k)return w(a);var b=[],c;for(c in a)b.push(c);b.sort();c="{";for(var d=0;d<b.length;d++)0!==d&&(c+=","),c+=w(b[d]),c+=":",c+=La(a[b[d]]);return c+"}"}function ac(a,b){if(a.length<=b)return[a];for(var c=[],d=0;d<a.length;d+=b)d+b>a?c.push(a.substring(d,a.length)):c.push(a.substring(d,d+b));return c}function bc(a,b){if("array"==fa(a))for(var c=0;c<a.length;++c)b(c,a[c]);else cc(a,b)}
+function dc(a){y(!Da(a));var b,c,d,e;0===a?(d=c=0,b=-Infinity===1/a?1:0):(b=0>a,a=Math.abs(a),a>=Math.pow(2,-1022)?(d=Math.min(Math.floor(Math.log(a)/Math.LN2),1023),c=d+1023,d=Math.round(a*Math.pow(2,52-d)-Math.pow(2,52))):(c=0,d=Math.round(a/Math.pow(2,-1074))));e=[];for(a=52;a;a-=1)e.push(d%2?1:0),d=Math.floor(d/2);for(a=11;a;a-=1)e.push(c%2?1:0),c=Math.floor(c/2);e.push(b?1:0);e.reverse();b=e.join("");c="";for(a=0;64>a;a+=8)d=parseInt(b.substr(a,8),2).toString(16),1===d.length&&(d="0"+d),c+=d;
+return c.toLowerCase()}var ec=/^-?\d{1,10}$/;function Zb(a){return ec.test(a)&&(a=Number(a),-2147483648<=a&&2147483647>=a)?a:k}function fc(a){try{a()}catch(b){setTimeout(function(){g(b)})}};function gc(a,b){this.D=a;y(this.D!==k,"LeafNode shouldn't be created with null value.");this.Ya="undefined"!==typeof b?b:k}s=gc.prototype;s.M=o(j);s.j=ba("Ya");s.Ga=function(a){return new gc(this.D,a)};s.L=function(){return N};s.Q=function(a){return E(a)===k?this:N};s.ea=o(k);s.H=function(a,b){return(new O).H(a,b).Ga(this.Ya)};s.ya=function(a,b){var c=E(a);return c===k?b:this.H(c,N.ya(Ma(a),b))};s.f=o(l);s.Ub=o(0);s.V=function(a){return a&&this.j()!==k?{".value":this.k(),".priority":this.j()}:this.k()};
+s.hash=function(){var a="";this.j()!==k&&(a+="priority:"+hc(this.j())+":");var b=typeof this.D,a=a+(b+":"),a="number"===b?a+dc(this.D):a+this.D;return Pb(a)};s.k=ba("D");s.toString=function(){return"string"===typeof this.D?'"'+this.D+'"':this.D};function ic(a,b){return Xb(a.ia,b.ia)||Yb(a.name,b.name)}function jc(a,b){return Yb(a.name,b.name)}function kc(a,b){return Yb(a,b)};function O(a,b){this.o=a||new Ua(kc);this.Ya="undefined"!==typeof b?b:k}s=O.prototype;s.M=o(l);s.j=ba("Ya");s.Ga=function(a){return new O(this.o,a)};s.H=function(a,b){var c=this.o.remove(a);b&&b.f()&&(b=k);b!==k&&(c=c.oa(a,b));return b&&b.j()!==k?new lc(c,k,this.Ya):new O(c,this.Ya)};s.ya=function(a,b){var c=E(a);if(c===k)return b;var d=this.L(c).ya(Ma(a),b);return this.H(c,d)};s.f=function(){return this.o.f()};s.Ub=function(){return this.o.count()};var mc=/^\d+$/;s=O.prototype;
+s.V=function(a){if(this.f())return k;var b={},c=0,d=0,e=j;this.w(function(f,h){b[f]=h.V(a);c++;e&&mc.test(f)?d=Math.max(d,Number(f)):e=l});if(!a&&e&&d<2*c){var f=[],h;for(h in b)f[h]=b[h];return f}a&&this.j()!==k&&(b[".priority"]=this.j());return b};s.hash=function(){var a="";this.j()!==k&&(a+="priority:"+hc(this.j())+":");this.w(function(b,c){var d=c.hash();""!==d&&(a+=":"+b+":"+d)});return""===a?"":Pb(a)};s.L=function(a){a=this.o.get(a);return a===k?N:a};
+s.Q=function(a){var b=E(a);return b===k?this:this.L(b).Q(Ma(a))};s.ea=function(a){return Xa(this.o,a)};s.cd=function(){return this.o.tb()};s.dd=function(){return this.o.Va()};s.w=function(a){return this.o.Ba(a)};s.yc=function(a){return this.o.Ma(a)};s.Ua=function(){return this.o.Ua()};s.toString=function(){var a="{",b=j;this.w(function(c,d){b?b=l:a+=", ";a+='"'+c+'" : '+d.toString()});return a+="}"};var N=new O;function lc(a,b,c){O.call(this,a,c);b===k&&(b=new Ua(ic),a.Ba(function(a,c){b=b.oa({name:a,ia:c.j()},c)}));this.ua=b}la(lc,O);s=lc.prototype;s.H=function(a,b){var c=this.L(a),d=this.o,e=this.ua;c!==k&&(d=d.remove(a),e=e.remove({name:a,ia:c.j()}));b&&b.f()&&(b=k);b!==k&&(d=d.oa(a,b),e=e.oa({name:a,ia:b.j()},b));return new lc(d,e,this.j())};s.ea=function(a,b){var c=Xa(this.ua,{name:a,ia:b.j()});return c?c.name:k};s.w=function(a){return this.ua.Ba(function(b,c){return a(b.name,c)})};
+s.yc=function(a){return this.ua.Ma(function(b,c){return a(b.name,c)})};s.Ua=function(){return this.ua.Ua(function(a,b){return{key:a.name,value:b}})};s.cd=function(){return this.ua.f()?k:this.ua.tb().name};s.dd=function(){return this.ua.f()?k:this.ua.Va().name};function Q(a,b){if(a===k)return N;var c=k;"object"===typeof a&&".priority"in a?c=a[".priority"]:"undefined"!==typeof b&&(c=b);y(c===k||"string"===typeof c||"number"===typeof c||"object"===typeof c&&".sv"in c);"object"===typeof a&&(".value"in a&&a[".value"]!==k)&&(a=a[".value"]);if("object"!==typeof a||".sv"in a)return new gc(a,c);if(a instanceof Array){var d=N;cc(a,function(b,c){if(C(a,c)&&"."!==c.substring(0,1)){var e=Q(b);if(e.M()||!e.f())d=d.H(c,e)}});return d.Ga(c)}var e=[],f={},h=l;bc(a,function(b,
+c){if("string"!==typeof c||"."!==c.substring(0,1)){var d=Q(a[c]);d.f()||(h=h||d.j()!==k,e.push({name:c,ia:d.j()}),f[c]=d)}});var i=nc(e,f,l);if(h){var m=nc(e,f,j);return new lc(i,m,c)}return new O(i,c)}var oc=Math.log(2);function qc(a){this.count=parseInt(Math.log(a+1)/oc);this.$c=this.count-1;this.wd=a+1&parseInt(Array(this.count+1).join("1"),2)}
+function nc(a,b,c){function d(d,f){var h=n-d,p=n;n-=d;var q=a[h].name,h=new $a(c?a[h]:q,b[q],f,k,e(h+1,p));i?i.left=h:m=h;i=h}function e(d,f){var h=f-d;if(0==h)return k;if(1==h){var h=a[d].name,i=c?a[d]:h;return new $a(i,b[h],l,k,k)}var i=parseInt(h/2)+d,m=e(d,i),n=e(i+1,f),h=a[i].name,i=c?a[i]:h;return new $a(i,b[h],l,m,n)}var f=c?ic:jc;a.sort(f);var h,f=new qc(a.length),i=k,m=k,n=a.length;for(h=0;h<f.count;++h){var p=!(f.wd&1<<f.$c);f.$c--;var q=Math.pow(2,f.count-(h+1));p?d(q,l):(d(q,l),d(q,j))}h=
+m;f=c?ic:kc;return h!==k?new Ua(f,h):new Ua(f)}function hc(a){return"number"===typeof a?"number:"+dc(a):"string:"+a};function R(a,b){this.z=a;this.ec=b}R.prototype.V=function(){z("Firebase.DataSnapshot.val",0,0,arguments.length);return this.z.V()};R.prototype.val=R.prototype.V;R.prototype.Ad=function(){z("Firebase.DataSnapshot.exportVal",0,0,arguments.length);return this.z.V(j)};R.prototype.exportVal=R.prototype.Ad;R.prototype.F=function(a){z("Firebase.DataSnapshot.child",0,1,arguments.length);ha(a)&&(a=String(a));Ia("Firebase.DataSnapshot.child",a);var b=new J(a),c=this.ec.F(b);return new R(this.z.Q(b),c)};
+R.prototype.child=R.prototype.F;R.prototype.Cc=function(a){z("Firebase.DataSnapshot.hasChild",1,1,arguments.length);Ia("Firebase.DataSnapshot.hasChild",a);var b=new J(a);return!this.z.Q(b).f()};R.prototype.hasChild=R.prototype.Cc;R.prototype.j=function(){z("Firebase.DataSnapshot.getPriority",0,0,arguments.length);return this.z.j()};R.prototype.getPriority=R.prototype.j;
+R.prototype.forEach=function(a){z("Firebase.DataSnapshot.forEach",1,1,arguments.length);B("Firebase.DataSnapshot.forEach",1,a,l);if(this.z.M())return l;var b=this;return this.z.w(function(c,d){return a(new R(d,b.ec.F(c)))})};R.prototype.forEach=R.prototype.forEach;R.prototype.nb=function(){z("Firebase.DataSnapshot.hasChildren",0,0,arguments.length);return this.z.M()?l:!this.z.f()};R.prototype.hasChildren=R.prototype.nb;
+R.prototype.name=function(){z("Firebase.DataSnapshot.name",0,0,arguments.length);return this.ec.name()};R.prototype.name=R.prototype.name;R.prototype.Ub=function(){z("Firebase.DataSnapshot.numChildren",0,0,arguments.length);return this.z.Ub()};R.prototype.numChildren=R.prototype.Ub;R.prototype.Nc=function(){z("Firebase.DataSnapshot.ref",0,0,arguments.length);return this.ec};R.prototype.ref=R.prototype.Nc;function rc(a){y("array"==fa(a)&&0<a.length);this.vd=a;this.sb={}}rc.prototype.Ac=function(){};rc.prototype.Xc=function(a){for(var b=this.sb[a]||[],c=0;c<b.length;c++)b[c].X.apply(b[c].T,Array.prototype.slice.call(arguments,1))};rc.prototype.Xa=function(a,b,c){sc(this,a);this.sb[a]=this.sb[a]||[];this.sb[a].push({X:b,T:c});(a=this.Ac(a))&&b.apply(c,a)};rc.prototype.ub=function(a,b,c){sc(this,a);for(var a=this.sb[a]||[],d=0;d<a.length;d++)if(a[d].X===b&&(!c||c===a[d].T)){a.splice(d,1);break}};
+function sc(a,b){var c=a.vd,d;a:{d=function(a){return a===b};for(var e=c.length,f=u(c)?c.split(""):c,h=0;h<e;h++)if(h in f&&d.call(aa,f[h])){d=h;break a}d=-1}y(0>d?k:u(c)?c.charAt(d):c[d],"Unknown event: "+b)};function tc(){rc.call(this,["visible"]);var a,b;"undefined"!==typeof document&&"undefined"!==typeof document.addEventListener&&("undefined"!==typeof document.hidden?(b="visibilitychange",a="hidden"):"undefined"!==typeof document.mozHidden?(b="mozvisibilitychange",a="mozHidden"):"undefined"!==typeof document.msHidden?(b="msvisibilitychange",a="msHidden"):"undefined"!==typeof document.webkitHidden&&(b="webkitvisibilitychange",a="webkitHidden"));this.gb=j;if(b){var c=this;document.addEventListener(b,
+function(){var b=!document[a];if(b!==c.gb){c.gb=b;c.Xc("visible",b)}},l)}}la(tc,rc);ea(tc);tc.prototype.Ac=function(a){y("visible"===a);return[this.gb]};function uc(a){this.Jc=a;this.ac=[];this.Qa=0;this.tc=-1;this.Ka=k};function cc(a,b){for(var c in a)b.call(aa,a[c],c,a)}function vc(a){var b={},c;for(c in a)b[c]=a[c];return b};function wc(){this.jb={}}function xc(a,b,c){t(c)||(c=1);C(a.jb,b)||(a.jb[b]=0);a.jb[b]+=c}wc.prototype.get=function(){return vc(this.jb)};function yc(a){this.xd=a;this.Qb=k}yc.prototype.get=function(){var a=this.xd.get(),b=vc(a);if(this.Qb)for(var c in this.Qb)b[c]-=this.Qb[c];this.Qb=a;return b};function zc(a,b){this.Sc={};this.kc=new yc(a);this.u=b;setTimeout(v(this.kd,this),10+6E4*Math.random())}zc.prototype.kd=function(){var a=this.kc.get(),b={},c=l,d;for(d in a)0<a[d]&&C(this.Sc,d)&&(b[d]=a[d],c=j);c&&(a=this.u,a.P&&(b={c:b},a.e("reportStats",b),a.Fa("s",b)));setTimeout(v(this.kd,this),6E5*Math.random())};var Ac={},Bc={};function Cc(a){a=a.toString();Ac[a]||(Ac[a]=new wc);return Ac[a]};function Dc(){this.set={}}s=Dc.prototype;s.add=function(a,b){this.set[a]=b!==k?b:j};s.contains=function(a){return C(this.set,a)};s.get=function(a){return this.contains(a)?this.set[a]:aa};s.remove=function(a){delete this.set[a]};s.f=function(){var a;a:{for(a in this.set){a=l;break a}a=j}return a};s.count=function(){var a=0,b;for(b in this.set)a++;return a};function Ec(a,b){for(var c in a.set)C(a.set,c)&&b(c,a.set[c])}s.keys=function(){var a=[],b;for(b in this.set)C(this.set,b)&&a.push(b);return a};var Fc="pLPCommand",Gc="pRTLPCB";function Hc(a,b,c){this.uc=a;this.e=Ub(a);this.Xd=b;this.$=Cc(b);this.jc=c;this.kb=l;this.Lb=function(a){b.host!==b.fa&&(a.ns=b.Sb);var c=[],f;for(f in a)a.hasOwnProperty(f)&&c.push(f+"="+a[f]);return(b.hc?"https://":"http://")+b.fa+"/.lp?"+c.join("&")}}var Ic,Jc;
+Hc.prototype.open=function(a,b){function c(){if(!d.Ja){d.ka=new Kc(function(a,b,c,e,f){xc(d.$,"bytes_received",w(arguments).length);if(d.ka)if(d.ba&&(clearTimeout(d.ba),d.ba=k),d.kb=j,"start"==a)d.id=b,d.jd=c;else if("close"===a)if(b){d.ka.ic=l;var h=d.fd;h.tc=b;h.Ka=function(){d.Ea()};h.tc<h.Qa&&(h.Ka(),h.Ka=k)}else d.Ea();else g(Error("Unrecognized command received: "+a))},function(a,b){xc(d.$,"bytes_received",w(arguments).length);var c=d.fd;for(c.ac[a]=b;c.ac[c.Qa];){var e=c.ac[c.Qa];delete c.ac[c.Qa];
+for(var f=0;f<e.length;++f)if(e[f]){var h=c;fc(function(){h.Jc(e[f])})}if(c.Qa===c.tc){c.Ka&&(clearTimeout(c.Ka),c.Ka(),c.Ka=k);break}c.Qa++}},function(){d.Ea()},d.Lb);var a={start:"t"};a.ser=Math.floor(1E8*Math.random());d.ka.mc&&(a.cb=d.ka.mc);a.v="5";d.jc&&(a.s=d.jc);a=d.Lb(a);d.e("Connecting via long-poll to "+a);Lc(d.ka,a,function(){})}}this.Zc=0;this.R=b;this.fd=new uc(a);this.Ja=l;var d=this;this.ba=setTimeout(function(){d.e("Timed out trying to connect.");d.Ea();d.ba=k},3E4);if("complete"===
+document.readyState)c();else{var e=l,f=function(){document.body?e||(e=j,c()):setTimeout(f,10)};document.addEventListener?(document.addEventListener("DOMContentLoaded",f,l),window.addEventListener("load",f,l)):document.attachEvent&&(document.attachEvent("onreadystatechange",function(){"complete"===document.readyState&&f()},l),window.attachEvent("onload",f,l))}};
+Hc.prototype.start=function(){var a=this.ka,b=this.jd;a.Gd=this.id;a.Hd=b;for(a.pc=j;Mc(a););a=this.id;b=this.jd;this.Wa=document.createElement("iframe");var c={dframe:"t"};c.id=a;c.pw=b;a=this.Lb(c);this.Wa.src=a;this.Wa.style.display="none";document.body.appendChild(this.Wa)};Hc.isAvailable=function(){return!Jc&&!("object"===typeof window&&window.chrome&&window.chrome.extension&&!/^chrome/.test(window.location.href))&&!("object"===typeof Windows&&"object"===typeof Windows.Wd)&&(Ic||j)};
+Hc.prototype.Ib=function(){this.Ja=j;this.ka&&(this.ka.close(),this.ka=k);this.Wa&&(document.body.removeChild(this.Wa),this.Wa=k);this.ba&&(clearTimeout(this.ba),this.ba=k)};Hc.prototype.Ea=function(){this.Ja||(this.e("Longpoll is closing itself"),this.Ib(),this.R&&(this.R(this.kb),this.R=k))};Hc.prototype.close=function(){this.Ja||(this.e("Longpoll is being closed."),this.Ib())};
+Hc.prototype.send=function(a){a=w(a);xc(this.$,"bytes_sent",a.length);for(var a=ta(a),a=Mb(a,j),a=ac(a,1840),b=0;b<a.length;b++){var c=this.ka;c.Cb.push({Qd:this.Zc,Vd:a.length,ad:a[b]});c.pc&&Mc(c);this.Zc++}};
+function Kc(a,b,c,d){this.Lb=d;this.ha=c;this.Lc=new Dc;this.Cb=[];this.vc=Math.floor(1E8*Math.random());this.ic=j;this.mc=Nb();window[Fc+this.mc]=a;window[Gc+this.mc]=b;a=document.createElement("iframe");a.style.display="none";if(document.body){document.body.appendChild(a);try{a.contentWindow.document||L("No IE domain setting required")}catch(e){a.src="javascript:void((function(){document.open();document.domain='"+document.domain+"';document.close();})())"}}else g("Document body has not initialized. Wait to initialize Firebase until after the document is ready.");
+a.contentDocument?a.za=a.contentDocument:a.contentWindow?a.za=a.contentWindow.document:a.document&&(a.za=a.document);this.Y=a;a="";this.Y.src&&"javascript:"===this.Y.src.substr(0,11)&&(a='<script>document.domain="'+document.domain+'";<\/script>');a="<html><body>"+a+"</body></html>";try{this.Y.za.open(),this.Y.za.write(a),this.Y.za.close()}catch(f){L("frame writing exception"),f.stack&&L(f.stack),L(f)}}
+Kc.prototype.close=function(){this.pc=l;if(this.Y){this.Y.za.body.innerHTML="";var a=this;setTimeout(function(){a.Y!==k&&(document.body.removeChild(a.Y),a.Y=k)},0)}var b=this.ha;b&&(this.ha=k,b())};
+function Mc(a){if(a.pc&&a.ic&&a.Lc.count()<(0<a.Cb.length?2:1)){a.vc++;var b={};b.id=a.Gd;b.pw=a.Hd;b.ser=a.vc;for(var b=a.Lb(b),c="",d=0;0<a.Cb.length;)if(1870>=a.Cb[0].ad.length+30+c.length){var e=a.Cb.shift(),c=c+"&seg"+d+"="+e.Qd+"&ts"+d+"="+e.Vd+"&d"+d+"="+e.ad;d++}else break;var b=b+c,f=a.vc;a.Lc.add(f);var h=function(){a.Lc.remove(f);Mc(a)},i=setTimeout(h,25E3);Lc(a,b,function(){clearTimeout(i);h()});return j}return l}
+function Lc(a,b,c){setTimeout(function(){try{if(a.ic){var d=a.Y.za.createElement("script");d.type="text/javascript";d.async=j;d.src=b;d.onload=d.onreadystatechange=function(){var a=d.readyState;if(!a||"loaded"===a||"complete"===a)d.onload=d.onreadystatechange=k,d.parentNode&&d.parentNode.removeChild(d),c()};d.onerror=function(){L("Long-poll script failed to load: "+b);a.ic=l;a.close()};a.Y.za.body.appendChild(d)}}catch(e){}},1)};var Nc=k;"undefined"!==typeof MozWebSocket?Nc=MozWebSocket:"undefined"!==typeof WebSocket&&(Nc=WebSocket);function S(a,b,c){this.uc=a;this.e=Ub(this.uc);this.frames=this.qb=k;this.Uc=0;this.$=Cc(b);this.Pa=(b.hc?"wss://":"ws://")+b.fa+"/.ws?v=5";b.host!==b.fa&&(this.Pa=this.Pa+"&ns="+b.Sb);c&&(this.Pa=this.Pa+"&s="+c)}var Oc;
+S.prototype.open=function(a,b){this.ha=b;this.Id=a;this.e("Websocket connecting to "+this.Pa);this.W=new Nc(this.Pa);this.kb=l;nb.set("previous_websocket_failure",j);var c=this;this.ba=setTimeout(function(){c.e("Websocket timed out trying to connect.");Pc(c);c.Ea()},3E4);this.W.onopen=function(){c.e("Websocket connected.");c.kb=j;Pc(c);nb.remove("previous_websocket_failure")};this.W.onclose=function(){c.e("Websocket connection was disconnected.");c.W=k;c.Ea()};this.W.onmessage=function(a){if(c.W!==
+k)if(a=a.data,xc(c.$,"bytes_received",a.length),Qc(c),c.frames!==k)Rc(c,a);else{a:{y(c.frames===k,"We already have a frame buffer");if(6>=a.length){var b=Number(a);if(!isNaN(b)){c.Uc=b;c.frames=[];a=k;break a}}c.Uc=1;c.frames=[]}a!==k&&Rc(c,a)}};this.W.onerror=function(a){c.e("WebSocket error.  Closing connection.");a.data&&c.e(a.data);c.Ea()}};S.prototype.start=function(){};
+S.isAvailable=function(){var a=l;if("undefined"!==typeof navigator&&navigator.userAgent){var b=navigator.userAgent.match(/Android ([0-9]{0,}\.[0-9]{0,})/);b&&1<b.length&&4.4>parseFloat(b[1])&&(a=j)}return!a&&Nc!==k&&!Oc};function Rc(a,b){a.frames.push(b);if(a.frames.length==a.Uc){var c=a.frames.join("");a.frames=k;c=sa(c);a.Id(c)}}S.prototype.send=function(a){Qc(this);a=w(a);xc(this.$,"bytes_sent",a.length);a=ac(a,16384);1<a.length&&this.W.send(String(a.length));for(var b=0;b<a.length;b++)this.W.send(a[b])};
+S.prototype.Ib=function(){this.Ja=j;Pc(this);this.qb&&(clearInterval(this.qb),this.qb=k);this.W&&(this.W.close(),this.W=k)};S.prototype.Ea=function(){this.Ja||(this.e("WebSocket is closing itself"),this.Ib(),this.ha&&(this.ha(this.kb),this.ha=k))};S.prototype.close=function(){this.Ja||(this.e("WebSocket is being closed"),this.Ib())};function Qc(a){clearInterval(a.qb);a.qb=setInterval(function(){a.W&&a.W.send("0");Qc(a)},45E3)}function Pc(a){a.ba&&(clearTimeout(a.ba),a.ba=k)};function Sc(){var a=[];S&&S.isAvailable()&&!nb.get("previous_websocket_failure")?a.push(S):bc(Tc,function(b,c){c&&c.isAvailable()&&a.push(c)});this.lc=a}var Tc=[Hc,{isAvailable:o(l)},S];function Uc(a,b,c,d,e,f){this.id=a;this.e=Ub("c:"+this.id+":");this.Jc=c;this.xb=d;this.R=e;this.Ic=f;this.J=b;this.$b=[];this.Yc=0;this.Wc=new Sc;this.wa=0;this.e("Connection created");Vc(this)}function Vc(a){var b;var c=a.Wc;0<c.lc.length?b=c.lc[0]:g(Error("No transports available"));a.K=new b("c:"+a.id+":"+a.Yc++,a.J);var d=Wc(a,a.K),e=Xc(a,a.K);a.Jb=a.K;a.Hb=a.K;a.A=k;setTimeout(function(){a.K&&a.K.open(d,e)},0)}
+function Xc(a,b){return function(c){b===a.K?(a.K=k,!c&&0===a.wa?(a.e("Realtime connection failed."),"s-"===a.J.fa.substr(0,2)&&(nb.remove("host:"+a.J.host),a.J.fa=a.J.host)):1===a.wa&&a.e("Realtime connection lost."),a.close()):b===a.A?(c=a.A,a.A=k,(a.Jb===c||a.Hb===c)&&a.close()):a.e("closing an old connection")}}
+function Wc(a,b){return function(c){if(2!=a.wa)if(b===a.Hb){var d=$b("t",c),c=$b("d",c);if("c"==d){if(d=$b("t",c),"d"in c)if(c=c.d,"h"===d){var d=c.ts,e=c.v,f=c.h;a.jc=c.s;qb(a.J,f);if(0==a.wa&&(a.K.start(),c=a.K,a.e("Realtime connection established."),a.K=c,a.wa=1,a.xb&&(a.xb(d),a.xb=k),"5"!==e&&M("Protocol version mismatch detected"),c=1<a.Wc.lc.length?a.Wc.lc[1]:k))a.A=new c("c:"+a.id+":"+a.Yc++,a.J,a.jc),a.A.open(Wc(a,a.A),Xc(a,a.A))}else if("n"===d){a.e("recvd end transmission on primary");a.Hb=
+a.A;for(c=0;c<a.$b.length;++c)a.Xb(a.$b[c]);a.$b=[];Yc(a)}else"s"===d?(a.e("Connection shutdown command received. Shutting down..."),a.Ic&&(a.Ic(c),a.Ic=k),a.R=k,a.close()):"r"===d?(a.e("Reset packet received.  New host: "+c),qb(a.J,c),1===a.wa?a.close():($c(a),Vc(a))):"e"===d?Vb("Server Error: "+c):Vb("Unknown control packet command: "+d)}else"d"==d&&a.Xb(c)}else b===a.A?(d=$b("t",c),c=$b("d",c),"c"==d?"t"in c&&(c=c.t,"a"===c?(a.A.start(),a.e("sending client ack on secondary"),a.A.send({t:"c",d:{t:"a",
+d:{}}}),a.e("Ending transmission on primary"),a.K.send({t:"c",d:{t:"n",d:{}}}),a.Jb=a.A,Yc(a)):"r"===c&&(a.e("Got a reset on secondary, closing it"),a.A.close(),(a.Jb===a.A||a.Hb===a.A)&&a.close())):"d"==d?a.$b.push(c):g(Error("Unknown protocol layer: "+d))):a.e("message on old connection")}}Uc.prototype.od=function(a){a={t:"d",d:a};1!==this.wa&&g("Connection is not connected");this.Jb.send(a)};
+function Yc(a){a.Jb===a.A&&a.Hb===a.A&&(a.e("cleaning up and promoting a connection: "+a.A.uc),a.K=a.A,a.A=k)}Uc.prototype.Xb=function(a){this.Jc(a)};Uc.prototype.close=function(){2!==this.wa&&(this.e("Closing realtime connection."),this.wa=2,$c(this),this.R&&(this.R(),this.R=k))};function $c(a){a.e("Shutting down all connections");a.K&&(a.K.close(),a.K=k);a.A&&(a.A.close(),a.A=k)};function ad(){rc.call(this,["online"]);this.yb=j;if("undefined"!==typeof window&&"undefined"!==typeof window.addEventListener){var a=this;window.addEventListener("online",function(){a.yb||a.Xc("online",j);a.yb=j},l);window.addEventListener("offline",function(){a.yb&&a.Xc("online",l);a.yb=l},l)}}la(ad,rc);ea(ad);ad.prototype.Ac=function(a){y("online"===a);return[this.yb]};function bd(a,b,c,d,e,f){this.id=cd++;this.e=Ub("p:"+this.id+":");this.Na=j;this.ga={};this.U=[];this.zb=0;this.wb=[];this.P=l;this.qa=1E3;this.Rb=3E5;this.Yb=b||da;this.Wb=c||da;this.vb=d||da;this.Kc=e||da;this.Bc=f||da;this.J=a;this.Oc=k;this.Gb={};this.Pd=0;this.rb=this.Fc=k;dd(this,0);tc.mb().Xa("visible",this.Kd,this);-1===a.host.indexOf("fblocal")&&ad.mb().Xa("online",this.Jd,this)}var cd=0,ed=0;s=bd.prototype;
+s.Fa=function(a,b,c){var d=++this.Pd,a={r:d,a:a,b:b};this.e(w(a));y(this.P,"sendRequest_ call when we're not connected not allowed.");this.ja.od(a);c&&(this.Gb[d]=c)};function fd(a,b,c,d,e){a.e("Listen on "+b+" for "+c);var f={p:b},d=wb(d,function(a){return Ka(a)});"{}"!==c&&(f.q=d);f.h=a.Bc(b);a.Fa("l",f,function(d){a.e("listen response",d);d=d.s;"ok"!==d&&gd(a,b,c);e&&e(d)})}
+s.hb=function(a,b,c){this.Ha={yd:a,bd:l,X:b,Nb:c};this.e("Authenticating using credential: "+this.Ha);hd(this);if(!(b=40==a.length))a:{var d;try{var e=a.split(".");if(3!==e.length){b=l;break a}var f;b:{try{if("undefined"!==typeof atob){f=atob(e[1]);break b}}catch(h){L("base64DecodeIfNativeSupport failed: ",h)}f=k}f!==k&&(d=sa(f))}catch(i){L("isAdminAuthToken_ failed",i)}b="object"===typeof d&&wa(d,"admin")===j}b&&(this.e("Admin auth credential detected.  Reducing max reconnect time."),this.Rb=3E4)};
+s.Kb=function(a){delete this.Ha;this.vb(l);this.P&&this.Fa("unauth",{},function(b){a(b.s,b.d)})};function hd(a){var b=a.Ha;a.P&&b&&a.Fa("auth",{cred:b.yd},function(c){var d=c.s,c=c.d||"error";"ok"!==d&&a.Ha===b&&delete a.Ha;a.vb("ok"===d);b.bd?"ok"!==d&&b.Nb&&b.Nb(d,c):(b.bd=j,b.X&&b.X(d,c))})}function id(a,b,c,d){b=b.toString();gd(a,b,c)&&a.P&&(a.e("Unlisten on "+b+" for "+c),b={p:b},d=wb(d,function(a){return Ka(a)}),"{}"!==c&&(b.q=d),a.Fa("u",b))}
+function jd(a,b,c,d){a.P?kd(a,"o",b,c,d):a.wb.push({Mc:b,action:"o",data:c,C:d})}s.Hc=function(a,b){this.P?kd(this,"oc",a,k,b):this.wb.push({Mc:a,action:"oc",data:k,C:b})};function kd(a,b,c,d,e){c={p:c,d:d};a.e("onDisconnect "+b,c);a.Fa(b,c,function(a){e&&setTimeout(function(){e(a.s,a.d)},0)})}s.put=function(a,b,c,d){ld(this,"p",a,b,c,d)};function ld(a,b,c,d,e,f){c={p:c,d:d};t(f)&&(c.h=f);a.U.push({action:b,ld:c,C:e});a.zb++;b=a.U.length-1;a.P&&md(a,b)}
+function md(a,b){var c=a.U[b].action,d=a.U[b].ld,e=a.U[b].C;a.U[b].Md=a.P;a.Fa(c,d,function(d){a.e(c+" response",d);delete a.U[b];a.zb--;0===a.zb&&(a.U=[]);e&&e(d.s,d.d)})}
+s.Xb=function(a){if("r"in a){this.e("from server: "+w(a));var b=a.r,c=this.Gb[b];c&&(delete this.Gb[b],c(a.b))}else"error"in a&&g("A server-side error has occurred: "+a.error),"a"in a&&(b=a.a,a=a.b,this.e("handleServerMessage",b,a),"d"===b?this.Yb(a.p,a.d):"m"===b?this.Yb(a.p,a.d,j):"c"===b?(b=a.p,a=(a=a.q)?wb(a,function(a){return La(a)}).join("$"):"{}",(a=gd(this,b,a))&&a.C&&a.C("permission_denied")):"ac"===b?(b=a.s,a=a.d,c=this.Ha,delete this.Ha,c&&c.Nb&&c.Nb(b,a),this.vb(l)):"sd"===b?this.Oc?this.Oc(a):
+"msg"in a&&"undefined"!==typeof console&&console.log("FIREBASE: "+a.msg.replace("\n","\nFIREBASE: ")):Vb("Unrecognized action received from server: "+w(b)+"\nAre you using the latest client?"))};
+s.xb=function(a){this.e("connection ready");this.P=j;this.rb=(new Date).getTime();this.Kc({serverTimeOffset:a-(new Date).getTime()});hd(this);for(var b in this.ga)for(var c in this.ga[b])a=this.ga[b][c],fd(this,b,c,a.Za,a.C);for(b=0;b<this.U.length;b++)this.U[b]&&md(this,b);for(;this.wb.length;)b=this.wb.shift(),kd(this,b.action,b.Mc,b.data,b.C);this.Wb(j)};
+function dd(a,b){y(!a.ja,"Scheduling a connect when we're already connected/ing?");a.Sa&&clearTimeout(a.Sa);a.Sa=setTimeout(function(){a.Sa=k;if(a.Na){a.e("Making a connection attempt");a.Fc=(new Date).getTime();a.rb=k;var b=v(a.Xb,a),d=v(a.xb,a),e=v(a.gd,a),f=a.id+":"+ed++;a.ja=new Uc(f,a.J,b,d,e,function(b){M(b+" ("+a.J.toString()+")");a.Na=l})}},b)}s.Kd=function(a){a&&(!this.gb&&this.qa===this.Rb)&&(this.e("Window became visible.  Reducing delay."),this.qa=1E3,this.ja||dd(this,0));this.gb=a};
+s.Jd=function(a){a?(this.e("Browser went online.  Reconnecting."),this.qa=1E3,this.Na=j,this.ja||dd(this,0)):(this.e("Browser went offline.  Killing connection; don't reconnect."),this.Na=l,this.ja&&this.ja.close())};
+s.gd=function(){this.e("data client disconnected");this.P=l;this.ja=k;for(var a=0;a<this.U.length;a++){var b=this.U[a];b&&("h"in b.ld&&b.Md)&&(b.C&&b.C("disconnect"),delete this.U[a],this.zb--)}0===this.zb&&(this.U=[]);if(this.Na)this.gb?this.rb&&(3E4<(new Date).getTime()-this.rb&&(this.qa=1E3),this.rb=k):(this.e("Window isn't visible.  Delaying reconnect."),this.qa=this.Rb,this.Fc=(new Date).getTime()),a=Math.max(0,this.qa-((new Date).getTime()-this.Fc)),a*=Math.random(),this.e("Trying to reconnect in "+
+a+"ms"),dd(this,a),this.qa=Math.min(this.Rb,1.3*this.qa);else for(var c in this.Gb)delete this.Gb[c];this.Wb(l)};s.Ia=function(){this.Na=l;this.ja?this.ja.close():(this.Sa&&(clearTimeout(this.Sa),this.Sa=k),this.P&&this.gd())};s.ab=function(){this.Na=j;this.qa=1E3;this.P||dd(this,0)};function gd(a,b,c){b=(new J(b)).toString();c||(c="{}");var d=a.ga[b][c];delete a.ga[b][c];return d};function nd(){this.o=this.D=k}function od(a,b,c){if(b.f())a.D=c,a.o=k;else if(a.D!==k)a.D=a.D.ya(b,c);else{a.o==k&&(a.o=new Dc);var d=E(b);a.o.contains(d)||a.o.add(d,new nd);a=a.o.get(d);b=Ma(b);od(a,b,c)}}function pd(a,b){if(b.f())return a.D=k,a.o=k,j;if(a.D!==k){if(a.D.M())return l;var c=a.D;a.D=k;c.w(function(b,c){od(a,new J(b),c)});return pd(a,b)}return a.o!==k?(c=E(b),b=Ma(b),a.o.contains(c)&&pd(a.o.get(c),b)&&a.o.remove(c),a.o.f()?(a.o=k,j):l):j}
+function qd(a,b,c){a.D!==k?c(b,a.D):a.w(function(a,e){var f=new J(b.toString()+"/"+a);qd(e,f,c)})}nd.prototype.w=function(a){this.o!==k&&Ec(this.o,function(b,c){a(b,c)})};function rd(){this.ra=N}function T(a,b){return a.ra.Q(b)}function U(a,b,c){a.ra=a.ra.ya(b,c)}rd.prototype.toString=function(){return this.ra.toString()};function sd(){this.sa=new rd;this.O=new rd;this.ma=new rd;this.Bb=new Pa}function td(a,b){for(var c=T(a.sa,b),d=T(a.O,b),e=K(a.Bb,b),f=l,h=e;h!==k;){if(h.k()!==k){f=j;break}h=h.parent()}if(f)return l;c=ud(c,d,e);return c!==d?(U(a.O,b,c),j):l}function ud(a,b,c){if(c.f())return a;if(c.k()!==k)return b;a=a||N;c.w(function(d){var d=d.name(),e=a.L(d),f=b.L(d),h=K(c,d),e=ud(e,f,h);a=a.H(d,e)});return a}
+sd.prototype.set=function(a,b){var c=this,d=[];vb(b,function(a){var b=a.path,a=a.pa,h=Nb();Qa(K(c.Bb,b),h);U(c.O,b,a);d.push({path:b,Rd:h})});return d};function vd(a,b){vb(b,function(b){var d=b.Rd,b=K(a.Bb,b.path),e=b.k();y(e!==k,"pendingPut should not be null.");e===d&&Qa(b,k)})};function wd(){this.Ta=[]}function xd(a,b){if(0!==b.length)for(var c=0;c<b.length;c++)a.Ta.push(b[c])}wd.prototype.Eb=function(){for(var a=0;a<this.Ta.length;a++)if(this.Ta[a]){var b=this.Ta[a];this.Ta[a]=k;yd(b)}this.Ta=[]};function yd(a){var b=a.X,c=a.pd,d=a.Db;fc(function(){b(c,d)})};function V(a,b,c,d){this.type=a;this.ta=b;this.aa=c;this.Db=d};function zd(a){this.I=a;this.na=[];this.xc=new wd}function Ad(a,b,c,d,e){a.na.push({type:b,X:c,cancel:d,T:e});var d=[],f=Bd(a.i);a.pb&&f.push(new V("value",a.i));for(var h=0;h<f.length;h++)if(f[h].type===b){var i=new H(a.I.n,a.I.path);f[h].aa&&(i=i.F(f[h].aa));d.push({X:e?v(c,e):c,pd:new R(f[h].ta,i),Db:f[h].Db})}xd(a.xc,d)}zd.prototype.cc=function(a,b){b=this.dc(a,b);b!=k&&Cd(this,b)};
+function Cd(a,b){for(var c=[],d=0;d<b.length;d++){var e=b[d],f=e.type,h=new H(a.I.n,a.I.path);b[d].aa&&(h=h.F(b[d].aa));h=new R(b[d].ta,h);"value"===e.type&&!h.nb()?f+="("+h.V()+")":"value"!==e.type&&(f+=" "+h.name());L(a.I.n.u.id+": event:"+a.I.path+":"+a.I.La()+":"+f);for(f=0;f<a.na.length;f++){var i=a.na[f];b[d].type===i.type&&c.push({X:i.T?v(i.X,i.T):i.X,pd:h,Db:e.Db})}}xd(a.xc,c)}zd.prototype.Eb=function(){this.xc.Eb()};
+function Bd(a){var b=[];if(!a.M()){var c=k;a.w(function(a,e){b.push(new V("child_added",e,a,c));c=a})}return b}function Ed(a){a.pb||(a.pb=j,Cd(a,[new V("value",a.i)]))};function Fd(a,b){zd.call(this,a);this.i=b}la(Fd,zd);Fd.prototype.dc=function(a,b){this.i=a;this.pb&&b!=k&&b.push(new V("value",this.i));return b};Fd.prototype.lb=function(){return{}};function Gd(a,b){this.Ob=a;this.Gc=b}
+function Hd(a,b,c,d,e){var f=a.Q(c),h=b.Q(c),d=new Gd(d,e),e=Id(d,c,f,h),h=!f.f()&&!h.f()&&f.j()!==h.j();if(e||h){f=c;for(c=e;f.parent()!==k;){var i=a.Q(f),e=b.Q(f),m=f.parent();if(!d.Ob||K(d.Ob,m).k()){var n=b.Q(m),p=[],f=f.Z<f.m.length?f.m[f.m.length-1]:k;i.f()?(i=n.ea(f,e),p.push(new V("child_added",e,f,i))):e.f()?p.push(new V("child_removed",i,f)):(i=n.ea(f,e),h&&p.push(new V("child_moved",e,f,i)),c&&p.push(new V("child_changed",e,f,i)));d.Gc(m,n,p)}h&&(h=l,c=j);f=m}}}
+function Id(a,b,c,d){var e,f=[];c===d?e=l:c.M()&&d.M()?e=c.k()!==d.k():c.M()?(Jd(a,b,N,d,f),e=j):d.M()?(Jd(a,b,c,N,f),e=j):e=Jd(a,b,c,d,f);e?a.Gc(b,d,f):c.j()!==d.j()&&a.Gc(b,d,k);return e}
+function Jd(a,b,c,d,e){var f=l,h=!a.Ob||!K(a.Ob,b).f(),i=[],m=[],n=[],p=[],q={},r={},x,P,I,G;x=c.Ua();I=Za(x);P=d.Ua();for(G=Za(P);I!==k||G!==k;){c=I===k?1:G===k?-1:I.key===G.key?0:ic({name:I.key,ia:I.value.j()},{name:G.key,ia:G.value.j()});if(0>c)f=wa(q,I.key),t(f)?(n.push({zc:I,Tc:i[f]}),i[f]=k):(r[I.key]=m.length,m.push(I)),f=j,I=Za(x);else{if(0<c)f=wa(r,G.key),t(f)?(n.push({zc:m[f],Tc:G}),m[f]=k):(q[G.key]=i.length,i.push(G)),f=j;else{c=b.F(G.key);if(c=Id(a,c,I.value,G.value))p.push(G),f=j;I.value.j()!==
+G.value.j()&&(n.push({zc:I,Tc:G}),f=j);I=Za(x)}G=Za(P)}if(!h&&f)return j}for(h=0;h<m.length;h++)if(q=m[h])c=b.F(q.key),Id(a,c,q.value,N),e.push(new V("child_removed",q.value,q.key));for(h=0;h<i.length;h++)if(q=i[h])c=b.F(q.key),m=d.ea(q.key,q.value),Id(a,c,N,q.value),e.push(new V("child_added",q.value,q.key,m));for(h=0;h<n.length;h++)q=n[h].zc,i=n[h].Tc,c=b.F(i.key),m=d.ea(i.key,i.value),e.push(new V("child_moved",i.value,i.key,m)),(c=Id(a,c,q.value,i.value))&&p.push(i);for(h=0;h<p.length;h++)a=p[h],
+m=d.ea(a.key,a.value),e.push(new V("child_changed",a.value,a.key,m));return f};function Kd(){this.S=this.xa=k;this.set={}}la(Kd,Dc);s=Kd.prototype;s.setActive=function(a){this.xa=a};function Ld(a){return a.contains("default")}function Md(a){return a.xa!=k&&Ld(a)}s.defaultView=function(){return Ld(this)?this.get("default"):k};s.path=ba("S");s.toString=function(){return wb(this.keys(),function(a){return"default"===a?"{}":a}).join("$")};s.Za=function(){var a=[];Ec(this,function(b,c){a.push(c.I)});return a};function Nd(a,b){zd.call(this,a);this.i=N;this.dc(b,Bd(b))}la(Nd,zd);
+Nd.prototype.dc=function(a,b){if(b===k)return b;var c=[],d=this.I;t(d.da)&&(t(d.va)&&d.va!=k?c.push(function(a,b){var c=Xb(b,d.da);return 0<c||0===c&&0<=Yb(a,d.va)}):c.push(function(a,b){return 0<=Xb(b,d.da)}));t(d.Aa)&&(t(d.Ra)?c.push(function(a,b){var c=Xb(b,d.Aa);return 0>c||0===c&&0>=Yb(a,d.Ra)}):c.push(function(a,b){return 0>=Xb(b,d.Aa)}));var e=k,f=k;if(t(this.I.Ca))if(t(this.I.da)){if(e=Od(a,c,this.I.Ca,l)){var h=a.L(e).j();c.push(function(a,b){var c=Xb(b,h);return 0>c||0===c&&0>=Yb(a,e)})}}else if(f=
+Od(a,c,this.I.Ca,j)){var i=a.L(f).j();c.push(function(a,b){var c=Xb(b,i);return 0<c||0===c&&0<=Yb(a,f)})}for(var m=[],n=[],p=[],q=[],r=0;r<b.length;r++){var x=b[r].aa,P=b[r].ta;switch(b[r].type){case "child_added":Pd(c,x,P)&&(this.i=this.i.H(x,P),n.push(b[r]));break;case "child_removed":this.i.L(x).f()||(this.i=this.i.H(x,k),m.push(b[r]));break;case "child_changed":!this.i.L(x).f()&&Pd(c,x,P)&&(this.i=this.i.H(x,P),q.push(b[r]));break;case "child_moved":var I=!this.i.L(x).f(),G=Pd(c,x,P);I?G?(this.i=
+this.i.H(x,P),p.push(b[r])):(m.push(new V("child_removed",this.i.L(x),x)),this.i=this.i.H(x,k)):G&&(this.i=this.i.H(x,P),n.push(b[r]))}}var Zc=e||f;if(Zc){var Dd=(r=f!==k)?this.i.cd():this.i.dd(),pc=l,bb=l,cb=this;(r?a.yc:a.w).call(a,function(a,b){!bb&&Dd===k&&(bb=j);if(bb&&pc)return j;pc?(m.push(new V("child_removed",cb.i.L(a),a)),cb.i=cb.i.H(a,k)):bb&&(n.push(new V("child_added",b,a)),cb.i=cb.i.H(a,b));Dd===a&&(bb=j);a===Zc&&(pc=j)})}for(r=0;r<n.length;r++)c=n[r],x=this.i.ea(c.aa,c.ta),m.push(new V("child_added",
+c.ta,c.aa,x));for(r=0;r<p.length;r++)c=p[r],x=this.i.ea(c.aa,c.ta),m.push(new V("child_moved",c.ta,c.aa,x));for(r=0;r<q.length;r++)c=q[r],x=this.i.ea(c.aa,c.ta),m.push(new V("child_changed",c.ta,c.aa,x));this.pb&&0<m.length&&m.push(new V("value",this.i));return m};function Od(a,b,c,d){if(a.M())return k;var e=k;(d?a.yc:a.w).call(a,function(a,d){if(Pd(b,a,d)&&(e=a,c--,0===c))return j});return e}function Pd(a,b,c){for(var d=0;d<a.length;d++)if(!a[d](b,c.j()))return l;return j}
+Nd.prototype.Cc=function(a){return this.i.L(a)!==N};Nd.prototype.lb=function(a,b,c){var d={};this.i.M()||this.i.w(function(a){d[a]=3});var e=this.i,c=T(c,new J("")),f=new Pa;Qa(K(f,this.I.path),j);var b=N.ya(a,b),h=this;Hd(c,b,a,f,function(a,b,c){c!==k&&a.toString()===h.I.path.toString()&&h.dc(b,c)});this.i.M()?cc(d,function(a,b){d[b]=2}):(this.i.w(function(a){C(d,a)||(d[a]=1)}),cc(d,function(a,b){h.i.L(b).f()&&(d[b]=2)}));this.i=e;return d};function Qd(a,b){this.u=a;this.g=b;this.Vb=b.ra;this.la=new Pa}
+Qd.prototype.Mb=function(a,b,c,d,e){var f=a.path,h=K(this.la,f),i=h.k();i===k?(i=new Kd,Qa(h,i)):y(!i.f(),"We shouldn't be storing empty QueryMaps");var m=a.La();if(i.contains(m))a=i.get(m),Ad(a,b,c,d,e);else{var n=this.g.ra.Q(f),n=a="default"===a.La()?new Fd(a,n):new Nd(a,n);if(Md(i)||Rd(h))i.add(m,n),i.S||(i.S=n.I.path);else{var p,q;i.f()||(p=i.toString(),q=i.Za());i.add(m,n);i.S||(i.S=n.I.path);i.setActive(Sd(this,i));p&&q&&id(this.u,i.path(),p,q)}Md(i)&&Sa(h,function(a){if(a=a.k()){a.xa&&a.xa();
+a.xa=k}});Ad(a,b,c,d,e);(b=(b=Ta(K(this.la,f),function(a){var b;if(b=a.k())if(b=a.k().defaultView())b=a.k().defaultView().pb;if(b)return j},j))||this.u===k&&!T(this.g,f).f())&&Ed(a)}a.Eb()};function Td(a,b,c,d,e){var f=a.get(b),h;if(h=f){h=l;for(var i=f.na.length-1;0<=i;i--){var m=f.na[i];if((!c||m.type===c)&&(!d||m.X===d)&&(!e||m.T===e))if(f.na.splice(i,1),h=j,c&&d)break}h=h&&!(0<f.na.length)}(c=h)&&a.remove(b);return c}
+Qd.prototype.fc=function(a,b,c,d){var e=K(this.la,a.path).k();return e===k?k:Ud(this,e,a,b,c,d)};
+function Ud(a,b,c,d,e,f){var h=b.path(),h=K(a.la,h),c=c?c.La():k,i=[];c&&"default"!==c?Td(b,c,d,e,f)&&i.push(c):vb(b.keys(),function(a){Td(b,a,d,e,f)&&i.push(a)});b.f()&&Qa(h,k);c=Rd(h);if(0<i.length&&!c){for(var m=h,n=h.parent(),c=l;!c&&n;){var p=n.k();if(p){y(!Md(p));var q=m.name(),r=l;Ec(p,function(a,b){r=b.Cc(q)||r});r&&(c=j)}m=n;n=n.parent()}m=k;if(!Md(b)){n=b.xa;b.xa=k;var x=[],P=function(b){var c=b.k();if(c&&Ld(c))x.push(c.path()),c.xa==k&&c.setActive(Sd(a,c));else{if(c){c.xa!=k||c.setActive(Sd(a,
+c));var d={};Ec(c,function(a,b){b.i.w(function(a){C(d,a)||(d[a]=j,a=c.path().F(a),x.push(a))})})}b.w(P)}};P(h);m=x;n&&n()}return c?k:m}return k}function Vd(a,b,c){Sa(K(a.la,b),function(a){(a=a.k())&&Ec(a,function(a,b){Ed(b)})},c,j)}
+function W(a,b,c){function d(a){do{if(h[a.toString()])return j;a=a.parent()}while(a!==k);return l}var e=a.Vb,f=a.g.ra;a.Vb=f;for(var h={},i=0;i<c.length;i++)h[c[i].toString()]=j;Hd(e,f,b,a.la,function(c,e,f){if(b.contains(c)){var h=d(c);h&&Vd(a,c,l);a.cc(c,e,f);h&&Vd(a,c,j)}else a.cc(c,e,f)});d(b)&&Vd(a,b,j);Wd(a,b)}function Wd(a,b){var c=K(a.la,b);Sa(c,function(a){(a=a.k())&&Ec(a,function(a,b){b.Eb()})},j,j);Ta(c,function(a){(a=a.k())&&Ec(a,function(a,b){b.Eb()})},l)}
+Qd.prototype.cc=function(a,b,c){a=K(this.la,a).k();a!==k&&Ec(a,function(a,e){e.cc(b,c)})};function Rd(a){return Ta(a,function(a){return a.k()&&Md(a.k())})}
+function Sd(a,b){if(a.u){var c=a.u,d=b.path(),e=b.toString(),f=b.Za(),h,i=b.keys(),m=Ld(b),n=a.u,p=function(c){if("ok"!==c){var d="Unknown Error";"too_big"===c?d="The data requested exceeds the maximum size that can be accessed with a single request.":"permission_denied"==c?d="Client doesn't have permission to access the desired data.":"unavailable"==c&&(d="The service is unavailable");var e=Error(c+": "+d);e.code=c.toUpperCase();M("on() or once() for "+b.path().toString()+" failed: "+e.toString());
+b&&(Ec(b,function(a,b){for(var c=0;c<b.na.length;c++){var d=b.na[c];d.cancel&&(d.T?v(d.cancel,d.T):d.cancel)(e)}}),Ud(a,b))}else h||(m?Vd(a,b.path(),j):vb(i,function(a){(a=b.get(a))&&Ed(a)}),Wd(a,b.path()))},q=b.toString(),r=b.path().toString();n.ga[r]=n.ga[r]||{};y(!n.ga[r][q],"listen() called twice for same path/queryId.");n.ga[r][q]={Za:b.Za(),C:p};n.P&&fd(n,r,q,b.Za(),p);return function(){h=j;id(c,d,e,f)}}return da}
+Qd.prototype.lb=function(a,b,c,d){var e={};Ec(b,function(b,h){var i=h.lb(a,c,d);cc(i,function(a,b){e[b]=3===a?3:(wa(e,b)||a)===a?a:3})});c.M()||c.w(function(a){C(e,a)||(e[a]=4)});return e};function Xd(a,b,c,d,e){var f=b.path(),b=a.lb(f,b,d,e),h=N,i=[];cc(b,function(b,n){var p=new J(n);3===b||1===b?h=h.H(n,d.Q(p)):(2===b&&i.push({path:f.F(n),pa:N}),i=i.concat(Yd(a,d.Q(p),K(c,p),e)))});return[{path:f,pa:h}].concat(i)}
+function Zd(a,b,c,d){var e;a:{var f=K(a.la,b);e=f.parent();for(var h=[];e!==k;){var i=e.k();if(i!==k){if(Ld(i)){e=[{path:b,pa:c}];break a}i=a.lb(b,i,c,d);f=wa(i,f.name());if(3===f||1===f){e=[{path:b,pa:c}];break a}2===f&&h.push({path:b,pa:N})}f=e;e=e.parent()}e=h}if(1==e.length&&(!e[0].pa.f()||c.f()))return e;h=K(a.la,b);f=h.k();f!==k?Ld(f)?e.push({path:b,pa:c}):e=e.concat(Xd(a,f,h,c,d)):e=e.concat(Yd(a,c,h,d));return e}
+function Yd(a,b,c,d){var e=c.k();if(e!==k)return Ld(e)?[{path:c.path(),pa:b}]:Xd(a,e,c,b,d);var f=[];c.w(function(c){var e=b.M()?N:b.L(c.name()),c=Yd(a,e,c,d);f=f.concat(c)});return f};function $d(a,b){if(!a||"object"!==typeof a)return a;y(".sv"in a,"Unexpected leaf node or priority contents");return b[a[".sv"]]}function ae(a,b){var c=$d(a.j(),b),d;if(a.M()){var e=$d(a.k(),b);return e!==a.k()||c!==a.j()?new gc(e,c):a}d=a;c!==a.j()&&(d=d.Ga(c));a.w(function(a,c){var e=ae(c,b);e!==c&&(d=d.H(a,e))});return d};function be(a){this.J=a;this.$=Cc(a);this.u=new bd(this.J,v(this.Yb,this),v(this.Wb,this),v(this.vb,this),v(this.Kc,this),v(this.Bc,this));var b=v(function(){return new zc(this.$,this.u)},this),a=a.toString();Bc[a]||(Bc[a]=b());this.qd=Bc[a];this.eb=new Pa;this.fb=new rd;this.g=new sd;this.G=new Qd(this.u,this.g.ma);this.Dc=new rd;this.Ec=new Qd(k,this.Dc);ce(this,"connected",l);ce(this,"authenticated",l);this.R=new nd;this.wc=0}s=be.prototype;
+s.toString=function(){return(this.J.hc?"https://":"http://")+this.J.host};s.name=function(){return this.J.Sb};function de(a){a=T(a.Dc,new J(".info/serverTimeOffset")).V()||0;return(new Date).getTime()+a}function ee(a){a=a={timestamp:de(a)};a.timestamp=a.timestamp||(new Date).getTime();return a}
+s.Yb=function(a,b,c){this.wc++;var d,e,f=[];9<=a.length&&a.lastIndexOf(".priority")===a.length-9?(d=new J(a.substring(0,a.length-9)),e=T(this.g.sa,d).Ga(b),f.push(d)):c?(d=new J(a),e=T(this.g.sa,d),cc(b,function(a,b){var c=new J(b);".priority"===b?e=e.Ga(a):(e=e.ya(c,Q(a)),f.push(d.F(b)))})):(d=new J(a),e=Q(b),f.push(d));a=Zd(this.G,d,e,this.g.O);b=l;for(c=0;c<a.length;++c){var h=a[c],i=this.g,m=h.path;U(i.sa,m,h.pa);b=td(i,m)||b}b&&(d=fe(this,d));W(this.G,d,f)};
+s.Wb=function(a){ce(this,"connected",a);if(a===l){this.e("onDisconnectEvents");var b=this,c=[],d=ee(this),a=qd,e=new nd;qd(this.R,new J(""),function(a,b){od(e,a,ae(b,d))});a(e,new J(""),function(a,d){var e=Zd(b.G,a,d,b.g.O);c.push.apply(c,b.g.set(a,e));e=ge(b,a);fe(b,e);W(b.G,e,[a])});vd(this.g,c);this.R=new nd}};s.Kc=function(a){var b=this;bc(a,function(a,d){ce(b,d,a)})};s.Bc=function(a){a=new J(a);return T(this.g.sa,a).hash()};s.vb=function(a){ce(this,"authenticated",a)};
+function ce(a,b,c){b=new J("/.info/"+b);U(a.Dc,b,Q(c));W(a.Ec,b,[b])}s.hb=function(a,b,c){"firebaseio-demo.com"===this.J.domain&&M("FirebaseRef.auth() not supported on demo (*.firebaseio-demo.com) Firebases. Please use on production (*.firebaseio.com) Firebases only.");this.u.hb(a,function(a,c){X(b,a,c)},function(a,b){M("auth() was canceled: "+b);if(c){var f=Error(b);f.code=a.toUpperCase();c(f)}})};s.Kb=function(a){this.u.Kb(function(b,c){X(a,b,c)})};
+s.bb=function(a,b,c,d){this.e("set",{path:a.toString(),value:b,ia:c});var e=ee(this),b=Q(b,c),e=ae(b,e),e=Zd(this.G,a,e,this.g.O),f=this.g.set(a,e),h=this;this.u.put(a.toString(),b.V(j),function(b,c){"ok"!==b&&M("set at "+a+" failed: "+b);vd(h.g,f);td(h.g,a);var e=fe(h,a);W(h.G,e,[]);X(d,b,c)});e=ge(this,a);fe(this,e);W(this.G,e,[a])};
+s.update=function(a,b,c){this.e("update",{path:a.toString(),value:b});var d=T(this.g.ma,a),e=j,f=[],h=ee(this),i=[],m;for(m in b){var e=l,n=Q(b[m]),n=ae(n,h),d=d.H(m,n),p=a.F(m);f.push(p);n=Zd(this.G,p,n,this.g.O);i=i.concat(this.g.set(a,n))}if(e)L("update() called with empty data.  Don't do anything."),X(c,"ok");else{var q=this;ld(this.u,"m",a.toString(),b,function(b,d){y("ok"===b||"permission_denied"===b,"merge at "+a+" failed.");"ok"!==b&&M("update at "+a+" failed: "+b);vd(q.g,i);td(q.g,a);var e=
+fe(q,a);W(q.G,e,[]);X(c,b,d)},aa);b=ge(this,a);fe(this,b);W(q.G,b,f)}};s.Pc=function(a,b,c){this.e("setPriority",{path:a.toString(),ia:b});var d=ee(this),d=$d(b,d),d=T(this.g.O,a).Ga(d),d=Zd(this.G,a,d,this.g.O),e=this.g.set(a,d),f=this;this.u.put(a.toString()+"/.priority",b,function(b,d){"permission_denied"===b&&M("setPriority at "+a+" failed: "+b);vd(f.g,e);td(f.g,a);var m=fe(f,a);W(f.G,m,[]);X(c,b,d)});b=fe(this,a);W(f.G,b,[])};
+s.Hc=function(a,b){var c=this;this.u.Hc(a.toString(),function(d,e){"ok"===d&&pd(c.R,a);X(b,d,e)})};function he(a,b,c,d){var e=Q(c);jd(a.u,b.toString(),e.V(j),function(c,h){"ok"===c&&od(a.R,b,e);X(d,c,h)})}function ie(a){xc(a.$,"deprecated_on_disconnect");a.qd.Sc.deprecated_on_disconnect=j}s.Mb=function(a,b,c,d,e){".info"===E(a.path)?this.Ec.Mb(a,b,c,d,e):this.G.Mb(a,b,c,d,e)};
+s.fc=function(a,b,c,d){if(".info"===E(a.path))this.Ec.fc(a,b,c,d);else{b=this.G.fc(a,b,c,d);if(c=b!==k){for(var c=this.g,d=a.path,e=[],f=0;f<b.length;++f)e[f]=T(c.sa,b[f]);U(c.sa,d,N);for(f=0;f<b.length;++f)U(c.sa,b[f],e[f]);c=td(c,d)}c&&(y(this.g.ma.ra===this.G.Vb,"We should have raised any outstanding events by now.  Else, we'll blow them away."),U(this.g.ma,a.path,T(this.g.O,a.path)),this.G.Vb=this.g.ma.ra)}};s.Ia=function(){this.u.Ia()};s.ab=function(){this.u.ab()};
+s.Qc=function(a){if("undefined"!==typeof console){a?(this.kc||(this.kc=new yc(this.$)),a=this.kc.get()):a=this.$.get();var b=a,c=[],d=0,e;for(e in b)c[d++]=e;var f=function(a,b){return Math.max(b.length,a)};if(c.reduce)e=c.reduce(f,0);else{var h=0;vb(c,function(a){h=f.call(aa,h,a)});e=h}for(var i in a){b=a[i];for(c=i.length;c<e+2;c++)i+=" ";console.log(i+b)}}};s.Rc=function(a){xc(this.$,a);this.qd.Sc[a]=j};s.e=function(){L("r:"+this.u.id+":",arguments)};
+function X(a,b,c){a&&fc(function(){if("ok"==b)a(k,c);else{var d=(b||"error").toUpperCase(),e=d;c&&(e+=": "+c);e=Error(e);e.code=d;a(e)}})};function je(a,b){var c=b||a.eb;b||ke(a,c);if(c.k()!==k){var d=le(a,c);y(0<d.length);if(xb(d,function(a){return 1===a.status})){for(var e=c.path(),f=0;f<d.length;f++)y(1===d[f].status,"tryToSendTransactionQueue_: items in queue should all be run."),d[f].status=2,d[f].nd++;c=T(a.g.O,e).hash();U(a.g.O,e,T(a.g.ma,e));for(var h=T(a.fb,e).V(j),i=Nb(),m={},n=0;n<d.length;n++)d[n].qc&&(m[d[n].path.toString()]=d[n].path);var p=[],q;for(q in m)p.push(m[q]);for(f=0;f<p.length;f++)Qa(K(a.g.Bb,p[f]),i);a.u.put(e.toString(),
+h,function(b){a.e("transaction put response",{path:e.toString(),status:b});for(f=0;f<p.length;f++){var c=K(a.g.Bb,p[f]),h=c.k();y(h!==k,"sendTransactionQueue_: pendingPut should not be null.");h===i&&(Qa(c,k),U(a.g.O,p[f],T(a.g.sa,p[f])))}if("ok"===b){b=[];for(f=0;f<d.length;f++)d[f].status=3,d[f].C&&(c=me(a,d[f].path),b.push(v(d[f].C,k,k,j,c))),d[f].nc();ke(a,K(a.eb,e));je(a);for(f=0;f<b.length;f++)fc(b[f])}else{if("datastale"===b)for(f=0;f<d.length;f++)d[f].status=4===d[f].status?5:1;else{M("transaction at "+
+e+" failed: "+b);for(f=0;f<d.length;f++)d[f].status=5,d[f].oc=b}b=fe(a,e);W(a.G,b,[e])}},c)}}else c.nb()&&c.w(function(b){je(a,b)})}
+function fe(a,b){var c=ne(a,b),d=c.path(),c=le(a,c);U(a.g.ma,d,T(a.g.O,d));U(a.fb,d,T(a.g.O,d));if(0!==c.length){for(var e=T(a.g.ma,d),f=e,h=[],i=0;i<c.length;i++){var m=Na(d,c[i].path),n=l,p;y(m!==k,"rerunTransactionsUnderNode_: relativePath should not be null.");if(5===c[i].status)n=j,p=c[i].oc;else if(1===c[i].status)if(25<=c[i].nd)n=j,p="maxretry";else{var q=e.Q(m),r=c[i].update(q.V());if(t(r)){Ba("transaction failed: Data returned ",r);var x=Q(r);"object"===typeof r&&r!=k&&C(r,".priority")||
+(x=x.Ga(q.j()));e=e.ya(m,x);c[i].qc&&(f=f.ya(m,x))}else n=j,p="nodata"}n&&(c[i].status=3,setTimeout(c[i].nc,0),c[i].C&&(n=new H(a,c[i].path),m=new R(e.Q(m),n),"nodata"===p?h.push(v(c[i].C,k,k,l,m)):h.push(v(c[i].C,k,Error(p),l,m))))}U(a.fb,d,e);U(a.g.ma,d,f);ke(a,a.eb);for(i=0;i<h.length;i++)fc(h[i]);je(a)}return d}function ne(a,b){for(var c,d=a.eb;(c=E(b))!==k&&d.k()===k;)d=K(d,c),b=Ma(b);return d}function le(a,b){var c=[];oe(a,b,c);c.sort(function(a,b){return a.hd-b.hd});return c}
+function oe(a,b,c){var d=b.k();if(d!==k)for(var e=0;e<d.length;e++)c.push(d[e]);b.w(function(b){oe(a,b,c)})}function ke(a,b){var c=b.k();if(c){for(var d=0,e=0;e<c.length;e++)3!==c[e].status&&(c[d]=c[e],d++);c.length=d;Qa(b,0<c.length?c:k)}b.w(function(b){ke(a,b)})}function ge(a,b){var c=ne(a,b).path(),d=K(a.eb,b);Ta(d,function(a){pe(a)});pe(d);Sa(d,function(a){pe(a)});return c}
+function pe(a){var b=a.k();if(b!==k){for(var c=[],d=-1,e=0;e<b.length;e++)4!==b[e].status&&(2===b[e].status?(y(d===e-1,"All SENT items should be at beginning of queue."),d=e,b[e].status=4,b[e].oc="set"):(y(1===b[e].status),b[e].nc(),b[e].C&&c.push(v(b[e].C,k,Error("set"),l,k))));-1===d?Qa(a,k):b.length=d+1;for(e=0;e<c.length;e++)fc(c[e])}}function me(a,b){var c=new H(a,b);return new R(T(a.fb,b),c)};function Y(){this.$a={}}ea(Y);Y.prototype.Ia=function(){for(var a in this.$a)this.$a[a].Ia()};Y.prototype.interrupt=Y.prototype.Ia;Y.prototype.ab=function(){for(var a in this.$a)this.$a[a].ab()};Y.prototype.resume=Y.prototype.ab;var Z={Dd:function(a){var b=O.prototype.hash;O.prototype.hash=a;var c=gc.prototype.hash;gc.prototype.hash=a;return function(){O.prototype.hash=b;gc.prototype.hash=c}}};Z.hijackHash=Z.Dd;Z.La=function(a){return a.La()};Z.queryIdentifier=Z.La;Z.Fd=function(a){return a.n.u.ga};Z.listens=Z.Fd;Z.Nd=function(a){return a.n.u.ja};Z.refConnection=Z.Nd;Z.sd=bd;Z.DataConnection=Z.sd;bd.prototype.sendRequest=bd.prototype.Fa;bd.prototype.interrupt=bd.prototype.Ia;Z.td=Uc;Z.RealTimeConnection=Z.td;
+Uc.prototype.sendRequest=Uc.prototype.od;Uc.prototype.close=Uc.prototype.close;Z.rd=pb;Z.ConnectionTarget=Z.rd;Z.Bd=function(){Ic=Oc=j};Z.forceLongPolling=Z.Bd;Z.Cd=function(){Jc=j};Z.forceWebSockets=Z.Cd;Z.Td=function(a,b){a.n.u.Oc=b};Z.setSecurityDebugCallback=Z.Td;Z.Qc=function(a,b){a.n.Qc(b)};Z.stats=Z.Qc;Z.Rc=function(a,b){a.n.Rc(b)};Z.statsIncrementCounter=Z.Rc;Z.wc=function(a){return a.n.wc};function $(a,b,c){this.Fb=a;this.S=b;this.Da=c}$.prototype.cancel=function(a){z("Firebase.onDisconnect().cancel",0,1,arguments.length);B("Firebase.onDisconnect().cancel",1,a,j);this.Fb.Hc(this.S,a)};$.prototype.cancel=$.prototype.cancel;$.prototype.remove=function(a){z("Firebase.onDisconnect().remove",0,1,arguments.length);D("Firebase.onDisconnect().remove",this.S);B("Firebase.onDisconnect().remove",1,a,j);he(this.Fb,this.S,k,a)};$.prototype.remove=$.prototype.remove;
+$.prototype.set=function(a,b){z("Firebase.onDisconnect().set",1,2,arguments.length);D("Firebase.onDisconnect().set",this.S);Aa("Firebase.onDisconnect().set",a,l);B("Firebase.onDisconnect().set",2,b,j);he(this.Fb,this.S,a,b)};$.prototype.set=$.prototype.set;
+$.prototype.bb=function(a,b,c){z("Firebase.onDisconnect().setWithPriority",2,3,arguments.length);D("Firebase.onDisconnect().setWithPriority",this.S);Aa("Firebase.onDisconnect().setWithPriority",a,l);Fa("Firebase.onDisconnect().setWithPriority",2,b,l);B("Firebase.onDisconnect().setWithPriority",3,c,j);(".length"===this.Da||".keys"===this.Da)&&g("Firebase.onDisconnect().setWithPriority failed: "+this.Da+" is a read-only object.");var d=this.Fb,e=this.S,f=Q(a,b);jd(d.u,e.toString(),f.V(j),function(a,
+b){"ok"===a&&od(d.R,e,f);X(c,a,b)})};$.prototype.setWithPriority=$.prototype.bb;
+$.prototype.update=function(a,b){z("Firebase.onDisconnect().update",1,2,arguments.length);D("Firebase.onDisconnect().update",this.S);Ea("Firebase.onDisconnect().update",a);B("Firebase.onDisconnect().update",2,b,j);var c=this.Fb,d=this.S,e=j,f;for(f in a)e=l;if(e)L("onDisconnect().update() called with empty data.  Don't do anything."),X(b,"ok");else{e=c.u;f=d.toString();var h=function(e,f){if("ok"===e)for(var h in a){var p=Q(a[h]);od(c.R,d.F(h),p)}X(b,e,f)};e.P?kd(e,"om",f,a,h):e.wb.push({Mc:f,action:"om",
+data:a,C:h})}};$.prototype.update=$.prototype.update;var qe,re=0,se=[];qe=function(a){var b=a===re;re=a;for(var c=Array(8),d=7;0<=d;d--)c[d]="-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(a%64),a=Math.floor(a/64);y(0===a);a=c.join("");if(b){for(d=11;0<=d&&63===se[d];d--)se[d]=0;se[d]++}else for(d=0;12>d;d++)se[d]=Math.floor(64*Math.random());for(d=0;12>d;d++)a+="-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz".charAt(se[d]);y(20===a.length,"NextPushId: Length should be 20.");return a};function H(){var a,b,c;if(arguments[0]instanceof be)c=arguments[0],a=arguments[1];else{z("new Firebase",1,2,arguments.length);var d=arguments[0];b=a="";var e=j,f="";if(u(d)){var h=d.indexOf("//");if(0<=h)var i=d.substring(0,h-1),d=d.substring(h+2);h=d.indexOf("/");-1===h&&(h=d.length);a=d.substring(0,h);var d=d.substring(h+1),m=a.split(".");if(3==m.length){h=m[2].indexOf(":");e=0<=h?"https"===i:j;if("firebase"===m[1])Wb(a+" is no longer supported. Please use <YOUR FIREBASE>.firebaseio.com instead");
+else{b=m[0];f="";d=("/"+d).split("/");for(i=0;i<d.length;i++)if(0<d[i].length){h=d[i];try{h=decodeURIComponent(h.replace(/\+/g," "))}catch(n){}f+="/"+h}}b=b.toLowerCase()}else b=k}e||"undefined"!==typeof window&&(window.location&&window.location.protocol&&-1!==window.location.protocol.indexOf("https:"))&&M("Insecure Firebase access from a secure page. Please use https in calls to new Firebase().");a=new pb(a,e,b);b=new J(f);e=b.toString();if(!(d=!u(a.host)))if(!(d=0===a.host.length))if(!(d=!za(a.Sb)))if(d=
+0!==e.length)e&&(e=e.replace(/^\/*\.info(\/|$)/,"/")),d=!(u(e)&&0!==e.length&&!ya.test(e));d&&g(Error(A("new Firebase",1,l)+'must be a valid firebase URL and the path can\'t contain ".", "#", "$", "[", or "]".'));arguments[1]?arguments[1]instanceof Y?c=arguments[1]:g(Error("Expected a valid Firebase.Context for second argument to new Firebase()")):c=Y.mb();e=a.toString();d=wa(c.$a,e);d||(d=new be(a),c.$a[e]=d);c=d;a=b}F.call(this,c,a)}la(H,F);var te=H,ue=["Firebase"],ve=ca;
+!(ue[0]in ve)&&ve.execScript&&ve.execScript("var "+ue[0]);for(var we;ue.length&&(we=ue.shift());)!ue.length&&t(te)?ve[we]=te:ve=ve[we]?ve[we]:ve[we]={};H.prototype.name=function(){z("Firebase.name",0,0,arguments.length);return this.path.f()?k:this.path.Z<this.path.m.length?this.path.m[this.path.m.length-1]:k};H.prototype.name=H.prototype.name;
+H.prototype.F=function(a){z("Firebase.child",1,1,arguments.length);if(ha(a))a=String(a);else if(!(a instanceof J))if(E(this.path)===k){var b=a;b&&(b=b.replace(/^\/*\.info(\/|$)/,"/"));Ia("Firebase.child",b)}else Ia("Firebase.child",a);return new H(this.n,this.path.F(a))};H.prototype.child=H.prototype.F;H.prototype.parent=function(){z("Firebase.parent",0,0,arguments.length);var a=this.path.parent();return a===k?k:new H(this.n,a)};H.prototype.parent=H.prototype.parent;
+H.prototype.root=function(){z("Firebase.ref",0,0,arguments.length);for(var a=this;a.parent()!==k;)a=a.parent();return a};H.prototype.root=H.prototype.root;H.prototype.toString=function(){z("Firebase.toString",0,0,arguments.length);var a;if(this.parent()===k)a=this.n.toString();else{a=this.parent().toString()+"/";var b=this.name();a+=encodeURIComponent(String(b))}return a};H.prototype.toString=H.prototype.toString;
+H.prototype.set=function(a,b){z("Firebase.set",1,2,arguments.length);D("Firebase.set",this.path);Aa("Firebase.set",a,l);B("Firebase.set",2,b,j);return this.n.bb(this.path,a,k,b)};H.prototype.set=H.prototype.set;H.prototype.update=function(a,b){z("Firebase.update",1,2,arguments.length);D("Firebase.update",this.path);Ea("Firebase.update",a);B("Firebase.update",2,b,j);C(a,".priority")&&g(Error("update() does not currently support updating .priority."));return this.n.update(this.path,a,b)};
+H.prototype.update=H.prototype.update;H.prototype.bb=function(a,b,c){z("Firebase.setWithPriority",2,3,arguments.length);D("Firebase.setWithPriority",this.path);Aa("Firebase.setWithPriority",a,l);Fa("Firebase.setWithPriority",2,b,l);B("Firebase.setWithPriority",3,c,j);(".length"===this.name()||".keys"===this.name())&&g("Firebase.setWithPriority failed: "+this.name()+" is a read-only object.");return this.n.bb(this.path,a,b,c)};H.prototype.setWithPriority=H.prototype.bb;
+H.prototype.remove=function(a){z("Firebase.remove",0,1,arguments.length);D("Firebase.remove",this.path);B("Firebase.remove",1,a,j);this.set(k,a)};H.prototype.remove=H.prototype.remove;
+H.prototype.transaction=function(a,b,c){function d(){}z("Firebase.transaction",1,3,arguments.length);D("Firebase.transaction",this.path);B("Firebase.transaction",1,a,l);B("Firebase.transaction",2,b,j);t(c)&&"boolean"!=typeof c&&g(Error(A("Firebase.transaction",3,j)+"must be a boolean."));(".length"===this.name()||".keys"===this.name())&&g("Firebase.transaction failed: "+this.name()+" is a read-only object.");"undefined"===typeof c&&(c=j);var e=this.n,f=this.path,h=c;e.e("transaction on "+f);var i=
+new H(e,f);i.Xa("value",d);var h={path:f,update:a,C:b,status:k,hd:Nb(),qc:h,nd:0,nc:function(){i.ub("value",d)},oc:k},m=h.update(T(e.fb,f).V());if(t(m)){Ba("transaction failed: Data returned ",m);h.status=1;var n=K(e.eb,f),p=n.k()||[];p.push(h);Qa(n,p);p="object"===typeof m&&m!==k&&C(m,".priority")?m[".priority"]:T(e.g.O,f).j();n=ee(e);m=Q(m,p);m=ae(m,n);U(e.fb,f,m);h.qc&&(U(e.g.ma,f,m),W(e.G,f,[f]));je(e)}else h.nc(),h.C&&(e=me(e,f),h.C(k,l,e))};H.prototype.transaction=H.prototype.transaction;
+H.prototype.Pc=function(a,b){z("Firebase.setPriority",1,2,arguments.length);D("Firebase.setPriority",this.path);Fa("Firebase.setPriority",1,a,l);B("Firebase.setPriority",2,b,j);this.n.Pc(this.path,a,b)};H.prototype.setPriority=H.prototype.Pc;H.prototype.push=function(a,b){z("Firebase.push",0,2,arguments.length);D("Firebase.push",this.path);Aa("Firebase.push",a,j);B("Firebase.push",2,b,j);var c=de(this.n),c=qe(c),c=this.F(c);"undefined"!==typeof a&&a!==k&&c.set(a,b);return c};H.prototype.push=H.prototype.push;
+H.prototype.ha=function(){return new $(this.n,this.path,this.name())};H.prototype.onDisconnect=H.prototype.ha;H.prototype.Od=function(){M("FirebaseRef.removeOnDisconnect() being deprecated. Please use FirebaseRef.onDisconnect().remove() instead.");this.ha().remove();ie(this.n)};H.prototype.removeOnDisconnect=H.prototype.Od;H.prototype.Sd=function(a){M("FirebaseRef.setOnDisconnect(value) being deprecated. Please use FirebaseRef.onDisconnect().set(value) instead.");this.ha().set(a);ie(this.n)};
+H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Firebase.auth",1,3,arguments.length);u(a)||g(Error(A("Firebase.auth",1,l)+"must be a valid credential (a string)."));B("Firebase.auth",2,b,j);B("Firebase.auth",3,b,j);this.n.hb(a,b,c)};H.prototype.auth=H.prototype.hb;H.prototype.Kb=function(a){z("Firebase.unauth",0,1,arguments.length);B("Firebase.unauth",1,a,j);this.n.Kb(a)};H.prototype.unauth=H.prototype.Kb;
+H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
+H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
+
+},{}]},{},[1,2,3,4,5,6,7,8]);
