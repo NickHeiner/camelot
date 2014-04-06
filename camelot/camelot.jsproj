@@ -58,6 +58,7 @@
     <Content Include="build\main.css" />
     <Content Include="js\services\auth.js" />
     <Content Include="js\services\bind-model.js" />
+    <Content Include="vendor\angular-winjs.js" />
     <Content Include="vendor\angularfire.js" />
     <Content Include="vendor\firebase.js" />
     <None Include="camelot_StoreKey.pfx" />

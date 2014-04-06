@@ -10,7 +10,7 @@ module.exports = angular.module('camelot', [
     'ngRoute', 
     'firebase'
 ]);
-},{"../vendor/angular":20,"../vendor/angular-route":19,"../vendor/angularfire":21,"../vendor/firebase":22,"./evil":6}],2:[function(require,module,exports){
+},{"../vendor/angular":22,"../vendor/angular-route":21,"../vendor/angularfire":23,"../vendor/firebase":24,"./evil":7}],2:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module');
@@ -29,7 +29,7 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel) {
     bindModel(['games'], $scope, 'games', _.constant([]));
 
 });
-},{"../angular-module":1,"lodash":18}],4:[function(require,module,exports){
+},{"../angular-module":1,"lodash":20}],4:[function(require,module,exports){
 'use strict';
 
 // For an introduction to the Blank template, see the following documentation:
@@ -80,6 +80,36 @@ ngModule.directive('johnsonBox', function () {
     };
 });
 },{"../angular-module":1}],6:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    guid = require('guid');
+
+angularModule.directive('searchBox', function () {
+
+    function sanitizeGuid(rawGuid) {
+        return rawGuid.replace('-', '');
+    }
+
+    return {
+        templateUrl: 'templates/search-box.html',
+        link: function ($scope) {
+
+            WinJS.UI.processAll();
+
+            //var searchNamespace = sanitizeGuid(guid.raw());
+
+            //WinJS.Namespace.define(searchNamespace, {
+            //    querySubmittedHandler: WinJS.UI.eventHandler(querySubmittedHandler)
+            //});
+
+            //function querySubmittedHandler() {
+
+            //}
+
+            //$scope.onQuerySubmittedFunctionName = searchNamespace + '.querySubmittedHandler';
+        }
+    };
+});
+},{"../angular-module":1,"guid":18}],7:[function(require,module,exports){
 var _ = require('lodash');
 
 var $ = window.jQuery = require('jquery');
@@ -116,7 +146,7 @@ methodsToOverride.forEach(function (methodName) {
 
     });
 
-},{"jquery":17,"lodash":18}],7:[function(require,module,exports){
+},{"jquery":19,"lodash":20}],8:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -137,13 +167,21 @@ ngModule.config(function ($routeProvider) {
         });
 
 });
-},{"../vendor/angular":20,"../vendor/angular-route":19,"./angular-module.js":1}],8:[function(require,module,exports){
+},{"../vendor/angular":22,"../vendor/angular-route":21,"./angular-module.js":1}],9:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module'),
     _ = require('lodash');
 
 ngModule.factory('auth', function ($q, $window, bindModel) {
+
+    function prepareWindowsLive() {
+        WL.init();
+
+        return $q.when(WL.login({
+            scope: 'wl.basic'
+        }));
+    }
 
     return function ($scope) {
 
@@ -161,36 +199,33 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
 
         $scope.getCurrentUser = getCurrentUser;
 
-        bindModel(['users'], $scope, 'users', _.constant({}));
+        var bindUsersModelPromise = bindModel(['users'], $scope, 'users', _.constant({}));
 
-        WL.init();
+        $q.all([bindUsersModelPromise, prepareWindowsLive()])
+            .then(function () {
 
-        $q.when(WL.login({
-            scope: 'wl.basic'
-        })).then(function () {
-
-            var updateUserNamePromise = $q.when(WL.api({
-                path: 'me',
-                method: 'GET'
-            })).then(function (response) {
-
-                $scope.currentUserId.id = response.id;
-
-                getCurrentUser().name = response.name;
-            });
-
-            return updateUserNamePromise.then(function () {
-                return $q.when(WL.api({
-                    path: 'me/picture',
+                var updateUserNamePromise = $q.when(WL.api({
+                    path: 'me',
                     method: 'GET'
                 })).then(function (response) {
-                    getCurrentUser().avatarUri = response.location;
+
+                    $scope.currentUserId.id = response.id;
+
+                    getCurrentUser().name = response.name;
+                });
+
+                return updateUserNamePromise.then(function () {
+                    return $q.when(WL.api({
+                        path: 'me/picture',
+                        method: 'GET'
+                    })).then(function (response) {
+                        getCurrentUser().avatarUri = response.location;
+                    });
                 });
             });
-        });
     };
 });
-},{"../angular-module":1,"lodash":18}],9:[function(require,module,exports){
+},{"../angular-module":1,"lodash":20}],10:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     url = require('url'),   
     path = require('path');
@@ -219,7 +254,7 @@ angularModule
             $firebase(firebaseRef).$bind($scope, scopeAttr, getDefault);
         };
 });
-},{"../angular-module":1,"path":11,"url":16}],10:[function(require,module,exports){
+},{"../angular-module":1,"path":12,"url":17}],11:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -281,7 +316,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -509,7 +544,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require("C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"))
-},{"C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":10}],12:[function(require,module,exports){
+},{"C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":11}],13:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -1020,7 +1055,7 @@ var substr = 'ab'.substr(-1) === 'b'
 }(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1106,7 +1141,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1193,13 +1228,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":13,"./encode":14}],16:[function(require,module,exports){
+},{"./decode":14,"./encode":15}],17:[function(require,module,exports){
 /*jshint strict:true node:true es5:true onevar:true laxcomma:true laxbreak:true eqeqeq:true immed:true latedef:true*/
 (function () {
   "use strict";
@@ -1832,7 +1867,72 @@ function parseHost(host) {
 
 }());
 
-},{"punycode":12,"querystring":15}],17:[function(require,module,exports){
+},{"punycode":13,"querystring":16}],18:[function(require,module,exports){
+(function () {
+  var validator = new RegExp("^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$", "i");
+
+  function gen(count) {
+    var out = "";
+    for (var i=0; i<count; i++) {
+      out += (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    }
+    return out;
+  }
+
+  function Guid(guid) {
+    if (!guid) throw new TypeError("Invalid argument; `value` has no value.");
+      
+    this.value = Guid.EMPTY;
+    
+    if (guid && guid instanceof Guid) {
+      this.value = guid.toString();
+
+    } else if (guid && Object.prototype.toString.call(guid) === "[object String]" && Guid.isGuid(guid)) {
+      this.value = guid;
+    }
+    
+    this.equals = function(other) {
+      // Comparing string `value` against provided `guid` will auto-call
+      // toString on `guid` for comparison
+      return Guid.isGuid(other) && this.value == other;
+    };
+
+    this.isEmpty = function() {
+      return this.value === Guid.EMPTY;
+    };
+    
+    this.toString = function() {
+      return this.value;
+    };
+    
+    this.toJSON = function() {
+      return this.value;
+    };
+  };
+
+  Guid.EMPTY = "00000000-0000-0000-0000-000000000000";
+
+  Guid.isGuid = function(value) {
+    return value && (value instanceof Guid || validator.test(value.toString()));
+  };
+
+  Guid.create = function() {
+    return new Guid([gen(2), gen(1), gen(1), gen(1), gen(3)].join("-"));
+  };
+
+  Guid.raw = function() {
+    return [gen(2), gen(1), gen(1), gen(1), gen(3)].join("-");
+  };
+
+  if(typeof module != 'undefined' && module.exports) {
+    module.exports = Guid;
+  }
+  else if (typeof window != 'undefined') {
+    window.Guid = Guid;
+  }
+})();
+
+},{}],19:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -10945,7 +11045,7 @@ return jQuery;
 
 }));
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -17734,7 +17834,7 @@ return jQuery;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],19:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -18663,7 +18763,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -40592,7 +40692,7 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 // AngularFire is an officially supported AngularJS binding for Firebase.
 // The bindings let you associate a Firebase URL with a model (or set of
 // models), and they will be transparently kept in sync across all clients
@@ -41613,7 +41713,7 @@ var styleDirective = valueFn({
 })();
 
 
-},{}],22:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 (function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
 function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -41762,4 +41862,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[1,2,3,4,5,6,7,8,9]);
+},{}]},{},[1,2,3,4,5,6,7,8,9,10]);

@@ -5,9 +5,9 @@
     <title>Camelot</title>
 
     <!-- WinJS references -->
-    <link href="//Microsoft.WinJS.1.0/css/ui-dark.css" rel="stylesheet" />
-    <script src="//Microsoft.WinJS.1.0/js/base.js"></script>
-    <script src="//Microsoft.WinJS.1.0/js/ui.js"></script>
+    <link href="//Microsoft.WinJS.2.0/css/ui-dark.css" rel="stylesheet" />
+    <script src="//Microsoft.WinJS.2.0/js/base.js"></script>
+    <script src="//Microsoft.WinJS.2.0/js/ui.js"></script>
     <script src="///LiveSDKHTML/js/wl.js"></script>
 
     <link href="/build/main.css" rel="stylesheet" />
@@ -19,6 +19,14 @@
         <h1 class="app-title">Camelot</h1>
         <div johnson-box user="getCurrentUser()" class="johnson-box"></div>
     </div>
+
+    <div data-win-control="WinJS.UI.DatePicker"></div>
+    <div data-win-control="WinJS.UI.TimePicker"></div>
+
+    <div data-win-control="WinJS.UI.Rating">
+    </div>
+
+    <div data-win-control="WinJS.UI.SearchBox"></div>
 
     <div ng-view></div>
 </body>
