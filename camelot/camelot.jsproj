@@ -56,6 +56,7 @@
     </AppxManifest>
     <Content Include="build\build.js" />
     <Content Include="build\main.css" />
+    <Content Include="js\services\auth.js" />
     <Content Include="js\services\bind-model.js" />
     <Content Include="vendor\angularfire.js" />
     <Content Include="vendor\firebase.js" />
