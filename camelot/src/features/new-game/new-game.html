@@ -1,1 +1,10 @@
-﻿<h1>New game</h1>
+﻿<h2>Pick a user to invite to a new game</h2>
+<h2><small>Only users who have logged into this app before will appear here.</small></h2>
+
+<div ng-hide="users.length">
+    <p>No one else has logged into this app.</p>
+</div>
+
+<div ng-repeat="user in users">
+    <p>{{user}}</p>
+</div>

@@ -17644,17 +17644,18 @@ ngModule.directive('johnsonBox', function () {
     };
 });
 },{"../../angular-module":10,"./johnson-box.html":16}],18:[function(require,module,exports){
-module.exports = "﻿<h1>New game</h1>";
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-hide=\"users.length\">\r\n    <p>No one else has logged into this app.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"user in users\">\r\n    <p>{{user}}</p>\r\n</div>";
 
 },{}],19:[function(require,module,exports){
-var ngModule = require('../../angular-module');
+var ngModule = require('../../angular-module'),
+    _ = require('lodash');
 
-ngModule.controller('NewGameCtrl', function ($scope, auth) {
+ngModule.controller('NewGameCtrl', function ($scope, bindModel) {
 
-    
+    bindModel(['users'], $scope, 'users', _.constant([]));
 
 });
-},{"../../angular-module":10}],20:[function(require,module,exports){
+},{"../../angular-module":10,"lodash":9}],20:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
