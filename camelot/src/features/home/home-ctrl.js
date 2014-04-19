@@ -6,6 +6,6 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
 
     bindModel(['games'], $scope, 'games', _.constant([]));
 
-    $scope.goToNewGame = goToRoute.goToNewGame();
+    $scope.goToNewGame = goToRoute.goToNewGame;
 
 });
