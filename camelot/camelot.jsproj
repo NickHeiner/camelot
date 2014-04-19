@@ -67,6 +67,8 @@
     <Content Include="src\features\home\home.html" />
     <Content Include="src\features\johnson-box\johnson-box.html" />
     <Content Include="src\features\johnson-box\johnson-box.js" />
+    <Content Include="src\features\new-game\new-game.html" />
+    <Content Include="src\features\new-game\new-game.js" />
     <Content Include="src\route.js" />
     <Content Include="src\services\auth.js" />
     <Content Include="src\services\bind-model.js" />

@@ -1,20 +1,31 @@
 ﻿require('../vendor/angular');
 require('../vendor/angular-route');
 
-var ngModule = require('./angular-module.js');
+var ngModule = require('./angular-module.js'),
+    paths = {
+        newGame: '/new-game',
+        game: '/game',
+        home: '/home'
+    };
 
 ngModule.config(function ($routeProvider) {
 
     $routeProvider
-        .when('/game', {
+        .when(paths.game, {
             template: require('../templates/game.html')
         })
-        .when('/home', {
+        .when(paths.home, {
             template: require('./features/home/home.html'),
             controller: 'HomeCtrl'
         })
+        .when(paths.newGame, {
+            template: require('./features/new-game/new-game.html'),
+            controller: 'NewGameCtrl'
+        })
         .otherwise({
-            redirectTo: '/home'
+            redirectTo: paths.home
         });
 
 });
+
+module.exports = paths;
