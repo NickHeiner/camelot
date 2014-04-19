@@ -5,7 +5,7 @@
   "main": "chivarly.js",
   "scripts": {
     "test": "grunt test",
-	"start": "grunt build"
+    "start": "grunt build"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
     "lodash": "^2.4.1",
     "zurb-foundation": "https://github.com/zurb/foundation/tarball/v5.2.1",
     "jquery": "^2.1.0",
-    "guid": "0.0.12"
+    "guid": "0.0.12",
+    "underscore.string": "^2.3.3"
   }
 }

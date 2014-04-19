@@ -5,7 +5,7 @@
     <p>No one is available to play with.</p>
 </div>
 
-<div ng-repeat="user in getPossibleOpponents()" ng-click="startNewGameWith(user)">
+<div ng-repeat="(id, user) in getPossibleOpponents()" ng-click="startNewGameWith(id)">
     <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->
     <img ng-src="{{user.avatarUri}}" />
     {{user.name}}

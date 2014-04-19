@@ -5,7 +5,8 @@ var ngModule = require('./angular-module.js'),
     paths = {
         newGame: '/new-game',
         game: '/game',
-        home: '/home'
+        home: '/home',
+        playGame: '/play-game/:gameId'
     };
 
 ngModule.config(function ($routeProvider) {
@@ -21,6 +22,10 @@ ngModule.config(function ($routeProvider) {
         .when(paths.newGame, {
             template: require('./features/new-game/new-game.html'),
             controller: 'NewGameCtrl'
+        })
+        .when(paths.playGame, {
+            template: require('./features/play-game/play-game.html'),
+            controller: 'PlayGameCtrl'
         })
         .otherwise({
             redirectTo: paths.home

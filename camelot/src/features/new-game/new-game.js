@@ -1,7 +1,7 @@
 ﻿var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
-ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, createNewGame, getFirebaseBinding) {
+ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, createNewGame, getFirebaseBinding, goToRoute) {
 
     bindModel(['users'], $scope, 'users', _.constant({}));
     $scope.games = getFirebaseBinding('games');
@@ -14,9 +14,10 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
         return _.isEmpty(getPossibleOpponents());
     }
 
-    function startNewGameWith(user) {
-        var newGame = createNewGame($rootScope.currentUserId.id, user.id);
+    function startNewGameWith(opponentId) {
+        var newGame = createNewGame($rootScope.currentUserId.id, opponentId);
         $scope.games.$add(newGame);
+        goToRoute.goToPlayGame();
     }
 
     $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;

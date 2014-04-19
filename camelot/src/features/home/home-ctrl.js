@@ -2,14 +2,10 @@
     route = require('../../route'),
     _ = require('lodash');
 
-ngModule.controller('HomeCtrl', function ($scope, bindModel, $location) {
+ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
 
     bindModel(['games'], $scope, 'games', _.constant([]));
 
-    function goToNewGame() {
-        $location.path(route.newGame);
-    }
-
-    $scope.goToNewGame = goToNewGame;
+    $scope.goToNewGame = goToRoute.goToNewGame();
 
 });
