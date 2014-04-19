@@ -1,7 +1,7 @@
 ﻿var ngModule = require('../angular-module');
 
-ngModule.controller('CamelotCtrl', function ($scope, auth) {
+ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
 
-    auth($scope);
+    auth($rootScope);
     
 });

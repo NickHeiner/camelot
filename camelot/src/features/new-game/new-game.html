@@ -2,11 +2,11 @@
 <h2><small>Only users who have logged into this app before will appear here.</small></h2>
 
 <div ng-show="shouldShowNoUsersMessage()">
-    <p>No one else has logged into this app.</p>
+    <p>No one is available to play with.</p>
 </div>
 
-<div ng-repeat="user in users">
+<div ng-repeat="user in getPossibleOpponents()">
     <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->
     <img ng-src="{{user.avatarUri}}" />
-    {{user.name}}    
+    {{user.name}}
 </div>
