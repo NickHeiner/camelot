@@ -7,10 +7,10 @@ ngModule.config(function ($routeProvider) {
 
     $routeProvider
         .when('/game', {
-            templateUrl: 'templates/game.html'
+            template: require('../templates/game.html')
         })
         .when('/home', {
-            templateUrl: 'templates/home.html',
+            template: require('./features/home/home.html'),
             controller: 'HomeCtrl'
         })
         .otherwise({
