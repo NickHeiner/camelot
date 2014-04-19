@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|AnyCPU">
       <Configuration>Debug</Configuration>
@@ -37,18 +37,15 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>392d4b12-9ce8-42e4-b8cf-f82302d3c2da</ProjectGuid>
   </PropertyGroup>
-  <PropertyGroup Label="Configuration">
-    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0'">
-    <VisualStudioVersion>12.0</VisualStudioVersion>
+  <PropertyGroup Condition="'$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '11.0'">
+    <VisualStudioVersion>11.0</VisualStudioVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).Default.props" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).props" />
   <PropertyGroup>
     <TargetPlatformIdentifier>Windows</TargetPlatformIdentifier>
-    <TargetPlatformVersion>8.1</TargetPlatformVersion>
+    <TargetPlatformVersion>8.0</TargetPlatformVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <PackageCertificateKeyFile>camelot_StoreKey.pfx</PackageCertificateKeyFile>
     <PackageCertificateThumbprint>39897E42A6A654829F111657DA5D5FD5CCF917B7</PackageCertificateThumbprint>
@@ -59,23 +56,8 @@
     </AppxManifest>
     <Content Include="build\build.js" />
     <Content Include="build\main.css" />
-    <Content Include="src\angular-module.js" />
-    <Content Include="src\controllers\camelot-ctrl.js" />
-    <Content Include="src\default.js" />
-    <Content Include="src\evil.js" />
-    <Content Include="src\features\home\home-ctrl.js" />
-    <Content Include="src\features\home\home.html" />
-    <Content Include="src\features\johnson-box\johnson-box.html" />
-    <Content Include="src\features\johnson-box\johnson-box.js" />
-    <Content Include="src\features\new-game\new-game.html" />
-    <Content Include="src\features\new-game\new-game-ctrl.js" />
-    <Content Include="src\features\play-game\play-game.html" />
-    <Content Include="src\features\play-game\play-game-ctrl.js" />
-    <Content Include="src\route.js" />
-    <Content Include="src\services\auth.js" />
-    <Content Include="src\services\bind-model.js" />
-    <Content Include="src\services\create-new-game.js" />
-    <Content Include="src\services\go-to-route.js" />
+    <Content Include="js\services\auth.js" />
+    <Content Include="js\services\bind-model.js" />
     <Content Include="vendor\angular-winjs.js" />
     <Content Include="vendor\angularfire.js" />
     <Content Include="vendor\firebase.js" />
@@ -86,17 +68,25 @@
     <Content Include="images\smalllogo.png" />
     <Content Include="images\splashscreen.png" />
     <Content Include="images\storelogo.png" />
+    <Content Include="js\angular-module.js" />
+    <Content Include="js\controllers\camelot-ctrl.js" />
+    <Content Include="js\controllers\home-ctrl.js" />
+    <Content Include="js\default.js" />
+    <Content Include="js\directives\johnson-box.js" />
+    <Content Include="js\evil.js" />
     <None Include="Package.StoreAssociation.xml" />
     <Content Include="scss\default.scss" />
+    <Content Include="js\route.js" />
     <Content Include="package.json" />
     <Content Include="readme.md" />
     <Content Include="templates\game.html" />
+    <Content Include="templates\home.html" />
+    <Content Include="templates\johnson-box.html" />
     <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />
   </ItemGroup>
   <ItemGroup>
     <SDKReference Include="LiveSDKHTML, Version=5.0" />
-    <SDKReference Include="Microsoft.WinJS.2.0, Version=1.0" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\$(WMSJSProjectDirectory)\Microsoft.VisualStudio.$(WMSJSProject).targets" />
   <!-- To modify your build process, add your task inside one of the targets below then uncomment

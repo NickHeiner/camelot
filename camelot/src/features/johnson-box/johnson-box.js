@@ -1,9 +1,9 @@
-﻿var ngModule = require('../angular-module');
+﻿var ngModule = require('../../angular-module');
 
 ngModule.directive('johnsonBox', function () {
 
     return {
-        templateUrl: 'templates/johnson-box.html',
+        template: require('./johnson-box.html'),
         scope: {
             user: '='
         }

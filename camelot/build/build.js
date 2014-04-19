@@ -1,225 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-require('./evil');
-
-require('../vendor/angular');
-require('../vendor/angular-route');
-require('../vendor/firebase');
-require('../vendor/angularfire');
-
-module.exports = angular.module('camelot', [
-    'ngRoute', 
-    'firebase'
-]);
-},{"../vendor/angular":20,"../vendor/angular-route":19,"../vendor/angularfire":21,"../vendor/firebase":22,"./evil":6}],2:[function(require,module,exports){
-/// <reference path="///LiveSDKHTML/js/wl.js" />
-
-var ngModule = require('../angular-module');
-
-ngModule.controller('CamelotCtrl', function ($scope, auth) {
-
-    auth($scope);
-    
-});
-},{"../angular-module":1}],3:[function(require,module,exports){
-var ngModule = require('../angular-module'),
-    _ = require('lodash');
-
-ngModule.controller('HomeCtrl', function ($scope, bindModel) {
-
-    bindModel(['games'], $scope, 'games', _.constant([]));
-
-});
-},{"../angular-module":1,"lodash":18}],4:[function(require,module,exports){
-'use strict';
-
-// For an introduction to the Blank template, see the following documentation:
-// http://go.microsoft.com/fwlink/?LinkId=232509
-
-WinJS.Binding.optimizeBindingReferences = true;
-
-var app = WinJS.Application;
-var activation = Windows.ApplicationModel.Activation;
-
-app.onactivated = function (args) {
-    if (args.detail.kind === activation.ActivationKind.launch) {
-        if (args.detail.previousExecutionState !== activation.ApplicationExecutionState.terminated) {
-            // TODO: This application has been newly launched. Initialize
-            // your application here.
-        } else {
-            // TODO: This application has been reactivated from suspension.
-            // Restore application state here.
-        }
-        args.setPromise(WinJS.UI.processAll());
-    }
-};
-
-app.oncheckpoint = function (args) {
-    // TODO: This application is about to be suspended. Save any state
-    // that needs to persist across suspensions here. You might use the
-    // WinJS.Application.sessionState object, which is automatically
-    // saved and restored across suspension. If you need to complete an
-    // asynchronous operation before your application is suspended, call
-    // args.setPromise().
-};
-
-MSApp.execUnsafeLocalFunction(function () {
-    app.start();
-});
-
-
-},{}],5:[function(require,module,exports){
-var ngModule = require('../angular-module');
-
-ngModule.directive('johnsonBox', function () {
-
-    return {
-        templateUrl: 'templates/johnson-box.html',
-        scope: {
-            user: '='
-        }
-    };
-});
-},{"../angular-module":1}],6:[function(require,module,exports){
-var _ = require('lodash');
-
-var $ = window.jQuery = require('jquery');
-
-var methodsToOverride = [
-    'after',
-    'append',
-    'appendTo',
-    'before',
-    'empty',
-    'html',
-    'insertAfter',
-    'insertBefore',
-    'prepend',
-    'prependTo'
-];
-
-methodsToOverride.forEach(function (methodName) {
-
-        var origMethod = $.fn[methodName];
-
-        $.fn[methodName] = function () {
-            var self = this,
-                args = arguments,
-                result;
-
-            MSApp.execUnsafeLocalFunction(function () {
-                result = origMethod.apply(self, args);
-            });
-
-            return result;
-
-        };
-
-    });
-
-},{"jquery":17,"lodash":18}],7:[function(require,module,exports){
-require('../vendor/angular');
-require('../vendor/angular-route');
-
-var ngModule = require('./angular-module.js');
-
-ngModule.config(function ($routeProvider) {
-
-    $routeProvider
-        .when('/game', {
-            templateUrl: 'templates/game.html'
-        })
-        .when('/home', {
-            templateUrl: 'templates/home.html',
-            controller: 'HomeCtrl'
-        })
-        .otherwise({
-            redirectTo: '/home'
-        });
-
-});
-},{"../vendor/angular":20,"../vendor/angular-route":19,"./angular-module.js":1}],8:[function(require,module,exports){
-/// <reference path="///LiveSDKHTML/js/wl.js" />
-
-var ngModule = require('../angular-module'),
-    _ = require('lodash');
-
-ngModule.factory('auth', function ($q, $window, bindModel) {
-
-    return function ($scope) {
-
-        // This must be an object because $scope isn't the model itself; it points to the model.
-        $scope.currentUserId = {};
-
-        function getCurrentUser() {
-            if (!_.has($scope.currentUserId, 'id')) {
-                return null;
-            }
-
-            $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
-            return $scope.users[$scope.currentUserId.id];
-        }
-
-        $scope.getCurrentUser = getCurrentUser;
-
-        bindModel(['users'], $scope, 'users', _.constant({}));
-
-        WL.init();
-
-        $q.when(WL.login({
-            scope: 'wl.basic'
-        })).then(function () {
-
-            var updateUserNamePromise = $q.when(WL.api({
-                path: 'me',
-                method: 'GET'
-            })).then(function (response) {
-
-                $scope.currentUserId.id = response.id;
-
-                getCurrentUser().name = response.name;
-            });
-
-            return updateUserNamePromise.then(function () {
-                return $q.when(WL.api({
-                    path: 'me/picture',
-                    method: 'GET'
-                })).then(function (response) {
-                    getCurrentUser().avatarUri = response.location;
-                });
-            });
-        });
-    };
-});
-},{"../angular-module":1,"lodash":18}],9:[function(require,module,exports){
-var angularModule = require('../angular-module'),
-    url = require('url'),   
-    path = require('path');
-
-angularModule
-    /**
-     * Namespace different schema versions to avoid conflicts in the future. 
-     * I'm not sure if there's a better way to do this.
-     */
-    .constant('SCHEMA_VERSION', '1')
-    .factory('getFirebaseUrl', function () {
-        return function (pathname) {
-            return url.format({
-                pathname: pathname,
-                protocol: 'https',
-                host: 'camelot-nth.firebaseio.com'
-            });
-        };
-    })
-    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase, getFirebaseUrl) {
-
-        return function (childPath, $scope, scopeAttr, getDefault) {
-            var pathname = path.join.apply(path, [SCHEMA_VERSION].concat(childPath)),
-                firebaseRef = new $window.Firebase(getFirebaseUrl(pathname));
-
-            $firebase(firebaseRef).$bind($scope, scopeAttr, getDefault);
-        };
-});
-},{"../angular-module":1,"path":11,"url":16}],10:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -281,7 +60,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],11:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -509,7 +288,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require("C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"))
-},{"C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":10}],12:[function(require,module,exports){
+},{"C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":1}],3:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -1020,7 +799,7 @@ var substr = 'ab'.substr(-1) === 'b'
 }(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],13:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1106,7 +885,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],14:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1193,13 +972,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":13,"./encode":14}],16:[function(require,module,exports){
+},{"./decode":4,"./encode":5}],7:[function(require,module,exports){
 /*jshint strict:true node:true es5:true onevar:true laxcomma:true laxbreak:true eqeqeq:true immed:true latedef:true*/
 (function () {
   "use strict";
@@ -1832,7 +1611,7 @@ function parseHost(host) {
 
 }());
 
-},{"punycode":12,"querystring":15}],17:[function(require,module,exports){
+},{"punycode":3,"querystring":6}],8:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.0
  * http://jquery.com/
@@ -10945,7 +10724,7 @@ return jQuery;
 
 }));
 
-},{}],18:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -17734,7 +17513,1019 @@ return jQuery;
 }.call(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],19:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+//  Underscore.string
+//  (c) 2010 Esa-Matti Suuronen <esa-matti aet suuronen dot org>
+//  Underscore.string is freely distributable under the terms of the MIT license.
+//  Documentation: https://github.com/epeli/underscore.string
+//  Some code is borrowed from MooTools and Alexandru Marasteanu.
+//  Version '2.3.2'
+
+!function(root, String){
+  'use strict';
+
+  // Defining helper functions.
+
+  var nativeTrim = String.prototype.trim;
+  var nativeTrimRight = String.prototype.trimRight;
+  var nativeTrimLeft = String.prototype.trimLeft;
+
+  var parseNumber = function(source) { return source * 1 || 0; };
+
+  var strRepeat = function(str, qty){
+    if (qty < 1) return '';
+    var result = '';
+    while (qty > 0) {
+      if (qty & 1) result += str;
+      qty >>= 1, str += str;
+    }
+    return result;
+  };
+
+  var slice = [].slice;
+
+  var defaultToWhiteSpace = function(characters) {
+    if (characters == null)
+      return '\\s';
+    else if (characters.source)
+      return characters.source;
+    else
+      return '[' + _s.escapeRegExp(characters) + ']';
+  };
+
+  // Helper for toBoolean
+  function boolMatch(s, matchers) {
+    var i, matcher, down = s.toLowerCase();
+    matchers = [].concat(matchers);
+    for (i = 0; i < matchers.length; i += 1) {
+      matcher = matchers[i];
+      if (!matcher) continue;
+      if (matcher.test && matcher.test(s)) return true;
+      if (matcher.toLowerCase() === down) return true;
+    }
+  }
+
+  var escapeChars = {
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    amp: '&',
+    apos: "'"
+  };
+
+  var reversedEscapeChars = {};
+  for(var key in escapeChars) reversedEscapeChars[escapeChars[key]] = key;
+  reversedEscapeChars["'"] = '#39';
+
+  // sprintf() for JavaScript 0.7-beta1
+  // http://www.diveintojavascript.com/projects/javascript-sprintf
+  //
+  // Copyright (c) Alexandru Marasteanu <alexaholic [at) gmail (dot] com>
+  // All rights reserved.
+
+  var sprintf = (function() {
+    function get_type(variable) {
+      return Object.prototype.toString.call(variable).slice(8, -1).toLowerCase();
+    }
+
+    var str_repeat = strRepeat;
+
+    var str_format = function() {
+      if (!str_format.cache.hasOwnProperty(arguments[0])) {
+        str_format.cache[arguments[0]] = str_format.parse(arguments[0]);
+      }
+      return str_format.format.call(null, str_format.cache[arguments[0]], arguments);
+    };
+
+    str_format.format = function(parse_tree, argv) {
+      var cursor = 1, tree_length = parse_tree.length, node_type = '', arg, output = [], i, k, match, pad, pad_character, pad_length;
+      for (i = 0; i < tree_length; i++) {
+        node_type = get_type(parse_tree[i]);
+        if (node_type === 'string') {
+          output.push(parse_tree[i]);
+        }
+        else if (node_type === 'array') {
+          match = parse_tree[i]; // convenience purposes only
+          if (match[2]) { // keyword argument
+            arg = argv[cursor];
+            for (k = 0; k < match[2].length; k++) {
+              if (!arg.hasOwnProperty(match[2][k])) {
+                throw new Error(sprintf('[_.sprintf] property "%s" does not exist', match[2][k]));
+              }
+              arg = arg[match[2][k]];
+            }
+          } else if (match[1]) { // positional argument (explicit)
+            arg = argv[match[1]];
+          }
+          else { // positional argument (implicit)
+            arg = argv[cursor++];
+          }
+
+          if (/[^s]/.test(match[8]) && (get_type(arg) != 'number')) {
+            throw new Error(sprintf('[_.sprintf] expecting number but found %s', get_type(arg)));
+          }
+          switch (match[8]) {
+            case 'b': arg = arg.toString(2); break;
+            case 'c': arg = String.fromCharCode(arg); break;
+            case 'd': arg = parseInt(arg, 10); break;
+            case 'e': arg = match[7] ? arg.toExponential(match[7]) : arg.toExponential(); break;
+            case 'f': arg = match[7] ? parseFloat(arg).toFixed(match[7]) : parseFloat(arg); break;
+            case 'o': arg = arg.toString(8); break;
+            case 's': arg = ((arg = String(arg)) && match[7] ? arg.substring(0, match[7]) : arg); break;
+            case 'u': arg = Math.abs(arg); break;
+            case 'x': arg = arg.toString(16); break;
+            case 'X': arg = arg.toString(16).toUpperCase(); break;
+          }
+          arg = (/[def]/.test(match[8]) && match[3] && arg >= 0 ? '+'+ arg : arg);
+          pad_character = match[4] ? match[4] == '0' ? '0' : match[4].charAt(1) : ' ';
+          pad_length = match[6] - String(arg).length;
+          pad = match[6] ? str_repeat(pad_character, pad_length) : '';
+          output.push(match[5] ? arg + pad : pad + arg);
+        }
+      }
+      return output.join('');
+    };
+
+    str_format.cache = {};
+
+    str_format.parse = function(fmt) {
+      var _fmt = fmt, match = [], parse_tree = [], arg_names = 0;
+      while (_fmt) {
+        if ((match = /^[^\x25]+/.exec(_fmt)) !== null) {
+          parse_tree.push(match[0]);
+        }
+        else if ((match = /^\x25{2}/.exec(_fmt)) !== null) {
+          parse_tree.push('%');
+        }
+        else if ((match = /^\x25(?:([1-9]\d*)\$|\(([^\)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(_fmt)) !== null) {
+          if (match[2]) {
+            arg_names |= 1;
+            var field_list = [], replacement_field = match[2], field_match = [];
+            if ((field_match = /^([a-z_][a-z_\d]*)/i.exec(replacement_field)) !== null) {
+              field_list.push(field_match[1]);
+              while ((replacement_field = replacement_field.substring(field_match[0].length)) !== '') {
+                if ((field_match = /^\.([a-z_][a-z_\d]*)/i.exec(replacement_field)) !== null) {
+                  field_list.push(field_match[1]);
+                }
+                else if ((field_match = /^\[(\d+)\]/.exec(replacement_field)) !== null) {
+                  field_list.push(field_match[1]);
+                }
+                else {
+                  throw new Error('[_.sprintf] huh?');
+                }
+              }
+            }
+            else {
+              throw new Error('[_.sprintf] huh?');
+            }
+            match[2] = field_list;
+          }
+          else {
+            arg_names |= 2;
+          }
+          if (arg_names === 3) {
+            throw new Error('[_.sprintf] mixing positional and named placeholders is not (yet) supported');
+          }
+          parse_tree.push(match);
+        }
+        else {
+          throw new Error('[_.sprintf] huh?');
+        }
+        _fmt = _fmt.substring(match[0].length);
+      }
+      return parse_tree;
+    };
+
+    return str_format;
+  })();
+
+
+
+  // Defining underscore.string
+
+  var _s = {
+
+    VERSION: '2.3.0',
+
+    isBlank: function(str){
+      if (str == null) str = '';
+      return (/^\s*$/).test(str);
+    },
+
+    stripTags: function(str){
+      if (str == null) return '';
+      return String(str).replace(/<\/?[^>]+>/g, '');
+    },
+
+    capitalize : function(str){
+      str = str == null ? '' : String(str);
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    },
+
+    chop: function(str, step){
+      if (str == null) return [];
+      str = String(str);
+      step = ~~step;
+      return step > 0 ? str.match(new RegExp('.{1,' + step + '}', 'g')) : [str];
+    },
+
+    clean: function(str){
+      return _s.strip(str).replace(/\s+/g, ' ');
+    },
+
+    count: function(str, substr){
+      if (str == null || substr == null) return 0;
+
+      str = String(str);
+      substr = String(substr);
+
+      var count = 0,
+        pos = 0,
+        length = substr.length;
+
+      while (true) {
+        pos = str.indexOf(substr, pos);
+        if (pos === -1) break;
+        count++;
+        pos += length;
+      }
+
+      return count;
+    },
+
+    chars: function(str) {
+      if (str == null) return [];
+      return String(str).split('');
+    },
+
+    swapCase: function(str) {
+      if (str == null) return '';
+      return String(str).replace(/\S/g, function(c){
+        return c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase();
+      });
+    },
+
+    escapeHTML: function(str) {
+      if (str == null) return '';
+      return String(str).replace(/[&<>"']/g, function(m){ return '&' + reversedEscapeChars[m] + ';'; });
+    },
+
+    unescapeHTML: function(str) {
+      if (str == null) return '';
+      return String(str).replace(/\&([^;]+);/g, function(entity, entityCode){
+        var match;
+
+        if (entityCode in escapeChars) {
+          return escapeChars[entityCode];
+        } else if (match = entityCode.match(/^#x([\da-fA-F]+)$/)) {
+          return String.fromCharCode(parseInt(match[1], 16));
+        } else if (match = entityCode.match(/^#(\d+)$/)) {
+          return String.fromCharCode(~~match[1]);
+        } else {
+          return entity;
+        }
+      });
+    },
+
+    escapeRegExp: function(str){
+      if (str == null) return '';
+      return String(str).replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
+    },
+
+    splice: function(str, i, howmany, substr){
+      var arr = _s.chars(str);
+      arr.splice(~~i, ~~howmany, substr);
+      return arr.join('');
+    },
+
+    insert: function(str, i, substr){
+      return _s.splice(str, i, 0, substr);
+    },
+
+    include: function(str, needle){
+      if (needle === '') return true;
+      if (str == null) return false;
+      return String(str).indexOf(needle) !== -1;
+    },
+
+    join: function() {
+      var args = slice.call(arguments),
+        separator = args.shift();
+
+      if (separator == null) separator = '';
+
+      return args.join(separator);
+    },
+
+    lines: function(str) {
+      if (str == null) return [];
+      return String(str).split("\n");
+    },
+
+    reverse: function(str){
+      return _s.chars(str).reverse().join('');
+    },
+
+    startsWith: function(str, starts){
+      if (starts === '') return true;
+      if (str == null || starts == null) return false;
+      str = String(str); starts = String(starts);
+      return str.length >= starts.length && str.slice(0, starts.length) === starts;
+    },
+
+    endsWith: function(str, ends){
+      if (ends === '') return true;
+      if (str == null || ends == null) return false;
+      str = String(str); ends = String(ends);
+      return str.length >= ends.length && str.slice(str.length - ends.length) === ends;
+    },
+
+    succ: function(str){
+      if (str == null) return '';
+      str = String(str);
+      return str.slice(0, -1) + String.fromCharCode(str.charCodeAt(str.length-1) + 1);
+    },
+
+    titleize: function(str){
+      if (str == null) return '';
+      str  = String(str).toLowerCase();
+      return str.replace(/(?:^|\s|-)\S/g, function(c){ return c.toUpperCase(); });
+    },
+
+    camelize: function(str){
+      return _s.trim(str).replace(/[-_\s]+(.)?/g, function(match, c){ return c ? c.toUpperCase() : ""; });
+    },
+
+    underscored: function(str){
+      return _s.trim(str).replace(/([a-z\d])([A-Z]+)/g, '$1_$2').replace(/[-\s]+/g, '_').toLowerCase();
+    },
+
+    dasherize: function(str){
+      return _s.trim(str).replace(/([A-Z])/g, '-$1').replace(/[-_\s]+/g, '-').toLowerCase();
+    },
+
+    classify: function(str){
+      return _s.titleize(String(str).replace(/[\W_]/g, ' ')).replace(/\s/g, '');
+    },
+
+    humanize: function(str){
+      return _s.capitalize(_s.underscored(str).replace(/_id$/,'').replace(/_/g, ' '));
+    },
+
+    trim: function(str, characters){
+      if (str == null) return '';
+      if (!characters && nativeTrim) return nativeTrim.call(str);
+      characters = defaultToWhiteSpace(characters);
+      return String(str).replace(new RegExp('\^' + characters + '+|' + characters + '+$', 'g'), '');
+    },
+
+    ltrim: function(str, characters){
+      if (str == null) return '';
+      if (!characters && nativeTrimLeft) return nativeTrimLeft.call(str);
+      characters = defaultToWhiteSpace(characters);
+      return String(str).replace(new RegExp('^' + characters + '+'), '');
+    },
+
+    rtrim: function(str, characters){
+      if (str == null) return '';
+      if (!characters && nativeTrimRight) return nativeTrimRight.call(str);
+      characters = defaultToWhiteSpace(characters);
+      return String(str).replace(new RegExp(characters + '+$'), '');
+    },
+
+    truncate: function(str, length, truncateStr){
+      if (str == null) return '';
+      str = String(str); truncateStr = truncateStr || '...';
+      length = ~~length;
+      return str.length > length ? str.slice(0, length) + truncateStr : str;
+    },
+
+    /**
+     * _s.prune: a more elegant version of truncate
+     * prune extra chars, never leaving a half-chopped word.
+     * @author github.com/rwz
+     */
+    prune: function(str, length, pruneStr){
+      if (str == null) return '';
+
+      str = String(str); length = ~~length;
+      pruneStr = pruneStr != null ? String(pruneStr) : '...';
+
+      if (str.length <= length) return str;
+
+      var tmpl = function(c){ return c.toUpperCase() !== c.toLowerCase() ? 'A' : ' '; },
+        template = str.slice(0, length+1).replace(/.(?=\W*\w*$)/g, tmpl); // 'Hello, world' -> 'HellAA AAAAA'
+
+      if (template.slice(template.length-2).match(/\w\w/))
+        template = template.replace(/\s*\S+$/, '');
+      else
+        template = _s.rtrim(template.slice(0, template.length-1));
+
+      return (template+pruneStr).length > str.length ? str : str.slice(0, template.length)+pruneStr;
+    },
+
+    words: function(str, delimiter) {
+      if (_s.isBlank(str)) return [];
+      return _s.trim(str, delimiter).split(delimiter || /\s+/);
+    },
+
+    pad: function(str, length, padStr, type) {
+      str = str == null ? '' : String(str);
+      length = ~~length;
+
+      var padlen  = 0;
+
+      if (!padStr)
+        padStr = ' ';
+      else if (padStr.length > 1)
+        padStr = padStr.charAt(0);
+
+      switch(type) {
+        case 'right':
+          padlen = length - str.length;
+          return str + strRepeat(padStr, padlen);
+        case 'both':
+          padlen = length - str.length;
+          return strRepeat(padStr, Math.ceil(padlen/2)) + str
+                  + strRepeat(padStr, Math.floor(padlen/2));
+        default: // 'left'
+          padlen = length - str.length;
+          return strRepeat(padStr, padlen) + str;
+        }
+    },
+
+    lpad: function(str, length, padStr) {
+      return _s.pad(str, length, padStr);
+    },
+
+    rpad: function(str, length, padStr) {
+      return _s.pad(str, length, padStr, 'right');
+    },
+
+    lrpad: function(str, length, padStr) {
+      return _s.pad(str, length, padStr, 'both');
+    },
+
+    sprintf: sprintf,
+
+    vsprintf: function(fmt, argv){
+      argv.unshift(fmt);
+      return sprintf.apply(null, argv);
+    },
+
+    toNumber: function(str, decimals) {
+      if (!str) return 0;
+      str = _s.trim(str);
+      if (!str.match(/^-?\d+(?:\.\d+)?$/)) return NaN;
+      return parseNumber(parseNumber(str).toFixed(~~decimals));
+    },
+
+    numberFormat : function(number, dec, dsep, tsep) {
+      if (isNaN(number) || number == null) return '';
+
+      number = number.toFixed(~~dec);
+      tsep = typeof tsep == 'string' ? tsep : ',';
+
+      var parts = number.split('.'), fnums = parts[0],
+        decimals = parts[1] ? (dsep || '.') + parts[1] : '';
+
+      return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + tsep) + decimals;
+    },
+
+    strRight: function(str, sep){
+      if (str == null) return '';
+      str = String(str); sep = sep != null ? String(sep) : sep;
+      var pos = !sep ? -1 : str.indexOf(sep);
+      return ~pos ? str.slice(pos+sep.length, str.length) : str;
+    },
+
+    strRightBack: function(str, sep){
+      if (str == null) return '';
+      str = String(str); sep = sep != null ? String(sep) : sep;
+      var pos = !sep ? -1 : str.lastIndexOf(sep);
+      return ~pos ? str.slice(pos+sep.length, str.length) : str;
+    },
+
+    strLeft: function(str, sep){
+      if (str == null) return '';
+      str = String(str); sep = sep != null ? String(sep) : sep;
+      var pos = !sep ? -1 : str.indexOf(sep);
+      return ~pos ? str.slice(0, pos) : str;
+    },
+
+    strLeftBack: function(str, sep){
+      if (str == null) return '';
+      str += ''; sep = sep != null ? ''+sep : sep;
+      var pos = str.lastIndexOf(sep);
+      return ~pos ? str.slice(0, pos) : str;
+    },
+
+    toSentence: function(array, separator, lastSeparator, serial) {
+      separator = separator || ', ';
+      lastSeparator = lastSeparator || ' and ';
+      var a = array.slice(), lastMember = a.pop();
+
+      if (array.length > 2 && serial) lastSeparator = _s.rtrim(separator) + lastSeparator;
+
+      return a.length ? a.join(separator) + lastSeparator + lastMember : lastMember;
+    },
+
+    toSentenceSerial: function() {
+      var args = slice.call(arguments);
+      args[3] = true;
+      return _s.toSentence.apply(_s, args);
+    },
+
+    slugify: function(str) {
+      if (str == null) return '';
+
+      var from  = "ąàáäâãåæăćęèéëêìíïîłńòóöôõøśșțùúüûñçżź",
+          to    = "aaaaaaaaaceeeeeiiiilnoooooosstuuuunczz",
+          regex = new RegExp(defaultToWhiteSpace(from), 'g');
+
+      str = String(str).toLowerCase().replace(regex, function(c){
+        var index = from.indexOf(c);
+        return to.charAt(index) || '-';
+      });
+
+      return _s.dasherize(str.replace(/[^\w\s-]/g, ''));
+    },
+
+    surround: function(str, wrapper) {
+      return [wrapper, str, wrapper].join('');
+    },
+
+    quote: function(str, quoteChar) {
+      return _s.surround(str, quoteChar || '"');
+    },
+
+    unquote: function(str, quoteChar) {
+      quoteChar = quoteChar || '"';
+      if (str[0] === quoteChar && str[str.length-1] === quoteChar)
+        return str.slice(1,str.length-1);
+      else return str;
+    },
+
+    exports: function() {
+      var result = {};
+
+      for (var prop in this) {
+        if (!this.hasOwnProperty(prop) || prop.match(/^(?:include|contains|reverse)$/)) continue;
+        result[prop] = this[prop];
+      }
+
+      return result;
+    },
+
+    repeat: function(str, qty, separator){
+      if (str == null) return '';
+
+      qty = ~~qty;
+
+      // using faster implementation if separator is not needed;
+      if (separator == null) return strRepeat(String(str), qty);
+
+      // this one is about 300x slower in Google Chrome
+      for (var repeat = []; qty > 0; repeat[--qty] = str) {}
+      return repeat.join(separator);
+    },
+
+    naturalCmp: function(str1, str2){
+      if (str1 == str2) return 0;
+      if (!str1) return -1;
+      if (!str2) return 1;
+
+      var cmpRegex = /(\.\d+)|(\d+)|(\D+)/g,
+        tokens1 = String(str1).toLowerCase().match(cmpRegex),
+        tokens2 = String(str2).toLowerCase().match(cmpRegex),
+        count = Math.min(tokens1.length, tokens2.length);
+
+      for(var i = 0; i < count; i++) {
+        var a = tokens1[i], b = tokens2[i];
+
+        if (a !== b){
+          var num1 = parseInt(a, 10);
+          if (!isNaN(num1)){
+            var num2 = parseInt(b, 10);
+            if (!isNaN(num2) && num1 - num2)
+              return num1 - num2;
+          }
+          return a < b ? -1 : 1;
+        }
+      }
+
+      if (tokens1.length === tokens2.length)
+        return tokens1.length - tokens2.length;
+
+      return str1 < str2 ? -1 : 1;
+    },
+
+    levenshtein: function(str1, str2) {
+      if (str1 == null && str2 == null) return 0;
+      if (str1 == null) return String(str2).length;
+      if (str2 == null) return String(str1).length;
+
+      str1 = String(str1); str2 = String(str2);
+
+      var current = [], prev, value;
+
+      for (var i = 0; i <= str2.length; i++)
+        for (var j = 0; j <= str1.length; j++) {
+          if (i && j)
+            if (str1.charAt(j - 1) === str2.charAt(i - 1))
+              value = prev;
+            else
+              value = Math.min(current[j], current[j - 1], prev) + 1;
+          else
+            value = i + j;
+
+          prev = current[j];
+          current[j] = value;
+        }
+
+      return current.pop();
+    },
+
+    toBoolean: function(str, trueValues, falseValues) {
+      if (typeof str === "number") str = "" + str;
+      if (typeof str !== "string") return !!str;
+      str = _s.trim(str);
+      if (boolMatch(str, trueValues || ["true", "1"])) return true;
+      if (boolMatch(str, falseValues || ["false", "0"])) return false;
+    }
+  };
+
+  // Aliases
+
+  _s.strip    = _s.trim;
+  _s.lstrip   = _s.ltrim;
+  _s.rstrip   = _s.rtrim;
+  _s.center   = _s.lrpad;
+  _s.rjust    = _s.lpad;
+  _s.ljust    = _s.rpad;
+  _s.contains = _s.include;
+  _s.q        = _s.quote;
+  _s.toBool   = _s.toBoolean;
+
+  // Exporting
+
+  // CommonJS module is defined
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports)
+      module.exports = _s;
+
+    exports._s = _s;
+  }
+
+  // Register as a named module with AMD.
+  if (typeof define === 'function' && define.amd)
+    define('underscore.string', [], function(){ return _s; });
+
+
+  // Integrate with Underscore.js if defined
+  // or create our own underscore object.
+  root._ = root._ || {};
+  root._.string = root._.str = _s;
+}(this, String);
+
+},{}],11:[function(require,module,exports){
+require('./evil');
+
+require('../vendor/angular');
+require('../vendor/angular-route');
+
+// http://stackoverflow.com/questions/19828632/is-it-possible-to-use-firebase-with-a-windows-8-app
+require('../vendor/firebase');
+Firebase.INTERNAL.forceWebSockets();
+
+require('../vendor/angularfire');
+require('../vendor/angular-winjs');
+
+module.exports = angular.module('camelot', [
+    'ngRoute', 
+    'firebase'
+]);
+},{"../vendor/angular":31,"../vendor/angular-route":29,"../vendor/angular-winjs":30,"../vendor/angularfire":32,"../vendor/firebase":33,"./evil":14}],12:[function(require,module,exports){
+var ngModule = require('../angular-module');
+
+ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
+
+    auth($rootScope);
+    
+});
+},{"../angular-module":11}],13:[function(require,module,exports){
+'use strict';
+
+// For an introduction to the Blank template, see the following documentation:
+// http://go.microsoft.com/fwlink/?LinkId=232509
+
+WinJS.Binding.optimizeBindingReferences = true;
+
+var app = WinJS.Application;
+var activation = Windows.ApplicationModel.Activation;
+
+app.onactivated = function (args) {
+    if (args.detail.kind === activation.ActivationKind.launch) {
+        if (args.detail.previousExecutionState !== activation.ApplicationExecutionState.terminated) {
+            // TODO: This application has been newly launched. Initialize
+            // your application here.
+        } else {
+            // TODO: This application has been reactivated from suspension.
+            // Restore application state here.
+        }
+        args.setPromise(WinJS.UI.processAll());
+    }
+};
+
+app.oncheckpoint = function (args) {
+    // TODO: This application is about to be suspended. Save any state
+    // that needs to persist across suspensions here. You might use the
+    // WinJS.Application.sessionState object, which is automatically
+    // saved and restored across suspension. If you need to complete an
+    // asynchronous operation before your application is suspended, call
+    // args.setPromise().
+};
+
+MSApp.execUnsafeLocalFunction(function () {
+    app.start();
+});
+
+
+},{}],14:[function(require,module,exports){
+var _ = require('lodash');
+
+var $ = window.jQuery = require('jquery');
+
+var methodsToOverride = [
+    'after',
+    'append',
+    'appendTo',
+    'before',
+    'empty',
+    'html',
+    'insertAfter',
+    'insertBefore',
+    'prepend',
+    'prependTo'
+];
+
+methodsToOverride.forEach(function (methodName) {
+
+        var origMethod = $.fn[methodName];
+
+        $.fn[methodName] = function () {
+            var self = this,
+                args = arguments,
+                result;
+
+            MSApp.execUnsafeLocalFunction(function () {
+                result = origMethod.apply(self, args);
+            });
+
+            return result;
+
+        };
+
+    });
+
+},{"jquery":8,"lodash":9}],15:[function(require,module,exports){
+var ngModule = require('../../angular-module'),
+    route = require('../../route'),
+    _ = require('lodash');
+
+ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
+
+    bindModel(['games'], $scope, 'games', _.constant([]));
+
+    function shouldShowNoGamesMessage() {
+        return _.isEmpty($scope.games);
+    }
+
+    $scope.shouldShowNoGamesMessage = shouldShowNoGamesMessage;
+    $scope.goToNewGame = goToRoute.goToNewGame;
+
+});
+},{"../../angular-module":11,"../../route":23,"lodash":9}],16:[function(require,module,exports){
+module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"game in games\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
+
+},{}],17:[function(require,module,exports){
+module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";
+
+},{}],18:[function(require,module,exports){
+var ngModule = require('../../angular-module');
+
+ngModule.directive('johnsonBox', function () {
+
+    return {
+        template: require('./johnson-box.html'),
+        scope: {
+            user: '='
+        }
+    };
+});
+},{"../../angular-module":11,"./johnson-box.html":17}],19:[function(require,module,exports){
+var ngModule = require('../../angular-module'),
+    _ = require('lodash');
+
+ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, createNewGame, getFirebaseBinding, goToRoute) {
+
+    bindModel(['users'], $scope, 'users', _.constant({}));
+    $scope.games = getFirebaseBinding('games');
+
+    function getPossibleOpponents() {
+        return _.omit($scope.users, $rootScope.currentUserId.id);
+    }
+
+    function shouldShowNoUsersMessage() {
+        return _.isEmpty(getPossibleOpponents());
+    }
+
+    function startNewGameWith(opponentId) {
+        var newGame = createNewGame($rootScope.currentUserId.id, opponentId);
+        $scope.games.$add(newGame);
+        goToRoute.goToPlayGame();
+    }
+
+    $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;
+    $scope.getPossibleOpponents = getPossibleOpponents;
+    $scope.startNewGameWith = startNewGameWith;
+
+});
+},{"../../angular-module":11,"lodash":9}],20:[function(require,module,exports){
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
+
+},{}],21:[function(require,module,exports){
+var angularModule = require('../../angular-module');
+
+angularModule.controller('PlayGameCtrl', function ($scope) {
+
+});
+},{"../../angular-module":11}],22:[function(require,module,exports){
+module.exports = "﻿<h3>Play game</h3>";
+
+},{}],23:[function(require,module,exports){
+require('../vendor/angular');
+require('../vendor/angular-route');
+
+var ngModule = require('./angular-module.js'),
+    paths = {
+        newGame: '/new-game',
+        game: '/game',
+        home: '/home',
+        playGame: '/play-game/:gameId'
+    };
+
+ngModule.config(function ($routeProvider) {
+
+    $routeProvider
+        .when(paths.game, {
+            template: require('../templates/game.html')
+        })
+        .when(paths.home, {
+            template: require('./features/home/home.html'),
+            controller: 'HomeCtrl'
+        })
+        .when(paths.newGame, {
+            template: require('./features/new-game/new-game.html'),
+            controller: 'NewGameCtrl'
+        })
+        .when(paths.playGame, {
+            template: require('./features/play-game/play-game.html'),
+            controller: 'PlayGameCtrl'
+        })
+        .otherwise({
+            redirectTo: paths.home
+        });
+
+});
+
+module.exports = paths;
+},{"../templates/game.html":28,"../vendor/angular":31,"../vendor/angular-route":29,"./angular-module.js":11,"./features/home/home.html":16,"./features/new-game/new-game.html":20,"./features/play-game/play-game.html":22}],24:[function(require,module,exports){
+/// <reference path="///LiveSDKHTML/js/wl.js" />
+
+var ngModule = require('../angular-module'),
+    _ = require('lodash');
+
+ngModule.factory('auth', function ($q, $window, bindModel) {
+
+    function prepareWindowsLive() {
+        WL.init();
+
+        return $q.when(WL.login({
+            scope: 'wl.basic'
+        }));
+    }
+
+    return function ($scope) {
+
+        // This must be an object because $scope isn't the model itself; it points to the model.
+        $scope.currentUserId = {};
+
+        function getCurrentUser() {
+            if (!_.has($scope.currentUserId, 'id')) {
+                return null;
+            }
+
+            $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
+            return $scope.users[$scope.currentUserId.id];
+        }
+
+        $scope.getCurrentUser = getCurrentUser;
+
+        var bindUsersModelPromise = bindModel(['users'], $scope, 'users', _.constant({}));
+
+        $q.all([bindUsersModelPromise, prepareWindowsLive()])
+            .then(function () {
+
+                var updateUserNamePromise = $q.when(WL.api({
+                    path: 'me',
+                    method: 'GET'
+                })).then(function (response) {
+
+                    $scope.currentUserId.id = response.id;
+
+                    getCurrentUser().name = response.name;
+                });
+
+                return updateUserNamePromise.then(function () {
+                    return $q.when(WL.api({
+                        path: 'me/picture',
+                        method: 'GET'
+                    })).then(function (response) {
+                        getCurrentUser().avatarUri = response.location;
+                    });
+                });
+            });
+    };
+});
+},{"../angular-module":11,"lodash":9}],25:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    url = require('url'),   
+    path = require('path');
+
+angularModule
+    /**
+     * Namespace different schema versions to avoid conflicts in the future. 
+     * I'm not sure if there's a better way to do this.
+     */
+    .constant('SCHEMA_VERSION', '1')
+    .factory('getFirebaseUrl', function () {
+        return function (pathname) {
+            return url.format({
+                pathname: pathname,
+                protocol: 'https',
+                host: 'camelot-nth.firebaseio.com'
+            });
+        };
+    })
+    .factory('getFirebaseBinding', function ($window, $firebase, SCHEMA_VERSION, getFirebaseUrl) {
+        return function (childPath) {
+            var pathname = path.join.apply(path, [SCHEMA_VERSION].concat(childPath)),
+                firebaseRef = new $window.Firebase(getFirebaseUrl(pathname));
+
+            return $firebase(firebaseRef);
+        };
+    })
+    .factory('bindModel', function (getFirebaseBinding) {
+
+        return function (childPath, $scope, scopeAttr, getDefault) {
+            getFirebaseBinding(childPath).$bind($scope, scopeAttr, getDefault);
+        };
+});
+},{"../angular-module":11,"path":2,"url":7}],26:[function(require,module,exports){
+var angularModule = require('../angular-module');
+
+angularModule
+    .factory('createNewGame', function () {
+        return function (initiator, recepient) {
+            return {
+                players: [initiator, recepient],
+                gameState: {},
+                waitingOn: initiator,
+                winner: null
+            };
+        };
+    });
+},{"../angular-module":11}],27:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    route = require('../route'),
+    _str = require('underscore.string'),
+    _ = require('lodash');
+
+angularModule.factory('goToRoute', function ($location) {
+    return _(route)
+        .map(function (routePath, routeName) {
+            return ['goTo' + _str.capitalize(routeName), function () {
+                $location.path(routePath);
+            }];
+        })
+        .zipObject()
+        .valueOf();
+});
+},{"../angular-module":11,"../route":23,"lodash":9,"underscore.string":10}],28:[function(require,module,exports){
+module.exports = "﻿";
+
+},{}],29:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -18663,7 +19454,1160 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],20:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
+/*!
+* angular-winjs
+*
+* Copyright 2013 Josh Williams and other contributors
+* Released under the MIT license
+*/
+(function (global) {
+    "use strict;"
+
+    // Pure utility
+    //
+    function objectMap(obj, mapping) {
+        return Object.keys(obj).reduce(function (result, key) {
+            var value = mapping(obj[key], key);
+            if (value) {
+                result[key] = value;
+            }
+            return result;
+        }, {});
+    }
+
+    function root(element) {
+        return element.parentNode ? root(element.parentNode) : element;
+    }
+
+    function select(selector, element) {
+        return document.querySelector(selector) || root(element).querySelector(selector);
+    }
+
+    var WrapperList = WinJS.Class.derive(WinJS.Binding.List, function (array) {
+        WinJS.Binding.List.call(this, array);
+    });
+
+    // Directive utilities
+    //
+    function addDestroyListener($scope, control, bindings) {
+        $scope.$on("$destroy", function () {
+            bindings.forEach(function (w) { w(); });
+
+            if (control.dispose) {
+                control.dispose();
+            }
+        });
+    }
+
+    function apply($scope, f) {
+        switch ($scope.$root.$$phase) {
+            case "$apply":
+            case "$digest":
+                f();
+                break;
+            default:
+                $scope.$apply(function () {
+                    f();
+                });
+                break;
+        }
+    }
+
+    function exists(control) {
+        return !!Object.getOwnPropertyDescriptor(WinJS.UI, control);
+    }
+
+    function list($scope, key, getControl, getList, bindings) {
+        var initialBindings = bindings.length;
+        var value = $scope[key];
+        if (value) {
+            if (Array.isArray(value)) {
+                value = new WrapperList(value);
+                bindings.push($scope.$watchCollection(key, function (array) {
+                    var list = getList();
+                    if (!list) {
+                        return;
+                    }
+                    if (!array) {
+                        list.length = 0;
+                        return;
+                    }
+                    var targetIndicies = new Map();
+                    for (var i = 0, len = array.length; i < len; i++) {
+                        targetIndicies.set(array[i], i);
+                    }
+                    var arrayIndex = 0, listIndex = 0;
+                    while (arrayIndex < array.length) {
+                        var arrayData = array[arrayIndex];
+                        if (listIndex >= list.length) {
+                            list.push(arrayData);
+                        } else {
+                            while (listIndex < list.length) {
+                                var listData = list.getAt(listIndex);
+                                if (listData === arrayData) {
+                                    listIndex++;
+                                    arrayIndex++;
+                                    break;
+                                } else {
+                                    if (targetIndicies.has(listData)) {
+                                        var targetIndex = targetIndicies.get(listData);
+                                        if (targetIndex < arrayIndex) {
+                                            // already in list, remove the duplicate
+                                            list.splice(listIndex, 1);
+                                        } else {
+                                            list.splice(listIndex, 0, arrayData);
+                                            arrayIndex++;
+                                            listIndex++;
+                                            break;
+                                        }
+                                    } else {
+                                        // deleted, remove from list
+                                        list.splice(listIndex, 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // clip any items which are left over in the tail.
+                    list.length = array.length;
+                }));
+            }
+            if (value.dataSource) {
+                value = value.dataSource;
+            }
+        }
+        if (bindings.length === initialBindings) {
+            bindings.push($scope.$watch(key, function (newValue, oldValue) {
+                if (newValue !== oldValue) {
+                    getControl()[key] = list($scope, key, getControl, getList, bindings);
+                }
+            }));
+        }
+        return value;
+    }
+
+    function proxy($scope, controller, name) {
+        Object.defineProperty(controller, name, {
+            get: function () { return $scope[name]; },
+            set: function (value) { $scope[name] = value; }
+        });
+    }
+
+    function BINDING_anchor($scope, key, element, getControl, bindings) {
+        bindings.push($scope.$watch(key, function (newValue, oldValue) {
+            newValue = typeof newValue === "string" ? select(newValue, element) : newValue;
+            oldValue = typeof oldValue === "string" ? select(oldValue, element) : oldValue;
+            if (oldValue && oldValue._anchorClick) {
+                oldValue.removeEventListener("click", oldValue._anchorClick);
+                oldValue._anchorClick = null;
+            }
+            if (newValue && !newValue._anchorClick) {
+                newValue._anchorClick = function () { getControl().show(); };
+                newValue.addEventListener("click", newValue._anchorClick);
+            }
+            return newValue;
+        }));
+        var anchor = $scope[key];
+        return typeof anchor === "string" ? select(anchor, element) : anchor;
+    }
+    BINDING_anchor.binding = "=?";
+
+    function BINDING_dataSource($scope, key, element, getControl, bindings) {
+        function getList() {
+            var control = getControl();
+            if (control) {
+                var list = control[key];
+                if (list) {
+                    return list.list;
+                }
+            }
+        };
+        return list($scope, key, getControl, getList, bindings);
+    }
+    BINDING_dataSource.binding = "=?";
+
+    function BINDING_event($scope, key, element, getControl, bindings) {
+        bindings.push($scope.$watch(key, function (newValue, oldValue) {
+            if (newValue !== oldValue) {
+                getControl()[key] = newValue;
+            }
+        }))
+        var value = $scope[key];
+        return function (event) {
+            apply($scope, function () { value({ $event: event }); });
+        };
+    }
+    BINDING_event.binding = "&";
+
+    function BINDING_property($scope, key, element, getControl, bindings) {
+        bindings.push($scope.$watch(key, function (newValue, oldValue) {
+            if (newValue !== oldValue) {
+                (getControl() || {})[key] = newValue;
+            }
+        }));
+        return $scope[key];
+    }
+    BINDING_property.binding = "=?";
+
+    function BINDING_selection($scope, key, element, getControl, bindings) {
+        bindings.push($scope.$watchCollection(key, function (selection) {
+            var value = (getControl() || {})[key];
+            if (value) {
+                value.set(selection);
+            }
+        }));
+        return $scope[key];
+    }
+    BINDING_selection.binding = "=?";
+
+    function BINDING_list($scope, key, element, getControl, bindings) {
+        function getList() {
+            var control = getControl();
+            if (control) {
+                return control[key];
+            }
+        }
+        return list($scope, key, getControl, getList, bindings);
+    }
+    BINDING_list.binding = "=?";
+
+    // Shared compile/link functions
+    //
+    function compileTemplate(name) {
+        return function (tElement, tAttrs, transclude) {
+            var rootElement = document.createElement("div");
+            Object.keys(tAttrs).forEach(function (key) {
+                if (key[0] !== '$') {
+                    rootElement.setAttribute(key, tAttrs[key]);
+                }
+            });
+            var immediateToken;
+            return function ($scope, elements, attrs, parents) {
+                var parent = parents.reduce(function (found, item) { return found || item; });
+                parent[name] = function (itemPromise) {
+                    return WinJS.Promise.as(itemPromise).then(function (item) {
+                        var itemScope = $scope.$new();
+                        itemScope.item = item;
+                        var result = rootElement.cloneNode(false);
+                        transclude(itemScope, function (clonedElement) {
+                            for (var i = 0, len = clonedElement.length; i < len; i++) {
+                                result.appendChild(clonedElement[i]);
+                            }
+                        });
+                        WinJS.Utilities.markDisposable(result, function () {
+                            itemScope.$destroy();
+                        });
+                        immediateToken = immediateToken || setImmediate(function () {
+                            immediateToken = null;
+                            itemScope.$apply();
+                        });
+                        return result;
+                    })
+                };
+            };
+        };
+    }
+
+    // WinJS module definition
+    //
+    var module = angular.module("winjs", []);
+
+    module.run(function ($rootScope) {
+        var Scope = Object.getPrototypeOf($rootScope);
+        var Scope$eval = Scope.$eval;
+        Scope.$eval = function (expr, locals) {
+            var that = this;
+            return MSApp.execUnsafeLocalFunction(function () {
+                return Scope$eval.call(that, expr, locals);
+            });
+        };
+    })
+
+    // Directives
+    //
+    exists("AppBar") && module.directive("winAppBar", function () {
+        var api = {
+            closedDisplayMode: BINDING_property,
+            commands: BINDING_property,
+            disabled: BINDING_property,
+            hidden: BINDING_property,
+            layout: BINDING_property,
+            placement: BINDING_property,
+            sticky: BINDING_property,
+            onafterhide: BINDING_event,
+            onaftershow: BINDING_event,
+            onbeforehide: BINDING_event,
+            onbeforeshow: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                var bindings = [];
+                var appbar;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return appbar; }, bindings); });
+                appbar = new WinJS.UI.AppBar(element, options)
+                addDestroyListener($scope, appbar, bindings);
+                return appbar;
+            },
+        };
+    });
+
+    exists("AppBar") && module.directive("winAppBarCommand", function () {
+        var api = {
+            disabled: BINDING_property,
+            extraClass: BINDING_property,
+            firstElementFocus: BINDING_property,
+            flyout: BINDING_property,
+            hidden: BINDING_property,
+            icon: BINDING_property,
+            id: BINDING_property,
+            label: BINDING_property,
+            lastElementFocus: BINDING_property,
+            section: BINDING_property,
+            selected: BINDING_property,
+            tooltip: BINDING_property,
+            type: BINDING_property,
+            onclick: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<BUTTON ng-transclude='true'></BUTTON>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                element.removeAttribute("id");
+                var bindings = [];
+                var command;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return command; }, bindings); });
+                command = new WinJS.UI.AppBarCommand(element, options)
+                addDestroyListener($scope, command, bindings);
+                return command;
+            },
+        };
+    });
+
+    exists("BackButton") && module.directive("winBackButton", function () {
+        return {
+            restrict: "E",
+            replace: true,
+            template: "<BUTTON></BUTTON>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var control = new WinJS.UI.BackButton(element);
+                addDestroyListener($scope, control, []);
+                return control;
+            }
+        };
+    });
+
+    exists("CellSpanningLayout") && module.directive("winCellSpanningLayout", function () {
+        var api = {
+            groupHeaderPosition: BINDING_property,
+            groupInfo: BINDING_property,
+            itemInfo: BINDING_property,
+            maximumRowsOrColumns: BINDING_property,
+            orientation: BINDING_property,
+        };
+        return {
+            require: "^winListView",
+            restrict: "E",
+            replace: true,
+            template: "",
+            scope: objectMap(api, function (value) { return value.binding; }),
+            link: function ($scope, elements, attrs, listView) {
+                var bindings = [];
+                var layout;
+                var options = objectMap(api, function (value, key) { return value($scope, key, null, function () { return layout; }, bindings); });
+                layout = listView.layout = new WinJS.UI.CellSpanningLayout(options);
+                addDestroyListener($scope, layout, bindings);
+                return layout;
+            },
+        };
+    });
+
+    exists("NavBarContainer") && module.directive("winCommandTemplate", function () {
+        return {
+            require: ["^?winNavBarContainer"],
+            restrict: "E",
+            replace: true,
+            transclude: true,
+            compile: compileTemplate("template"),
+        };
+    });
+
+    exists("DatePicker") && module.directive("winDatePicker", function () {
+        var api = {
+            calendar: BINDING_property,
+            current: BINDING_property,
+            datePattern: BINDING_property,
+            disabled: BINDING_property,
+            maxYear: BINDING_property,
+            minYear: BINDING_property,
+            monthPattern: BINDING_property,
+            yearPattern: BINDING_property,
+            onchange: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV></DIV>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                var bindings = [];
+                var datePicker;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return datePicker; }, bindings); });
+                datePicker = new WinJS.UI.DatePicker(element, options);
+                datePicker.addEventListener("change", function () {
+                    apply($scope, function () {
+                        $scope["current"] = datePicker["current"];
+                    });
+                });
+                addDestroyListener($scope, datePicker, bindings);
+                return datePicker;
+            },
+        };
+    });
+
+    exists("FlipView") && module.directive("winFlipView", function () {
+        var api = {
+            currentPage: BINDING_property,
+            itemDataSource: BINDING_dataSource,
+            itemSpacing: BINDING_property,
+            itemTemplate: BINDING_property,
+            orientation: BINDING_property,
+            ondatasourcecountchanged: BINDING_event,
+            onpagecompleted: BINDING_event,
+            onpageselected: BINDING_event,
+            onpagevisibilitychanged: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            controller: function ($scope) {
+                proxy($scope, this, "itemTemplate");
+            },
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var flipView;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return flipView; }, bindings); });
+                flipView = new WinJS.UI.FlipView(element, options);
+                addDestroyListener($scope, flipView, bindings);
+                return flipView;
+            },
+        };
+    });
+
+    exists("Flyout") && module.directive("winFlyout", function () {
+        var api = {
+            alignment: BINDING_property,
+            anchor: BINDING_anchor,
+            hidden: BINDING_property,
+            placement: BINDING_property,
+            onafterhide: BINDING_event,
+            onaftershow: BINDING_event,
+            onbeforehide: BINDING_event,
+            onbeforeshow: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var flyout;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return flyout; }, bindings); });
+                flyout = new WinJS.UI.Flyout(element, options);
+                var anchor = flyout.anchor;
+                if (anchor && anchor instanceof HTMLElement && !anchor._anchorClick) {
+                    anchor._anchorClick = function () { flyout.show(); };
+                    anchor.addEventListener("click", anchor._anchorClick);
+                }
+                addDestroyListener($scope, flyout, bindings);
+                return flyout;
+            },
+        };
+    });
+
+    exists("GridLayout") && module.directive("winGridLayout", function () {
+        var api = {
+            groupHeaderPosition: BINDING_property,
+            maximumRowsOrColumns: BINDING_property,
+            orientation: BINDING_property,
+        };
+        return {
+            require: "^winListView",
+            restrict: "E",
+            replace: true,
+            template: "",
+            scope: objectMap(api, function (value) { return value.binding; }),
+            link: function ($scope, elements, attrs, listView) {
+                var bindings = [];
+                var layout;
+                var options = objectMap(api, function (value, key) { return value($scope, key, null, function () { return layout; }, bindings); });
+                layout = listView.layout = new WinJS.UI.GridLayout(options);
+                addDestroyListener($scope, layout, bindings);
+                return layout;
+            },
+        };
+    });
+
+    exists("ListView") && module.directive("winGroupHeaderTemplate", function () {
+        return {
+            require: ["^?winListView"],
+            restrict: "E",
+            replace: true,
+            transclude: true,
+            compile: compileTemplate("groupHeaderTemplate"),
+        };
+    });
+
+    exists("Hub") && module.directive("winHub", function () {
+        var api = {
+            headerTemplate: BINDING_property,
+            indexOfFirstVisible: BINDING_property,
+            indexOfLastVisible: BINDING_property,
+            loadingState: BINDING_property,
+            orientation: BINDING_property,
+            scrollPosition: BINDING_property,
+            sectionOnScreen: BINDING_property,
+            sections: BINDING_list,
+            oncontentanimating: BINDING_event,
+            onheaderinvoked: BINDING_event,
+            onloadingstatechanged: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            controller: function ($scope) {
+                proxy($scope, this, "headerTemplate");
+            },
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var hub;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return hub; }, bindings); });
+                hub = new WinJS.UI.Hub(element, options);
+                hub.addEventListener("loadingstatechanged", function () {
+                    apply($scope, function () {
+                        $scope["loadingState"] = hub["loadingState"];
+                    });
+                });
+                addDestroyListener($scope, hub, bindings);
+                return hub;
+            },
+        };
+    });
+
+    exists("HubSection") && module.directive("winHubSection", function () {
+        var api = {
+            header: BINDING_property,
+            isHeaderStatic: BINDING_property,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var section;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return section; }, bindings); });
+                section = new WinJS.UI.HubSection(element, options)
+                addDestroyListener($scope, section, bindings);
+                return section;
+            },
+        };
+    });
+
+    exists("ItemContainer") && module.directive("winItemContainer", function () {
+        var api = {
+            draggable: BINDING_property,
+            selected: BINDING_dataSource,
+            selectionDisabled: BINDING_property,
+            swipeBehavior: BINDING_property,
+            tapBehavior: BINDING_property,
+            oninvoked: BINDING_event,
+            onselectionchanged: BINDING_event,
+            onselectionchanging: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var itemContainer;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return itemContainer; }, bindings); });
+                itemContainer = new WinJS.UI.ItemContainer(element, options);
+                itemContainer.addEventListener("selectionchanged", function () {
+                    apply($scope, function () {
+                        $scope["selected"] = itemContainer["selected"];
+                    });
+                });
+                addDestroyListener($scope, itemContainer, bindings);
+                return itemContainer;
+            },
+        };
+    });
+
+    (exists("ListView") || exists("FlipView")) && module.directive("winItemTemplate", function () {
+        return {
+            require: ["^?winListView", "^?winFlipView"],
+            restrict: "E",
+            replace: true,
+            transclude: true,
+            compile: compileTemplate("itemTemplate"),
+        };
+    });
+
+    exists("ListLayout") && module.directive("winListLayout", function () {
+        var api = {
+            groupHeaderPosition: BINDING_property,
+            orientation: BINDING_property,
+        };
+        return {
+            require: "^winListView",
+            restrict: "E",
+            replace: true,
+            template: "",
+            scope: objectMap(api, function (value) { return value.binding; }),
+            link: function ($scope, elements, attrs, listView) {
+                var bindings = [];
+                var layout;
+                var options = objectMap(api, function (value, key) { return value($scope, key, null, function () { return layout; }, bindings); });
+                layout = listView.layout = new WinJS.UI.ListLayout(options);
+                addDestroyListener($scope, layout, bindings);
+                return layout;
+            },
+        };
+    });
+
+    exists("ListView") && module.directive("winListView", function () {
+        var api = {
+            currentItem: BINDING_property,
+            groupDataSource: BINDING_dataSource,
+            groupHeaderTemplate: BINDING_property,
+            groupHeaderTapBehavior: BINDING_property,
+            indexOfFirstVisible: BINDING_property,
+            indexOfLastVisible: BINDING_property,
+            itemDataSource: BINDING_dataSource,
+            itemsDraggable: BINDING_property,
+            itemsReorderable: BINDING_property,
+            itemTemplate: BINDING_property,
+            layout: BINDING_property,
+            loadingBehavior: BINDING_property,
+            maxDeferredItemsCleanup: BINDING_property,
+            scrollPosition: BINDING_property,
+            selection: BINDING_selection,
+            selectionMode: BINDING_property,
+            swipeBehavior: BINDING_property,
+            tapBehavior: BINDING_property,
+            oncontentanimating: BINDING_event,
+            ongroupheaderinvoked: BINDING_event,
+            onitemdragstart: BINDING_event,
+            onitemdragenter: BINDING_event,
+            onitemdragbetween: BINDING_event,
+            onitemdragleave: BINDING_event,
+            onitemdragchanged: BINDING_event,
+            onitemdragdrop: BINDING_event,
+            oniteminvoked: BINDING_event,
+            onkeyboardnavigating: BINDING_event,
+            onloadingstatechanged: BINDING_event,
+            onselectionchanged: BINDING_event,
+            onselectionchanging: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            controller: function ($scope) {
+                proxy($scope, this, "itemTemplate");
+                proxy($scope, this, "groupHeaderTemplate");
+                proxy($scope, this, "layout");
+                proxy($scope, this, "selection");
+            },
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var listView;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return listView; }, bindings); });
+                listView = new WinJS.UI.ListView(element, options);
+                listView.addEventListener("selectionchanged", function () {
+                    var value = $scope["selection"];
+                    if (value) {
+                        apply($scope, function () {
+                            var current = listView.selection.getIndices();
+                            value.length = 0;
+                            current.forEach(function (item) {
+                                value.push(item);
+                            });
+                        });
+                    }
+                });
+                addDestroyListener($scope, listView, bindings);
+                return listView;
+            },
+        };
+    });
+
+    exists("Menu") && module.directive("winMenu", function () {
+        var api = {
+            alignment: BINDING_property,
+            anchor: BINDING_anchor,
+            commmands: BINDING_property,
+            onafterhide: BINDING_event,
+            onaftershow: BINDING_event,
+            onbeforehide: BINDING_event,
+            onbeforeshow: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var menu;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return menu; }, bindings); });
+                menu = new WinJS.UI.Menu(element, options);
+                var anchor = menu.anchor;
+                if (anchor && anchor instanceof HTMLElement && anchor._anchorClick) {
+                    anchor._anchorClick = function () { menu.show(); };
+                    anchor.addEventListener("click", anchor._anchorClick);
+                }
+                addDestroyListener($scope, menu, bindings);
+                return menu;
+            },
+        };
+    });
+
+    exists("MenuCommand") && module.directive("winMenuCommand", function () {
+        var api = {
+            disabled: BINDING_property,
+            extraClass: BINDING_property,
+            flyout: BINDING_property,
+            hidden: BINDING_property,
+            id: BINDING_property,
+            label: BINDING_property,
+            section: BINDING_property,
+            selected: BINDING_property,
+            type: BINDING_property,
+            onclick: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<BUTTON></BUTTON>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                element.removeAttribute("id");
+                var bindings = [];
+                var command;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return command; }, bindings); });
+                command = new WinJS.UI.MenuCommand(element, options)
+                addDestroyListener($scope, command, bindings);
+                return command;
+            },
+        };
+    });
+
+    exists("NavBar") && module.directive("winNavBar", function () {
+        return {
+            restrict: "E",
+            replace: true,
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var navbar = new WinJS.UI.NavBar(element);
+                addDestroyListener($scope, navbar, []);
+                return navbar;
+            },
+        };
+    });
+
+    exists("NavBarCommand") && module.directive("winNavBarCommand", function () {
+        var api = {
+            icon: BINDING_property,
+            label: BINDING_property,
+            location: BINDING_property,
+            splitButton: BINDING_property,
+            state: BINDING_property,
+            tooltip: BINDING_property,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var command;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return command; }, bindings); });
+                command = new WinJS.UI.NavBarCommand(element, options)
+                addDestroyListener($scope, command, bindings);
+                return command;
+            },
+        };
+    });
+
+    exists("NavBarContainer") && module.directive("winNavBarContainer", function () {
+        var api = {
+            data: BINDING_list,
+            fixedSize: BINDING_property,
+            layout: BINDING_property,
+            template: BINDING_property,
+            maxRows: BINDING_property,
+            oninvoked: BINDING_event,
+            onsplittoggle: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            controller: function ($scope) {
+                proxy($scope, this, "template");
+            },
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var container;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return container; }, bindings); });
+                container = new WinJS.UI.NavBarContainer(element, options)
+                addDestroyListener($scope, container, bindings);
+                return container;
+            },
+        };
+    });
+
+    exists("Pivot") && module.directive("winPivot", function () {
+        var api = {
+            items: BINDING_list,
+            locked: BINDING_property,
+            selectedIndex: BINDING_property,
+            selectedItem: BINDING_property,
+            title: BINDING_property,
+            onitemanimationend: BINDING_event,
+            onitemanimationstart: BINDING_event,
+            onselectionchanged: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var pivot;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return pivot; }, bindings); });
+                pivot = new WinJS.UI.Pivot(element, options);
+                addDestroyListener($scope, pivot, bindings);
+                return hub;
+            },
+        };
+    });
+
+    exists("PivotItem") && module.directive("winPivotItem", function () {
+        var api = {
+            header: BINDING_property,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var item;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return item; }, bindings); });
+                item = new WinJS.UI.PivotItem(element, options)
+                addDestroyListener($scope, item, bindings);
+                return item;
+            },
+        };
+    });
+
+    exists("Rating") && module.directive("winRating", function () {
+        var api = {
+            averageRating: BINDING_property,
+            disabled: BINDING_property,
+            enableClear: BINDING_property,
+            maxRating: BINDING_property,
+            tooltipStrings: BINDING_property,
+            userRating: BINDING_property,
+            oncancel: BINDING_event,
+            onchange: BINDING_event,
+            onpreviewchange: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV></DIV>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                var bindings = [];
+                var rating;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return rating; }, bindings); });
+                rating = new WinJS.UI.Rating(element, options);
+                rating.addEventListener("change", function () {
+                    apply($scope, function () {
+                        $scope["userRating"] = rating["userRating"];
+                    });
+                });
+                addDestroyListener($scope, rating, bindings);
+                return rating;
+            },
+        };
+    });
+
+    exists("SearchBox") && module.directive("winSearchBox", function () {
+        var api = {
+            chooseSuggestionOnEnter: BINDING_property,
+            disabled: BINDING_property,
+            focusOnKeyboardInput: BINDING_property,
+            placeholderText: BINDING_property,
+            queryText: BINDING_property,
+            searchHistoryContext: BINDING_property,
+            searchHistoryDisabled: BINDING_property,
+            onquerychanged: BINDING_event,
+            onquerysubmitted: BINDING_event,
+            onreceivingfocusonkeyboardinput: BINDING_event,
+            onresultsuggestionchosen: BINDING_event,
+            onsuggestionsrequested: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV></DIV>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                var bindings = [];
+                var searchBox;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return searchBox; }, bindings); });
+                searchBox = new WinJS.UI.SearchBox(element, options);
+                searchBox.addEventListener("querychanged", function () {
+                    apply($scope, function () {
+                        $scope["queryText"] = searchBox["queryText"];
+                    });
+                });
+                addDestroyListener($scope, searchBox, bindings);
+                return searchBox;
+            },
+        };
+    });
+
+    exists("SectionHeaderTemplate") && module.directive("winSectionHeaderTemplate", function () {
+        return {
+            require: ["^?winHub"],
+            restrict: "E",
+            replace: true,
+            transclude: true,
+            compile: compileTemplate("headerTemplate"),
+        };
+    });
+
+    exists("SemanticZoom") && module.directive("winSemanticZoom", function () {
+        var api = {
+            enableButton: BINDING_property,
+            locked: BINDING_property,
+            zoomedOut: BINDING_property,
+            zoomFactor: BINDING_property,
+            onzoomchanged: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var sezo;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return sezo; }, bindings); });
+                sezo = new WinJS.UI.SemanticZoom(element, options)
+                addDestroyListener($scope, sezo, bindings);
+                return sezo;
+            },
+        };
+    });
+
+    exists("TimePicker") && module.directive("winTimePicker", function () {
+        var api = {
+            clock: BINDING_property,
+            current: BINDING_property,
+            disabled: BINDING_property,
+            hourPattern: BINDING_property,
+            minuteIncrement: BINDING_property,
+            minutePattern: BINDING_property,
+            periodPattern: BINDING_property,
+            onchange: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV></DIV>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("disabled");
+                var bindings = [];
+                var timePicker;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return timePicker; }, bindings); });
+                timePicker = new WinJS.UI.TimePicker(element, options);
+                timePicker.addEventListener("change", function () {
+                    apply($scope, function () {
+                        $scope["current"] = timePicker["current"];
+                    });
+                });
+                addDestroyListener($scope, timePicker, bindings);
+                return timePicker;
+            },
+        };
+    });
+
+    exists("ToggleSwitch") && module.directive("winToggleSwitch", function () {
+        var api = {
+            checked: BINDING_property,
+            disabled: BINDING_property,
+            labelOff: BINDING_property,
+            labelOn: BINDING_property,
+            title: BINDING_property,
+            onchange: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV></DIV>",
+            link: function ($scope, elements) {
+                var element = elements[0];
+                element.removeAttribute("checked");
+                element.removeAttribute("disabled");
+                element.removeAttribute("title");
+                var bindings = [];
+                var toggle;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return toggle; }, bindings); });
+                toggle = new WinJS.UI.ToggleSwitch(element, options);
+                toggle.addEventListener("change", function () {
+                    apply($scope, function () {
+                        $scope["checked"] = toggle["checked"];
+                    });
+                });
+                addDestroyListener($scope, toggle, bindings);
+                return toggle;
+            },
+        };
+    });
+
+    exists("Tooltip") && module.directive("winTooltip", function () {
+        var api = {
+            contentElement: BINDING_property,
+            extraClass: BINDING_property,
+            innerHTML: BINDING_property,
+            infotip: BINDING_property,
+            placement: BINDING_property,
+            onbeforeclose: BINDING_event,
+            onbeforeopen: BINDING_event,
+            onclosed: BINDING_event,
+            onopened: BINDING_event,
+        };
+        return {
+            restrict: "E",
+            replace: true,
+            scope: objectMap(api, function (value) { return value.binding; }),
+            template: "<DIV ng-transclude='true'></DIV>",
+            transclude: true,
+            controller: function ($scope) {
+                proxy($scope, this, "contentElement");
+            },
+            link: function ($scope, elements) {
+                var element = elements[0];
+                var bindings = [];
+                var tooltip;
+                var options = objectMap(api, function (value, key) { return value($scope, key, element, function () { return tooltip; }, bindings); });
+                tooltip = new WinJS.UI.Tooltip(element, options)
+                addDestroyListener($scope, tooltip, bindings);
+                return tooltip;
+            },
+        };
+    });
+
+    // Tooltop is a little odd because you have to be able to specify both the element
+    // which has a tooltip (the content) and the tooltip's content itself. We specify
+    // a special directive <win-tooltip-content /> which represents the latter.
+    exists("Tooltip") && module.directive("winTooltipContent", function () {
+        return {
+            require: "^winTooltip",
+            restrict: "E",
+            replace: true,
+            transclude: true,
+            template: "\
+<div style='display:none'>\
+  <div ng-transclude='true'></div>\
+</div>",
+            link: function ($scope, elements, attrs, tooltip) {
+                tooltip.contentElement = elements[0].firstElementChild;
+            },
+        };
+    });
+
+    // @TODO, This guy is a real odd-ball, you really need to coordinate with the settings 
+    // event which fires, I need to think more about this.
+    WinJS.UI.SettingsFlyout;
+
+    // Do not support explicitly, use ng-repeat
+    //WinJS.UI.Repeater;
+
+}(this));
+
+
+},{}],31:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -40592,7 +42536,7 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}],21:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 // AngularFire is an officially supported AngularJS binding for Firebase.
 // The bindings let you associate a Firebase URL with a model (or set of
 // models), and they will be transparently kept in sync across all clients
@@ -41613,7 +43557,7 @@ var styleDirective = valueFn({
 })();
 
 
-},{}],22:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 (function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
 function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -41762,4 +43706,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[1,2,3,4,5,6,7,8,9]);
+},{}]},{},[11,12,13,14,15,18,19,21,23,24,25,26,27]);

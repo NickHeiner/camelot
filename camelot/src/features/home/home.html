@@ -1,0 +1,11 @@
+﻿<div ng-show="shouldShowNoGamesMessage()">
+    <p>You have no games.</p>
+</div>
+
+<div ng-repeat="game in games">
+    {{game}}
+</div>
+
+<div>
+    <button ng-click="goToNewGame()">New game</button>
+</div>
