@@ -18319,9 +18319,6 @@ ngModule.directive('johnsonBox', function () {
     };
 });
 },{"../../angular-module":11,"./johnson-box.html":17}],19:[function(require,module,exports){
-module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
-
-},{}],20:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
@@ -18349,16 +18346,19 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
     $scope.startNewGameWith = startNewGameWith;
 
 });
-},{"../../angular-module":11,"lodash":9}],21:[function(require,module,exports){
-module.exports = "﻿<h3>Play game</h3>";
+},{"../../angular-module":11,"lodash":9}],20:[function(require,module,exports){
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 var angularModule = require('../../angular-module');
 
 angularModule.controller('PlayGameCtrl', function ($scope) {
 
 });
-},{"../../angular-module":11}],23:[function(require,module,exports){
+},{"../../angular-module":11}],22:[function(require,module,exports){
+module.exports = "﻿<h3>Play game</h3>";
+
+},{}],23:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -18395,7 +18395,7 @@ ngModule.config(function ($routeProvider) {
 });
 
 module.exports = paths;
-},{"../templates/game.html":28,"../vendor/angular":31,"../vendor/angular-route":29,"./angular-module.js":11,"./features/home/home.html":16,"./features/new-game/new-game.html":19,"./features/play-game/play-game.html":21}],24:[function(require,module,exports){
+},{"../templates/game.html":28,"../vendor/angular":31,"../vendor/angular-route":29,"./angular-module.js":11,"./features/home/home.html":16,"./features/new-game/new-game.html":20,"./features/play-game/play-game.html":22}],24:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module'),
@@ -43701,4 +43701,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[11,12,13,14,15,18,20,22,23,24,25,26,27]);
+},{}]},{},[11,12,13,14,15,18,19,21,23,24,25,26,27]);
