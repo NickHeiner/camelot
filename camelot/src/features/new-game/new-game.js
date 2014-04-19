@@ -14,5 +14,6 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel) {
     }
 
     $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;
+    $scope.getPossibleOpponents = getPossibleOpponents;
 
 });
