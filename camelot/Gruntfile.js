@@ -43,6 +43,9 @@ module.exports = function (grunt) {
             dist: {
                 files: {
                     'build/build.js': ['src/**/*.js']
+                },
+                options: {
+                    transform: [require('html-browserify')]
                 }
             }
         }

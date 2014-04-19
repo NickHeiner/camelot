@@ -3,7 +3,7 @@
 ngModule.directive('johnsonBox', function () {
 
     return {
-        templateUrl: 'templates/johnson-box.html',
+        template: require('./johnson-box.html'),
         scope: {
             user: '='
         }
