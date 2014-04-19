@@ -3,6 +3,12 @@
 
 ngModule.controller('NewGameCtrl', function ($scope, bindModel) {
 
-    bindModel(['users'], $scope, 'users', _.constant([]));
+    bindModel(['users'], $scope, 'users', _.constant({}));
+
+    function shouldShowNoUsersMessage() {
+        return _.isEmpty($scope.users);
+    }
+
+    $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;
 
 });
