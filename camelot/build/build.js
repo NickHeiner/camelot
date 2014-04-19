@@ -17518,7 +17518,11 @@ require('./evil');
 
 require('../vendor/angular');
 require('../vendor/angular-route');
+
+// http://stackoverflow.com/questions/19828632/is-it-possible-to-use-firebase-with-a-windows-8-app
 require('../vendor/firebase');
+Firebase.INTERNAL.forceWebSockets();
+
 require('../vendor/angularfire');
 require('../vendor/angular-winjs');
 
@@ -17644,7 +17648,7 @@ ngModule.directive('johnsonBox', function () {
     };
 });
 },{"../../angular-module":10,"./johnson-box.html":16}],18:[function(require,module,exports){
-module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one else has logged into this app.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"user in users\">\r\n    <p>{{user}}</p>\r\n</div>";
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one else has logged into this app.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"user in users\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}    \r\n</div>";
 
 },{}],19:[function(require,module,exports){
 var ngModule = require('../../angular-module'),

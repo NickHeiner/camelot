@@ -6,5 +6,7 @@
 </div>
 
 <div ng-repeat="user in users">
-    <p>{{user}}</p>
+    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->
+    <img ng-src="{{user.avatarUri}}" />
+    {{user.name}}    
 </div>
