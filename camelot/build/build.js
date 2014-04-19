@@ -18297,11 +18297,16 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
 
     bindModel(['games'], $scope, 'games', _.constant([]));
 
+    function shouldShowNoGamesMessage() {
+        return _.isEmpty($scope.games);
+    }
+
+    $scope.shouldShowNoGamesMessage = shouldShowNoGamesMessage;
     $scope.goToNewGame = goToRoute.goToNewGame;
 
 });
 },{"../../angular-module":11,"../../route":23,"lodash":9}],16:[function(require,module,exports){
-module.exports = "﻿<div ng-hide=\"games.length\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"game in games\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
+module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"game in games\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
 
 },{}],17:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";
