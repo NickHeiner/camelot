@@ -59,8 +59,17 @@
     </AppxManifest>
     <Content Include="build\build.js" />
     <Content Include="build\main.css" />
-    <Content Include="js\services\auth.js" />
-    <Content Include="js\services\bind-model.js" />
+    <Content Include="src\angular-module.js" />
+    <Content Include="src\controllers\camelot-ctrl.js" />
+    <Content Include="src\default.js" />
+    <Content Include="src\evil.js" />
+    <Content Include="src\features\home\home-ctrl.js" />
+    <Content Include="src\features\home\home.html" />
+    <Content Include="src\features\johnson-box\johnson-box.html" />
+    <Content Include="src\features\johnson-box\johnson-box.js" />
+    <Content Include="src\route.js" />
+    <Content Include="src\services\auth.js" />
+    <Content Include="src\services\bind-model.js" />
     <Content Include="vendor\angular-winjs.js" />
     <Content Include="vendor\angularfire.js" />
     <Content Include="vendor\firebase.js" />
@@ -71,20 +80,11 @@
     <Content Include="images\smalllogo.png" />
     <Content Include="images\splashscreen.png" />
     <Content Include="images\storelogo.png" />
-    <Content Include="js\angular-module.js" />
-    <Content Include="js\controllers\camelot-ctrl.js" />
-    <Content Include="js\controllers\home-ctrl.js" />
-    <Content Include="js\default.js" />
-    <Content Include="js\directives\johnson-box.js" />
-    <Content Include="js\evil.js" />
     <None Include="Package.StoreAssociation.xml" />
     <Content Include="scss\default.scss" />
-    <Content Include="js\route.js" />
     <Content Include="package.json" />
     <Content Include="readme.md" />
     <Content Include="templates\game.html" />
-    <Content Include="templates\home.html" />
-    <Content Include="templates\johnson-box.html" />
     <Content Include="vendor\angular-route.js" />
     <Content Include="vendor\angular.js" />
   </ItemGroup>

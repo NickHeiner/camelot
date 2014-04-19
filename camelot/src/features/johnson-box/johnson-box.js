@@ -1,4 +1,4 @@
-﻿var ngModule = require('../angular-module');
+﻿var ngModule = require('../../angular-module');
 
 ngModule.directive('johnsonBox', function () {
 

@@ -32,7 +32,7 @@ module.exports = function (grunt) {
                 },
                 files: {
                     src: [
-                        'js/**/*.js',
+                        'src/**/*.js',
                         'Gruntfile.js'
                     ]
                 }
@@ -42,7 +42,7 @@ module.exports = function (grunt) {
         browserify: {
             dist: {
                 files: {
-                    'build/build.js': ['js/**/*.js']
+                    'build/build.js': ['src/**/*.js']
                 }
             }
         }

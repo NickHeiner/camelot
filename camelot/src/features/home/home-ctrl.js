@@ -1,4 +1,4 @@
-﻿var ngModule = require('../angular-module'),
+﻿var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
 ngModule.controller('HomeCtrl', function ($scope, bindModel) {
