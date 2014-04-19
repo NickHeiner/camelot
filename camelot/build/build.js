@@ -17530,7 +17530,7 @@ module.exports = angular.module('camelot', [
     'ngRoute', 
     'firebase'
 ]);
-},{"../vendor/angular":26,"../vendor/angular-route":24,"../vendor/angular-winjs":25,"../vendor/angularfire":27,"../vendor/firebase":28,"./evil":13}],11:[function(require,module,exports){
+},{"../vendor/angular":27,"../vendor/angular-route":25,"../vendor/angular-winjs":26,"../vendor/angularfire":28,"../vendor/firebase":29,"./evil":13}],11:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
 ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
@@ -17648,15 +17648,16 @@ ngModule.directive('johnsonBox', function () {
     };
 });
 },{"../../angular-module":10,"./johnson-box.html":16}],18:[function(require,module,exports){
-module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"user in getPossibleOpponents()\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"user in getPossibleOpponents()\" ng-click=\"startNewGameWith(user)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
 
 },{}],19:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
-ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel) {
+ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, createNewGame, getFirebaseBinding) {
 
     bindModel(['users'], $scope, 'users', _.constant({}));
+    $scope.games = getFirebaseBinding('games');
 
     function getPossibleOpponents() {
         return _.omit($scope.users, $rootScope.currentUserId.id);
@@ -17666,8 +17667,14 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel) {
         return _.isEmpty(getPossibleOpponents());
     }
 
+    function startNewGameWith(user) {
+        var newGame = createNewGame($rootScope.currentUserId.id, user.id);
+        $scope.games.$add(newGame);
+    }
+
     $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;
     $scope.getPossibleOpponents = getPossibleOpponents;
+    $scope.startNewGameWith = startNewGameWith;
 
 });
 },{"../../angular-module":10,"lodash":9}],20:[function(require,module,exports){
@@ -17702,7 +17709,7 @@ ngModule.config(function ($routeProvider) {
 });
 
 module.exports = paths;
-},{"../templates/game.html":23,"../vendor/angular":26,"../vendor/angular-route":24,"./angular-module.js":10,"./features/home/home.html":15,"./features/new-game/new-game.html":18}],21:[function(require,module,exports){
+},{"../templates/game.html":24,"../vendor/angular":27,"../vendor/angular-route":25,"./angular-module.js":10,"./features/home/home.html":15,"./features/new-game/new-game.html":18}],21:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module'),
@@ -17780,19 +17787,38 @@ angularModule
             });
         };
     })
-    .factory('bindModel', function ($window, SCHEMA_VERSION, $firebase, getFirebaseUrl) {
-
-        return function (childPath, $scope, scopeAttr, getDefault) {
+    .factory('getFirebaseBinding', function ($window, $firebase, SCHEMA_VERSION, getFirebaseUrl) {
+        return function (childPath) {
             var pathname = path.join.apply(path, [SCHEMA_VERSION].concat(childPath)),
                 firebaseRef = new $window.Firebase(getFirebaseUrl(pathname));
 
-            $firebase(firebaseRef).$bind($scope, scopeAttr, getDefault);
+            return $firebase(firebaseRef);
+        };
+    })
+    .factory('bindModel', function (getFirebaseBinding) {
+
+        return function (childPath, $scope, scopeAttr, getDefault) {
+            getFirebaseBinding(childPath).$bind($scope, scopeAttr, getDefault);
         };
 });
 },{"../angular-module":10,"path":2,"url":7}],23:[function(require,module,exports){
+var angularModule = require('../angular-module');
+
+angularModule
+    .factory('createNewGame', function () {
+        return function (initiator, recepient) {
+            return {
+                players: [initiator, recepient],
+                gameState: {},
+                waitingOn: initiator,
+                winner: null
+            };
+        };
+    });
+},{"../angular-module":10}],24:[function(require,module,exports){
 module.exports = "﻿";
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -18721,7 +18747,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /*!
 * angular-winjs
 *
@@ -19874,7 +19900,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 }(this));
 
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -41803,7 +41829,7 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 // AngularFire is an officially supported AngularJS binding for Firebase.
 // The bindings let you associate a Firebase URL with a model (or set of
 // models), and they will be transparently kept in sync across all clients
@@ -42824,7 +42850,7 @@ var styleDirective = valueFn({
 })();
 
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 (function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
 function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -42973,4 +42999,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[10,11,12,13,14,17,19,20,21,22]);
+},{}]},{},[10,11,12,13,14,17,19,20,21,22,23]);
