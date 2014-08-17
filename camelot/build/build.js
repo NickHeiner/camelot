@@ -18451,7 +18451,7 @@ var ngModule = require('../../angular-module'),
     route = require('../../route'),
     _ = require('lodash');
 
-ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
+ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootScope) {
 
     bindModel(['games'], $scope, 'games', _.constant([]));
 
@@ -18459,12 +18459,22 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
         return !_.isUndefined($scope.games) && _.isEmpty($scope.games);
     }
 
+    function waitingOnCurrentPlayer(game) {
+        return game.waitingOn === $rootScope.currentUserId.id;
+    }
+
+    function notWaitingOnCurrentPlayer(game) {
+        return !waitingOnCurrentPlayer(game);
+    }
+
     $scope.shouldShowNoGamesMessage = shouldShowNoGamesMessage;
     $scope.goToNewGame = goToRoute.goToNewGame;
+    $scope.waitingOnCurrentPlayer = waitingOnCurrentPlayer;
+    $scope.notWaitingOnCurrentPlayer = notWaitingOnCurrentPlayer;
 
 });
 },{"../../angular-module":11,"../../route":23,"lodash":9}],16:[function(require,module,exports){
-module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"game in games\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
+module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div ng-repeat=\"game in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div ng-repeat=\"game in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
 
 },{}],17:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";

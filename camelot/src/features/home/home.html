@@ -2,7 +2,13 @@
     <p>You have no games.</p>
 </div>
 
-<div ng-repeat="game in games">
+<h3>Your Turn</h3>
+<div ng-repeat="game in games" ng-if="waitingOnCurrentPlayer(game)">
+    {{game}}
+</div>
+
+<h3>Their Turn</h3>
+<div ng-repeat="game in games" ng-if="notWaitingOnCurrentPlayer(game)">
     {{game}}
 </div>
 
