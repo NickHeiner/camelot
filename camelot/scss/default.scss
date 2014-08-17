@@ -38,6 +38,8 @@ $profile-pic-height: 10em;
 	-ms-grid-rows: $profile-pic-height / 2 auto 1fr;	
 }
 
+@import '../src/features/play-game/play-game.scss';
+
 .user-name {
 	-ms-grid-row: 2;
 	-ms-grid-column: 1;

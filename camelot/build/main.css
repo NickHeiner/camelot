@@ -3612,6 +3612,17 @@ th.hide-for-touch {
   -ms-grid-columns: auto auto;
   -ms-grid-rows: 5em auto 1fr; }
 
+.board-row {
+  float: left;
+  clear: both; }
+
+.board-space {
+  width: 10%;
+  height: 10%;
+  background: blue;
+  float: left;
+  margin: 5px; }
+
 .user-name {
   -ms-grid-row: 2;
   -ms-grid-column: 1; }

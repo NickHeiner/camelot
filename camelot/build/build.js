@@ -1,66 +1,222 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// shim for using process in browser
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
 
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    if (canPost) {
-        var queue = [];
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.once = noop;
-process.off = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-}
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
+module.exports = {
+	createEmptyGame: require('./init/create-empty-game')
 };
 
-},{}],2:[function(require,module,exports){
+},{"./init/create-empty-game":4}],2:[function(require,module,exports){
+'use strict';
+
+function getConstants() {
+    var WHITE = 'white',
+        BLACK = 'black',
+        BOARD_HEIGHT = 17;
+
+    return {
+        BOARD_WIDTH: 12,
+        BOARD_HEIGHT: BOARD_HEIGHT,
+        KNIGHT: 'knight',
+        PAWN: 'pawn',
+        WHITE: WHITE,
+        BLACK: BLACK,
+
+        COUNT_PIECES_NEEDED_TO_WIN: 2,
+
+        WHITE_GOAL_ROW: 0,
+        BLACK_GOAL_ROW: BOARD_HEIGHT - 1,
+
+        // This could be de-duplicated
+        STARTING_POSITIONS: [
+            {
+                ROW: 5,
+                COL_START: 3,
+                COUNT_PAWNS: 6,
+                COLOR: WHITE
+            },
+            {
+                ROW: 6,
+                COL_START: 4,
+                COUNT_PAWNS: 4,
+                COLOR: WHITE
+            },
+            {
+                ROW: 9,
+                COL_START: 4,
+                COUNT_PAWNS: 4,
+                COLOR: BLACK
+            },
+            {
+                ROW: 10,
+                COL_START: 3,
+                COUNT_PAWNS: 6,
+                COLOR: BLACK
+            },
+        ]
+    };
+}
+
+module.exports = getConstants;
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash'),
+    getRangeForRow = require('./get-range-for-row');
+
+function getBoardSpaces() {
+
+    // TODO verify that this is actually correct
+
+    return _.flatten([
+        getRangeForRow(0, 5),
+        getRangeForRow(1, 2),
+        getRangeForRow(2, 1),
+        _.range(3, 14).map(function(row) {
+            return getRangeForRow(row, 0);
+        }),
+        getRangeForRow(14, 1),
+        getRangeForRow(15, 2),
+        getRangeForRow(16, 5),
+    ]);
+
+}
+
+module.exports = getBoardSpaces;
+
+},{"./get-range-for-row":5,"lodash":18}],4:[function(require,module,exports){
+'use strict';
+
+var createBoardSpaces = require('./create-board-spaces'),
+    withStartingPieces = require('./with-starting-pieces');
+
+function createEmptyGame() {
+    return withStartingPieces({
+        turnCount: 0,
+        capturedPieces: {
+            playerA: {
+                small: 0,
+                large: 0
+            },
+            playerB: {
+                small: 0,
+                large: 0
+            }
+        },
+        boardSpaces: createBoardSpaces()
+    });
+}
+
+module.exports = createEmptyGame;
+
+},{"./create-board-spaces":3,"./with-starting-pieces":6}],5:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash'),
+    getConstants = require('../get-constants');
+
+function createBoardSpace(row, col) {
+    return {
+        row: row,
+        col: col
+    };
+}
+
+function getRangeForRow(row, firstCol) {
+    var lastCol = getConstants().BOARD_WIDTH - firstCol;
+    return _.map(_.range(firstCol, lastCol), function(col) {
+        return createBoardSpace(row, col);
+    });
+}
+
+module.exports = getRangeForRow;
+
+},{"../get-constants":2,"lodash":18}],6:[function(require,module,exports){
+'use strict';
+
+var updateBoardSpace = require('../update/update-board-space'),
+    constants = require('../get-constants')(),
+    repeat = require('../util/repeat'),
+    _ = require('lodash');
+
+function makePieceRow(gameState, countPawns, row, colStart, color) {
+
+    var pieces = [constants.KNIGHT].concat(repeat(constants.PAWN, countPawns)).concat([constants.KNIGHT]),
+        collOffsets = _.range(countPawns + 2);
+
+    return _.reduce(collOffsets, function(gameStateAcc, colOffset) {
+        return updateBoardSpace(gameStateAcc, row, colOffset + colStart, {piece: pieces[colOffset], color: color});
+    }, gameState);
+
+}
+
+function withStartingPieces(gameState) {
+
+    return _.reduce(constants.STARTING_POSITIONS, function(gameStateAcc, startingPosition) {
+        return makePieceRow(
+            gameStateAcc,
+            startingPosition.COUNT_PAWNS,
+            startingPosition.ROW,
+            startingPosition.COL_START,
+            startingPosition.COLOR
+        );
+    }, gameState);
+
+}
+
+module.exports = withStartingPieces;
+
+},{"../get-constants":2,"../update/update-board-space":8,"../util/repeat":9,"lodash":18}],7:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash');
+
+function getBoardSpace(gameState, rowOrBoardSpaceObj, colOrUndefined) {
+
+    var row,
+        col;
+
+    if (_.isObject(rowOrBoardSpaceObj)) {
+        row = rowOrBoardSpaceObj.row;
+        col = rowOrBoardSpaceObj.col;
+    } else {
+        row = rowOrBoardSpaceObj;
+        col = colOrUndefined;
+    }
+
+    return _.find(gameState.boardSpaces, {row: row, col: col}) || null;
+}
+
+module.exports = getBoardSpace;
+
+},{"lodash":18}],8:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash'),
+    getBoardSpace = require('../query/get-board-space');
+
+function updateBoardSpace(gameState, row, col, newBoardSpace) {
+    var newGameState = _.cloneDeep(gameState);
+
+    _.merge(getBoardSpace(newGameState, row, col), newBoardSpace);
+
+    return newGameState;
+}
+
+module.exports = updateBoardSpace; 
+
+},{"../query/get-board-space":7,"lodash":18}],9:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash');
+
+function repeat(val, count) {
+    return _.map(_.range(count), _.constant(val));
+}
+
+module.exports = repeat;
+
+},{"lodash":18}],10:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -287,8 +443,73 @@ var substr = 'ab'.substr(-1) === 'b'
     }
 ;
 
-}).call(this,require("C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js"))
-},{"C:\\Users\\Nick\\Documents\\Visual Studio 2012\\Projects\\camelot\\camelot\\node_modules\\grunt-browserify\\node_modules\\browserify\\node_modules\\insert-module-globals\\node_modules\\process\\browser.js":1}],3:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"_process":11}],11:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}],12:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -798,8 +1019,8 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }(this));
 
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],13:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -885,7 +1106,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],5:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -936,7 +1157,7 @@ module.exports = function(obj, sep, eq, name) {
     return map(objectKeys(obj), function(k) {
       var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
       if (isArray(obj[k])) {
-        return obj[k].map(function(v) {
+        return map(obj[k], function(v) {
           return ks + encodeURIComponent(stringifyPrimitive(v));
         }).join(sep);
       } else {
@@ -972,17 +1193,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":4,"./encode":5}],7:[function(require,module,exports){
-/*jshint strict:true node:true es5:true onevar:true laxcomma:true laxbreak:true eqeqeq:true immed:true latedef:true*/
-(function () {
-  "use strict";
-
+},{"./decode":13,"./encode":14}],16:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1011,6 +1228,23 @@ exports.resolve = urlResolve;
 exports.resolveObject = urlResolveObject;
 exports.format = urlFormat;
 
+exports.Url = Url;
+
+function Url() {
+  this.protocol = null;
+  this.slashes = null;
+  this.auth = null;
+  this.host = null;
+  this.port = null;
+  this.hostname = null;
+  this.hash = null;
+  this.search = null;
+  this.query = null;
+  this.pathname = null;
+  this.path = null;
+  this.href = null;
+}
+
 // Reference: RFC 3986, RFC 1808, RFC 2396
 
 // define these here so at least they only have to be
@@ -1023,20 +1257,19 @@ var protocolPattern = /^([a-z0-9.+-]+:)/i,
     delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
 
     // RFC 2396: characters not allowed for various reasons.
-    unwise = ['{', '}', '|', '\\', '^', '~', '`'].concat(delims),
+    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
 
     // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
-    autoEscape = ['\''].concat(delims),
+    autoEscape = ['\''].concat(unwise),
     // Characters that are never ever allowed in a hostname.
     // Note that any invalid chars are also handled, but these
     // are the ones that are *expected* to be seen, so we fast-path
     // them.
-    nonHostChars = ['%', '/', '?', ';', '#']
-      .concat(unwise).concat(autoEscape),
-    nonAuthChars = ['/', '@', '?', '#'].concat(delims),
+    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
+    hostEndingChars = ['/', '?', '#'],
     hostnameMaxLen = 255,
-    hostnamePartPattern = /^[a-zA-Z0-9][a-z0-9A-Z_-]{0,62}$/,
-    hostnamePartStart = /^([a-zA-Z0-9][a-z0-9A-Z_-]{0,62})(.*)$/,
+    hostnamePartPattern = /^[a-z0-9A-Z_-]{0,63}$/,
+    hostnamePartStart = /^([a-z0-9A-Z_-]{0,63})(.*)$/,
     // protocols that can allow "unsafe" and "unwise" chars.
     unsafeProtocol = {
       'javascript': true,
@@ -1046,18 +1279,6 @@ var protocolPattern = /^([a-z0-9.+-]+:)/i,
     hostlessProtocol = {
       'javascript': true,
       'javascript:': true
-    },
-    // protocols that always have a path component.
-    pathedProtocol = {
-      'http': true,
-      'https': true,
-      'ftp': true,
-      'gopher': true,
-      'file': true,
-      'http:': true,
-      'ftp:': true,
-      'gopher:': true,
-      'file:': true
     },
     // protocols that always contain a // bit.
     slashedProtocol = {
@@ -1075,14 +1296,19 @@ var protocolPattern = /^([a-z0-9.+-]+:)/i,
     querystring = require('querystring');
 
 function urlParse(url, parseQueryString, slashesDenoteHost) {
-  if (url && typeof(url) === 'object' && url.href) return url;
+  if (url && isObject(url) && url instanceof Url) return url;
 
-  if (typeof url !== 'string') {
+  var u = new Url;
+  u.parse(url, parseQueryString, slashesDenoteHost);
+  return u;
+}
+
+Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
+  if (!isString(url)) {
     throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
   }
 
-  var out = {},
-      rest = url;
+  var rest = url;
 
   // trim before proceeding.
   // This is to support parse stuff like "  http://foo.com  \n"
@@ -1092,7 +1318,7 @@ function urlParse(url, parseQueryString, slashesDenoteHost) {
   if (proto) {
     proto = proto[0];
     var lowerProto = proto.toLowerCase();
-    out.protocol = lowerProto;
+    this.protocol = lowerProto;
     rest = rest.substr(proto.length);
   }
 
@@ -1104,78 +1330,85 @@ function urlParse(url, parseQueryString, slashesDenoteHost) {
     var slashes = rest.substr(0, 2) === '//';
     if (slashes && !(proto && hostlessProtocol[proto])) {
       rest = rest.substr(2);
-      out.slashes = true;
+      this.slashes = true;
     }
   }
 
   if (!hostlessProtocol[proto] &&
       (slashes || (proto && !slashedProtocol[proto]))) {
+
     // there's a hostname.
     // the first instance of /, ?, ;, or # ends the host.
-    // don't enforce full RFC correctness, just be unstupid about it.
-
+    //
     // If there is an @ in the hostname, then non-host chars *are* allowed
-    // to the left of the first @ sign, unless some non-auth character
+    // to the left of the last @ sign, unless some host-ending character
     // comes *before* the @-sign.
     // URLs are obnoxious.
-    var atSign = rest.indexOf('@');
-    if (atSign !== -1) {
-      var auth = rest.slice(0, atSign);
+    //
+    // ex:
+    // http://a@b@c/ => user:a@b host:c
+    // http://a@b?@c => user:a host:c path:/?@c
 
-      // there *may be* an auth
-      var hasAuth = true;
-      for (var i = 0, l = nonAuthChars.length; i < l; i++) {
-        if (auth.indexOf(nonAuthChars[i]) !== -1) {
-          // not a valid auth.  Something like http://foo.com/bar@baz/
-          hasAuth = false;
-          break;
-        }
-      }
+    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
+    // Review our test case against browsers more comprehensively.
 
-      if (hasAuth) {
-        // pluck off the auth portion.
-        out.auth = decodeURIComponent(auth);
-        rest = rest.substr(atSign + 1);
-      }
+    // find the first instance of any hostEndingChars
+    var hostEnd = -1;
+    for (var i = 0; i < hostEndingChars.length; i++) {
+      var hec = rest.indexOf(hostEndingChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
     }
 
-    var firstNonHost = -1;
-    for (var i = 0, l = nonHostChars.length; i < l; i++) {
-      var index = rest.indexOf(nonHostChars[i]);
-      if (index !== -1 &&
-          (firstNonHost < 0 || index < firstNonHost)) firstNonHost = index;
-    }
-
-    if (firstNonHost !== -1) {
-      out.host = rest.substr(0, firstNonHost);
-      rest = rest.substr(firstNonHost);
+    // at this point, either we have an explicit point where the
+    // auth portion cannot go past, or the last @ char is the decider.
+    var auth, atSign;
+    if (hostEnd === -1) {
+      // atSign can be anywhere.
+      atSign = rest.lastIndexOf('@');
     } else {
-      out.host = rest;
-      rest = '';
+      // atSign must be in auth portion.
+      // http://a@b/c@d => host:b auth:a path:/c@d
+      atSign = rest.lastIndexOf('@', hostEnd);
     }
+
+    // Now we have a portion which is definitely the auth.
+    // Pull that off.
+    if (atSign !== -1) {
+      auth = rest.slice(0, atSign);
+      rest = rest.slice(atSign + 1);
+      this.auth = decodeURIComponent(auth);
+    }
+
+    // the host is the remaining to the left of the first non-host char
+    hostEnd = -1;
+    for (var i = 0; i < nonHostChars.length; i++) {
+      var hec = rest.indexOf(nonHostChars[i]);
+      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
+        hostEnd = hec;
+    }
+    // if we still have not hit it, then the entire thing is a host.
+    if (hostEnd === -1)
+      hostEnd = rest.length;
+
+    this.host = rest.slice(0, hostEnd);
+    rest = rest.slice(hostEnd);
 
     // pull out port.
-    var p = parseHost(out.host);
-    var keys = Object.keys(p);
-    for (var i = 0, l = keys.length; i < l; i++) {
-      var key = keys[i];
-      out[key] = p[key];
-    }
+    this.parseHost();
 
     // we've indicated that there is a hostname,
     // so even if it's empty, it has to be present.
-    out.hostname = out.hostname || '';
+    this.hostname = this.hostname || '';
 
     // if hostname begins with [ and ends with ]
     // assume that it's an IPv6 address.
-    var ipv6Hostname = out.hostname[0] === '[' &&
-        out.hostname[out.hostname.length - 1] === ']';
+    var ipv6Hostname = this.hostname[0] === '[' &&
+        this.hostname[this.hostname.length - 1] === ']';
 
     // validate a little.
-    if (out.hostname.length > hostnameMaxLen) {
-      out.hostname = '';
-    } else if (!ipv6Hostname) {
-      var hostparts = out.hostname.split(/\./);
+    if (!ipv6Hostname) {
+      var hostparts = this.hostname.split(/\./);
       for (var i = 0, l = hostparts.length; i < l; i++) {
         var part = hostparts[i];
         if (!part) continue;
@@ -1203,38 +1436,44 @@ function urlParse(url, parseQueryString, slashesDenoteHost) {
             if (notHost.length) {
               rest = '/' + notHost.join('.') + rest;
             }
-            out.hostname = validParts.join('.');
+            this.hostname = validParts.join('.');
             break;
           }
         }
       }
     }
 
-    // hostnames are always lower case.
-    out.hostname = out.hostname.toLowerCase();
+    if (this.hostname.length > hostnameMaxLen) {
+      this.hostname = '';
+    } else {
+      // hostnames are always lower case.
+      this.hostname = this.hostname.toLowerCase();
+    }
 
     if (!ipv6Hostname) {
       // IDNA Support: Returns a puny coded representation of "domain".
       // It only converts the part of the domain name that
       // has non ASCII characters. I.e. it dosent matter if
       // you call it with a domain that already is in ASCII.
-      var domainArray = out.hostname.split('.');
+      var domainArray = this.hostname.split('.');
       var newOut = [];
       for (var i = 0; i < domainArray.length; ++i) {
         var s = domainArray[i];
         newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
             'xn--' + punycode.encode(s) : s);
       }
-      out.hostname = newOut.join('.');
+      this.hostname = newOut.join('.');
     }
 
-    out.host = (out.hostname || '') +
-        ((out.port) ? ':' + out.port : '');
-    out.href += out.host;
+    var p = this.port ? ':' + this.port : '';
+    var h = this.hostname || '';
+    this.host = h + p;
+    this.href += this.host;
 
     // strip [ and ] from the hostname
+    // the host field still retains them, though
     if (ipv6Hostname) {
-      out.hostname = out.hostname.substr(1, out.hostname.length - 2);
+      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
       if (rest[0] !== '/') {
         rest = '/' + rest;
       }
@@ -1263,38 +1502,39 @@ function urlParse(url, parseQueryString, slashesDenoteHost) {
   var hash = rest.indexOf('#');
   if (hash !== -1) {
     // got a fragment string.
-    out.hash = rest.substr(hash);
+    this.hash = rest.substr(hash);
     rest = rest.slice(0, hash);
   }
   var qm = rest.indexOf('?');
   if (qm !== -1) {
-    out.search = rest.substr(qm);
-    out.query = rest.substr(qm + 1);
+    this.search = rest.substr(qm);
+    this.query = rest.substr(qm + 1);
     if (parseQueryString) {
-      out.query = querystring.parse(out.query);
+      this.query = querystring.parse(this.query);
     }
     rest = rest.slice(0, qm);
   } else if (parseQueryString) {
     // no query string, but parseQueryString still requested
-    out.search = '';
-    out.query = {};
+    this.search = '';
+    this.query = {};
   }
-  if (rest) out.pathname = rest;
-  if (slashedProtocol[proto] &&
-      out.hostname && !out.pathname) {
-    out.pathname = '/';
+  if (rest) this.pathname = rest;
+  if (slashedProtocol[lowerProto] &&
+      this.hostname && !this.pathname) {
+    this.pathname = '/';
   }
 
   //to support http.request
-  if (out.pathname || out.search) {
-    out.path = (out.pathname ? out.pathname : '') +
-               (out.search ? out.search : '');
+  if (this.pathname || this.search) {
+    var p = this.pathname || '';
+    var s = this.search || '';
+    this.path = p + s;
   }
 
   // finally, reconstruct the href based on what has been validated.
-  out.href = urlFormat(out);
-  return out;
-}
+  this.href = this.format();
+  return this;
+};
 
 // format a parsed object into a url string
 function urlFormat(obj) {
@@ -1302,44 +1542,49 @@ function urlFormat(obj) {
   // If it's an obj, this is a no-op.
   // this way, you can call url_format() on strings
   // to clean up potentially wonky urls.
-  if (typeof(obj) === 'string') obj = urlParse(obj);
+  if (isString(obj)) obj = urlParse(obj);
+  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
+  return obj.format();
+}
 
-  var auth = obj.auth || '';
+Url.prototype.format = function() {
+  var auth = this.auth || '';
   if (auth) {
     auth = encodeURIComponent(auth);
     auth = auth.replace(/%3A/i, ':');
     auth += '@';
   }
 
-  var protocol = obj.protocol || '',
-      pathname = obj.pathname || '',
-      hash = obj.hash || '',
+  var protocol = this.protocol || '',
+      pathname = this.pathname || '',
+      hash = this.hash || '',
       host = false,
       query = '';
 
-  if (obj.host !== undefined) {
-    host = auth + obj.host;
-  } else if (obj.hostname !== undefined) {
-    host = auth + (obj.hostname.indexOf(':') === -1 ?
-        obj.hostname :
-        '[' + obj.hostname + ']');
-    if (obj.port) {
-      host += ':' + obj.port;
+  if (this.host) {
+    host = auth + this.host;
+  } else if (this.hostname) {
+    host = auth + (this.hostname.indexOf(':') === -1 ?
+        this.hostname :
+        '[' + this.hostname + ']');
+    if (this.port) {
+      host += ':' + this.port;
     }
   }
 
-  if (obj.query && typeof obj.query === 'object' &&
-      Object.keys(obj.query).length) {
-    query = querystring.stringify(obj.query);
+  if (this.query &&
+      isObject(this.query) &&
+      Object.keys(this.query).length) {
+    query = querystring.stringify(this.query);
   }
 
-  var search = obj.search || (query && ('?' + query)) || '';
+  var search = this.search || (query && ('?' + query)) || '';
 
   if (protocol && protocol.substr(-1) !== ':') protocol += ':';
 
   // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
   // unless they had them to begin with.
-  if (obj.slashes ||
+  if (this.slashes ||
       (!protocol || slashedProtocol[protocol]) && host !== false) {
     host = '//' + (host || '');
     if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
@@ -1350,40 +1595,68 @@ function urlFormat(obj) {
   if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
   if (search && search.charAt(0) !== '?') search = '?' + search;
 
+  pathname = pathname.replace(/[?#]/g, function(match) {
+    return encodeURIComponent(match);
+  });
+  search = search.replace('#', '%23');
+
   return protocol + host + pathname + search + hash;
-}
+};
 
 function urlResolve(source, relative) {
-  return urlFormat(urlResolveObject(source, relative));
+  return urlParse(source, false, true).resolve(relative);
 }
+
+Url.prototype.resolve = function(relative) {
+  return this.resolveObject(urlParse(relative, false, true)).format();
+};
 
 function urlResolveObject(source, relative) {
   if (!source) return relative;
+  return urlParse(source, false, true).resolveObject(relative);
+}
 
-  source = urlParse(urlFormat(source), false, true);
-  relative = urlParse(urlFormat(relative), false, true);
+Url.prototype.resolveObject = function(relative) {
+  if (isString(relative)) {
+    var rel = new Url();
+    rel.parse(relative, false, true);
+    relative = rel;
+  }
+
+  var result = new Url();
+  Object.keys(this).forEach(function(k) {
+    result[k] = this[k];
+  }, this);
 
   // hash is always overridden, no matter what.
-  source.hash = relative.hash;
+  // even href="" will remove it.
+  result.hash = relative.hash;
 
+  // if the relative url is empty, then there's nothing left to do here.
   if (relative.href === '') {
-    source.href = urlFormat(source);
-    return source;
+    result.href = result.format();
+    return result;
   }
 
   // hrefs like //foo/bar always cut to the protocol.
   if (relative.slashes && !relative.protocol) {
-    relative.protocol = source.protocol;
+    // take everything except the protocol from relative
+    Object.keys(relative).forEach(function(k) {
+      if (k !== 'protocol')
+        result[k] = relative[k];
+    });
+
     //urlParse appends trailing / to urls like http://www.example.com
-    if (slashedProtocol[relative.protocol] &&
-        relative.hostname && !relative.pathname) {
-      relative.path = relative.pathname = '/';
+    if (slashedProtocol[result.protocol] &&
+        result.hostname && !result.pathname) {
+      result.path = result.pathname = '/';
     }
-    relative.href = urlFormat(relative);
-    return relative;
+
+    result.href = result.format();
+    return result;
   }
 
-  if (relative.protocol && relative.protocol !== source.protocol) {
+  if (relative.protocol && relative.protocol !== result.protocol) {
     // if it's a known url protocol, then changing
     // the protocol does weird things
     // first, if it's not file:, then we MUST have a host,
@@ -1393,10 +1666,14 @@ function urlResolveObject(source, relative) {
     // because that's known to be hostless.
     // anything else is assumed to be absolute.
     if (!slashedProtocol[relative.protocol]) {
-      relative.href = urlFormat(relative);
-      return relative;
+      Object.keys(relative).forEach(function(k) {
+        result[k] = relative[k];
+      });
+      result.href = result.format();
+      return result;
     }
-    source.protocol = relative.protocol;
+
+    result.protocol = relative.protocol;
     if (!relative.host && !hostlessProtocol[relative.protocol]) {
       var relPath = (relative.pathname || '').split('/');
       while (relPath.length && !(relative.host = relPath.shift()));
@@ -1404,72 +1681,72 @@ function urlResolveObject(source, relative) {
       if (!relative.hostname) relative.hostname = '';
       if (relPath[0] !== '') relPath.unshift('');
       if (relPath.length < 2) relPath.unshift('');
-      relative.pathname = relPath.join('/');
+      result.pathname = relPath.join('/');
+    } else {
+      result.pathname = relative.pathname;
     }
-    source.pathname = relative.pathname;
-    source.search = relative.search;
-    source.query = relative.query;
-    source.host = relative.host || '';
-    source.auth = relative.auth;
-    source.hostname = relative.hostname || relative.host;
-    source.port = relative.port;
-    //to support http.request
-    if (source.pathname !== undefined || source.search !== undefined) {
-      source.path = (source.pathname ? source.pathname : '') +
-                    (source.search ? source.search : '');
+    result.search = relative.search;
+    result.query = relative.query;
+    result.host = relative.host || '';
+    result.auth = relative.auth;
+    result.hostname = relative.hostname || relative.host;
+    result.port = relative.port;
+    // to support http.request
+    if (result.pathname || result.search) {
+      var p = result.pathname || '';
+      var s = result.search || '';
+      result.path = p + s;
     }
-    source.slashes = source.slashes || relative.slashes;
-    source.href = urlFormat(source);
-    return source;
+    result.slashes = result.slashes || relative.slashes;
+    result.href = result.format();
+    return result;
   }
 
-  var isSourceAbs = (source.pathname && source.pathname.charAt(0) === '/'),
+  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
       isRelAbs = (
-          relative.host !== undefined ||
+          relative.host ||
           relative.pathname && relative.pathname.charAt(0) === '/'
       ),
       mustEndAbs = (isRelAbs || isSourceAbs ||
-                    (source.host && relative.pathname)),
+                    (result.host && relative.pathname)),
       removeAllDots = mustEndAbs,
-      srcPath = source.pathname && source.pathname.split('/') || [],
+      srcPath = result.pathname && result.pathname.split('/') || [],
       relPath = relative.pathname && relative.pathname.split('/') || [],
-      psychotic = source.protocol &&
-          !slashedProtocol[source.protocol];
+      psychotic = result.protocol && !slashedProtocol[result.protocol];
 
   // if the url is a non-slashed url, then relative
   // links like ../.. should be able
   // to crawl up to the hostname, as well.  This is strange.
-  // source.protocol has already been set by now.
+  // result.protocol has already been set by now.
   // Later on, put the first path part into the host field.
   if (psychotic) {
-
-    delete source.hostname;
-    delete source.port;
-    if (source.host) {
-      if (srcPath[0] === '') srcPath[0] = source.host;
-      else srcPath.unshift(source.host);
+    result.hostname = '';
+    result.port = null;
+    if (result.host) {
+      if (srcPath[0] === '') srcPath[0] = result.host;
+      else srcPath.unshift(result.host);
     }
-    delete source.host;
+    result.host = '';
     if (relative.protocol) {
-      delete relative.hostname;
-      delete relative.port;
+      relative.hostname = null;
+      relative.port = null;
       if (relative.host) {
         if (relPath[0] === '') relPath[0] = relative.host;
         else relPath.unshift(relative.host);
       }
-      delete relative.host;
+      relative.host = null;
     }
     mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
   }
 
   if (isRelAbs) {
     // it's absolute.
-    source.host = (relative.host || relative.host === '') ?
-                      relative.host : source.host;
-    source.hostname = (relative.hostname || relative.hostname === '') ?
-                      relative.hostname : source.hostname;
-    source.search = relative.search;
-    source.query = relative.query;
+    result.host = (relative.host || relative.host === '') ?
+                  relative.host : result.host;
+    result.hostname = (relative.hostname || relative.hostname === '') ?
+                      relative.hostname : result.hostname;
+    result.search = relative.search;
+    result.query = relative.query;
     srcPath = relPath;
     // fall through to the dot-handling below.
   } else if (relPath.length) {
@@ -1478,53 +1755,55 @@ function urlResolveObject(source, relative) {
     if (!srcPath) srcPath = [];
     srcPath.pop();
     srcPath = srcPath.concat(relPath);
-    source.search = relative.search;
-    source.query = relative.query;
-  } else if ('search' in relative) {
+    result.search = relative.search;
+    result.query = relative.query;
+  } else if (!isNullOrUndefined(relative.search)) {
     // just pull out the search.
     // like href='?foo'.
     // Put this after the other two cases because it simplifies the booleans
     if (psychotic) {
-      source.hostname = source.host = srcPath.shift();
+      result.hostname = result.host = srcPath.shift();
       //occationaly the auth can get stuck only in host
       //this especialy happens in cases like
       //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-      var authInHost = source.host && source.host.indexOf('@') > 0 ?
-                       source.host.split('@') : false;
+      var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                       result.host.split('@') : false;
       if (authInHost) {
-        source.auth = authInHost.shift();
-        source.host = source.hostname = authInHost.shift();
+        result.auth = authInHost.shift();
+        result.host = result.hostname = authInHost.shift();
       }
     }
-    source.search = relative.search;
-    source.query = relative.query;
+    result.search = relative.search;
+    result.query = relative.query;
     //to support http.request
-    if (source.pathname !== undefined || source.search !== undefined) {
-      source.path = (source.pathname ? source.pathname : '') +
-                    (source.search ? source.search : '');
+    if (!isNull(result.pathname) || !isNull(result.search)) {
+      result.path = (result.pathname ? result.pathname : '') +
+                    (result.search ? result.search : '');
     }
-    source.href = urlFormat(source);
-    return source;
+    result.href = result.format();
+    return result;
   }
+
   if (!srcPath.length) {
     // no path at all.  easy.
     // we've already handled the other stuff above.
-    delete source.pathname;
+    result.pathname = null;
     //to support http.request
-    if (!source.search) {
-      source.path = '/' + source.search;
+    if (result.search) {
+      result.path = '/' + result.search;
     } else {
-      delete source.path;
+      result.path = null;
     }
-    source.href = urlFormat(source);
-    return source;
+    result.href = result.format();
+    return result;
   }
+
   // if a url ENDs in . or .., then it must get a trailing slash.
   // however, if it ends in anything else non-slashy,
   // then it must NOT get a trailing slash.
   var last = srcPath.slice(-1)[0];
   var hasTrailingSlash = (
-      (source.host || relative.host) && (last === '.' || last === '..') ||
+      (result.host || relative.host) && (last === '.' || last === '..') ||
       last === '');
 
   // strip single dots, resolve double dots to parent dir
@@ -1564,56 +1843,74 @@ function urlResolveObject(source, relative) {
 
   // put the host back
   if (psychotic) {
-    source.hostname = source.host = isAbsolute ? '' :
+    result.hostname = result.host = isAbsolute ? '' :
                                     srcPath.length ? srcPath.shift() : '';
     //occationaly the auth can get stuck only in host
     //this especialy happens in cases like
     //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-    var authInHost = source.host && source.host.indexOf('@') > 0 ?
-                     source.host.split('@') : false;
+    var authInHost = result.host && result.host.indexOf('@') > 0 ?
+                     result.host.split('@') : false;
     if (authInHost) {
-      source.auth = authInHost.shift();
-      source.host = source.hostname = authInHost.shift();
+      result.auth = authInHost.shift();
+      result.host = result.hostname = authInHost.shift();
     }
   }
 
-  mustEndAbs = mustEndAbs || (source.host && srcPath.length);
+  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
 
   if (mustEndAbs && !isAbsolute) {
     srcPath.unshift('');
   }
 
-  source.pathname = srcPath.join('/');
-  //to support request.http
-  if (source.pathname !== undefined || source.search !== undefined) {
-    source.path = (source.pathname ? source.pathname : '') +
-                  (source.search ? source.search : '');
+  if (!srcPath.length) {
+    result.pathname = null;
+    result.path = null;
+  } else {
+    result.pathname = srcPath.join('/');
   }
-  source.auth = relative.auth || source.auth;
-  source.slashes = source.slashes || relative.slashes;
-  source.href = urlFormat(source);
-  return source;
-}
 
-function parseHost(host) {
-  var out = {};
+  //to support request.http
+  if (!isNull(result.pathname) || !isNull(result.search)) {
+    result.path = (result.pathname ? result.pathname : '') +
+                  (result.search ? result.search : '');
+  }
+  result.auth = relative.auth || result.auth;
+  result.slashes = result.slashes || relative.slashes;
+  result.href = result.format();
+  return result;
+};
+
+Url.prototype.parseHost = function() {
+  var host = this.host;
   var port = portPattern.exec(host);
   if (port) {
     port = port[0];
     if (port !== ':') {
-      out.port = port.substr(1);
+      this.port = port.substr(1);
     }
     host = host.substr(0, host.length - port.length);
   }
-  if (host) out.hostname = host;
-  return out;
+  if (host) this.hostname = host;
+};
+
+function isString(arg) {
+  return typeof arg === "string";
 }
 
-}());
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
 
-},{"punycode":3,"querystring":6}],8:[function(require,module,exports){
+function isNull(arg) {
+  return arg === null;
+}
+function isNullOrUndefined(arg) {
+  return  arg == null;
+}
+
+},{"punycode":12,"querystring":15}],17:[function(require,module,exports){
 /*!
- * jQuery JavaScript Library v2.1.0
+ * jQuery JavaScript Library v2.1.1
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -1623,7 +1920,7 @@ function parseHost(host) {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-01-23T21:10Z
+ * Date: 2014-05-01T17:11Z
  */
 
 (function( global, factory ) {
@@ -1673,8 +1970,6 @@ var toString = class2type.toString;
 
 var hasOwn = class2type.hasOwnProperty;
 
-var trim = "".trim;
-
 var support = {};
 
 
@@ -1683,7 +1978,7 @@ var
 	// Use the correct document accordingly with window argument (sandbox)
 	document = window.document,
 
-	version = "2.1.0",
+	version = "2.1.1",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -1691,6 +1986,10 @@ var
 		// Need init if jQuery is called (just allow error to be thrown if not included)
 		return new jQuery.fn.init( selector, context );
 	},
+
+	// Support: Android<4.1
+	// Make sure we trim BOM and NBSP
+	rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
 
 	// Matches dashed string for camelizing
 	rmsPrefix = /^-ms-/,
@@ -1722,10 +2021,10 @@ jQuery.fn = jQuery.prototype = {
 	get: function( num ) {
 		return num != null ?
 
-			// Return a 'clean' array
+			// Return just the one element from the set
 			( num < 0 ? this[ num + this.length ] : this[ num ] ) :
 
-			// Return just the object
+			// Return all the elements in a clean array
 			slice.call( this );
 	},
 
@@ -1881,7 +2180,7 @@ jQuery.extend({
 		// parseFloat NaNs numeric-cast false positives (null|true|false|"")
 		// ...but misinterprets leading-number strings, particularly hex literals ("0x...")
 		// subtraction forces infinities to NaN
-		return obj - parseFloat( obj ) >= 0;
+		return !jQuery.isArray( obj ) && obj - parseFloat( obj ) >= 0;
 	},
 
 	isPlainObject: function( obj ) {
@@ -1893,16 +2192,8 @@ jQuery.extend({
 			return false;
 		}
 
-		// Support: Firefox <20
-		// The try/catch suppresses exceptions thrown when attempting to access
-		// the "constructor" property of certain host objects, ie. |window.location|
-		// https://bugzilla.mozilla.org/show_bug.cgi?id=814622
-		try {
-			if ( obj.constructor &&
-					!hasOwn.call( obj.constructor.prototype, "isPrototypeOf" ) ) {
-				return false;
-			}
-		} catch ( e ) {
+		if ( obj.constructor &&
+				!hasOwn.call( obj.constructor.prototype, "isPrototypeOf" ) ) {
 			return false;
 		}
 
@@ -2012,8 +2303,11 @@ jQuery.extend({
 		return obj;
 	},
 
+	// Support: Android<4.1
 	trim: function( text ) {
-		return text == null ? "" : trim.call( text );
+		return text == null ?
+			"" :
+			( text + "" ).replace( rtrim, "" );
 	},
 
 	// results is for internal usage only
@@ -2165,14 +2459,14 @@ function isArraylike( obj ) {
 }
 var Sizzle =
 /*!
- * Sizzle CSS Selector Engine v1.10.16
+ * Sizzle CSS Selector Engine v1.10.19
  * http://sizzlejs.com/
  *
  * Copyright 2013 jQuery Foundation, Inc. and other contributors
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-01-13
+ * Date: 2014-04-18
  */
 (function( window ) {
 
@@ -2181,7 +2475,9 @@ var i,
 	Expr,
 	getText,
 	isXML,
+	tokenize,
 	compile,
+	select,
 	outermostContext,
 	sortInput,
 	hasDuplicate,
@@ -2248,17 +2544,23 @@ var i,
 	// Proper syntax: http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
 	identifier = characterEncoding.replace( "w", "w#" ),
 
-	// Acceptable operators http://www.w3.org/TR/selectors/#attribute-selectors
-	attributes = "\\[" + whitespace + "*(" + characterEncoding + ")" + whitespace +
-		"*(?:([*^$|!~]?=)" + whitespace + "*(?:(['\"])((?:\\\\.|[^\\\\])*?)\\3|(" + identifier + ")|)|)" + whitespace + "*\\]",
+	// Attribute selectors: http://www.w3.org/TR/selectors/#attribute-selectors
+	attributes = "\\[" + whitespace + "*(" + characterEncoding + ")(?:" + whitespace +
+		// Operator (capture 2)
+		"*([*^$|!~]?=)" + whitespace +
+		// "Attribute values must be CSS identifiers [capture 5] or strings [capture 3 or capture 4]"
+		"*(?:'((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\"|(" + identifier + "))|)" + whitespace +
+		"*\\]",
 
-	// Prefer arguments quoted,
-	//   then not containing pseudos/brackets,
-	//   then attribute selectors/non-parenthetical expressions,
-	//   then anything else
-	// These preferences are here to reduce the number of selectors
-	//   needing tokenize in the PSEUDO preFilter
-	pseudos = ":(" + characterEncoding + ")(?:\\(((['\"])((?:\\\\.|[^\\\\])*?)\\3|((?:\\\\.|[^\\\\()[\\]]|" + attributes.replace( 3, 8 ) + ")*)|.*)\\)|)",
+	pseudos = ":(" + characterEncoding + ")(?:\\((" +
+		// To reduce the number of selectors needing tokenize in the preFilter, prefer arguments:
+		// 1. quoted (capture 3; capture 4 or capture 5)
+		"('((?:\\\\.|[^\\\\'])*)'|\"((?:\\\\.|[^\\\\\"])*)\")|" +
+		// 2. simple (capture 6)
+		"((?:\\\\.|[^\\\\()[\\]]|" + attributes + ")*)|" +
+		// 3. anything else (capture 2)
+		".*" +
+		")\\)|)",
 
 	// Leading and non-escaped trailing whitespace, capturing some non-whitespace characters preceding the latter
 	rtrim = new RegExp( "^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g" ),
@@ -2303,7 +2605,7 @@ var i,
 	funescape = function( _, escaped, escapedWhitespace ) {
 		var high = "0x" + escaped - 0x10000;
 		// NaN means non-codepoint
-		// Support: Firefox
+		// Support: Firefox<24
 		// Workaround erroneous numeric interpretation of +"0x"
 		return high !== high || escapedWhitespace ?
 			escaped :
@@ -2699,7 +3001,7 @@ setDocument = Sizzle.setDocument = function( node ) {
 				var m = context.getElementById( id );
 				// Check parentNode to catch when Blackberry 4.6 returns
 				// nodes that are no longer in the document #6963
-				return m && m.parentNode ? [m] : [];
+				return m && m.parentNode ? [ m ] : [];
 			}
 		};
 		Expr.filter["ID"] = function( id ) {
@@ -2779,11 +3081,13 @@ setDocument = Sizzle.setDocument = function( node ) {
 			// setting a boolean content attribute,
 			// since its presence should be enough
 			// http://bugs.jquery.com/ticket/12359
-			div.innerHTML = "<select t=''><option selected=''></option></select>";
+			div.innerHTML = "<select msallowclip=''><option selected=''></option></select>";
 
-			// Support: IE8, Opera 10-12
+			// Support: IE8, Opera 11-12.16
 			// Nothing should be selected when empty strings follow ^= or $= or *=
-			if ( div.querySelectorAll("[t^='']").length ) {
+			// The test attribute must be unknown in Opera but "safe" for WinRT
+			// http://msdn.microsoft.com/en-us/library/ie/hh465388.aspx#attribute_section
+			if ( div.querySelectorAll("[msallowclip^='']").length ) {
 				rbuggyQSA.push( "[*^$]=" + whitespace + "*(?:''|\"\")" );
 			}
 
@@ -2826,7 +3130,8 @@ setDocument = Sizzle.setDocument = function( node ) {
 		});
 	}
 
-	if ( (support.matchesSelector = rnative.test( (matches = docElem.webkitMatchesSelector ||
+	if ( (support.matchesSelector = rnative.test( (matches = docElem.matches ||
+		docElem.webkitMatchesSelector ||
 		docElem.mozMatchesSelector ||
 		docElem.oMatchesSelector ||
 		docElem.msMatchesSelector) )) ) {
@@ -3007,7 +3312,7 @@ Sizzle.matchesSelector = function( elem, expr ) {
 		} catch(e) {}
 	}
 
-	return Sizzle( expr, document, null, [elem] ).length > 0;
+	return Sizzle( expr, document, null, [ elem ] ).length > 0;
 };
 
 Sizzle.contains = function( context, elem ) {
@@ -3136,7 +3441,7 @@ Expr = Sizzle.selectors = {
 			match[1] = match[1].replace( runescape, funescape );
 
 			// Move the given value to match[3] whether quoted or unquoted
-			match[3] = ( match[4] || match[5] || "" ).replace( runescape, funescape );
+			match[3] = ( match[3] || match[4] || match[5] || "" ).replace( runescape, funescape );
 
 			if ( match[2] === "~=" ) {
 				match[3] = " " + match[3] + " ";
@@ -3179,15 +3484,15 @@ Expr = Sizzle.selectors = {
 
 		"PSEUDO": function( match ) {
 			var excess,
-				unquoted = !match[5] && match[2];
+				unquoted = !match[6] && match[2];
 
 			if ( matchExpr["CHILD"].test( match[0] ) ) {
 				return null;
 			}
 
 			// Accept quoted arguments as-is
-			if ( match[3] && match[4] !== undefined ) {
-				match[2] = match[4];
+			if ( match[3] ) {
+				match[2] = match[4] || match[5] || "";
 
 			// Strip excess characters from unquoted arguments
 			} else if ( unquoted && rpseudo.test( unquoted ) &&
@@ -3592,7 +3897,7 @@ function setFilters() {}
 setFilters.prototype = Expr.filters = Expr.pseudos;
 Expr.setFilters = new setFilters();
 
-function tokenize( selector, parseOnly ) {
+tokenize = Sizzle.tokenize = function( selector, parseOnly ) {
 	var matched, match, tokens, type,
 		soFar, groups, preFilters,
 		cached = tokenCache[ selector + " " ];
@@ -3657,7 +3962,7 @@ function tokenize( selector, parseOnly ) {
 			Sizzle.error( selector ) :
 			// Cache the tokens
 			tokenCache( selector, groups ).slice( 0 );
-}
+};
 
 function toSelector( tokens ) {
 	var i = 0,
@@ -3734,6 +4039,15 @@ function elementMatcher( matchers ) {
 			return true;
 		} :
 		matchers[0];
+}
+
+function multipleContexts( selector, contexts, results ) {
+	var i = 0,
+		len = contexts.length;
+	for ( ; i < len; i++ ) {
+		Sizzle( selector, contexts[i], results );
+	}
+	return results;
 }
 
 function condense( unmatched, map, filter, context, xml ) {
@@ -4004,7 +4318,7 @@ function matcherFromGroupMatchers( elementMatchers, setMatchers ) {
 		superMatcher;
 }
 
-compile = Sizzle.compile = function( selector, group /* Internal Use Only */ ) {
+compile = Sizzle.compile = function( selector, match /* Internal Use Only */ ) {
 	var i,
 		setMatchers = [],
 		elementMatchers = [],
@@ -4012,12 +4326,12 @@ compile = Sizzle.compile = function( selector, group /* Internal Use Only */ ) {
 
 	if ( !cached ) {
 		// Generate a function of recursive functions that can be used to check each element
-		if ( !group ) {
-			group = tokenize( selector );
+		if ( !match ) {
+			match = tokenize( selector );
 		}
-		i = group.length;
+		i = match.length;
 		while ( i-- ) {
-			cached = matcherFromTokens( group[i] );
+			cached = matcherFromTokens( match[i] );
 			if ( cached[ expando ] ) {
 				setMatchers.push( cached );
 			} else {
@@ -4027,74 +4341,83 @@ compile = Sizzle.compile = function( selector, group /* Internal Use Only */ ) {
 
 		// Cache the compiled function
 		cached = compilerCache( selector, matcherFromGroupMatchers( elementMatchers, setMatchers ) );
+
+		// Save selector and tokenization
+		cached.selector = selector;
 	}
 	return cached;
 };
 
-function multipleContexts( selector, contexts, results ) {
-	var i = 0,
-		len = contexts.length;
-	for ( ; i < len; i++ ) {
-		Sizzle( selector, contexts[i], results );
-	}
-	return results;
-}
-
-function select( selector, context, results, seed ) {
+/**
+ * A low-level selection function that works with Sizzle's compiled
+ *  selector functions
+ * @param {String|Function} selector A selector or a pre-compiled
+ *  selector function built with Sizzle.compile
+ * @param {Element} context
+ * @param {Array} [results]
+ * @param {Array} [seed] A set of elements to match against
+ */
+select = Sizzle.select = function( selector, context, results, seed ) {
 	var i, tokens, token, type, find,
-		match = tokenize( selector );
+		compiled = typeof selector === "function" && selector,
+		match = !seed && tokenize( (selector = compiled.selector || selector) );
 
-	if ( !seed ) {
-		// Try to minimize operations if there is only one group
-		if ( match.length === 1 ) {
+	results = results || [];
 
-			// Take a shortcut and set the context if the root selector is an ID
-			tokens = match[0] = match[0].slice( 0 );
-			if ( tokens.length > 2 && (token = tokens[0]).type === "ID" &&
-					support.getById && context.nodeType === 9 && documentIsHTML &&
-					Expr.relative[ tokens[1].type ] ) {
+	// Try to minimize operations if there is no seed and only one group
+	if ( match.length === 1 ) {
 
-				context = ( Expr.find["ID"]( token.matches[0].replace(runescape, funescape), context ) || [] )[0];
-				if ( !context ) {
-					return results;
-				}
-				selector = selector.slice( tokens.shift().value.length );
+		// Take a shortcut and set the context if the root selector is an ID
+		tokens = match[0] = match[0].slice( 0 );
+		if ( tokens.length > 2 && (token = tokens[0]).type === "ID" &&
+				support.getById && context.nodeType === 9 && documentIsHTML &&
+				Expr.relative[ tokens[1].type ] ) {
+
+			context = ( Expr.find["ID"]( token.matches[0].replace(runescape, funescape), context ) || [] )[0];
+			if ( !context ) {
+				return results;
+
+			// Precompiled matchers will still verify ancestry, so step up a level
+			} else if ( compiled ) {
+				context = context.parentNode;
 			}
 
-			// Fetch a seed set for right-to-left matching
-			i = matchExpr["needsContext"].test( selector ) ? 0 : tokens.length;
-			while ( i-- ) {
-				token = tokens[i];
+			selector = selector.slice( tokens.shift().value.length );
+		}
 
-				// Abort if we hit a combinator
-				if ( Expr.relative[ (type = token.type) ] ) {
-					break;
-				}
-				if ( (find = Expr.find[ type ]) ) {
-					// Search, expanding context for leading sibling combinators
-					if ( (seed = find(
-						token.matches[0].replace( runescape, funescape ),
-						rsibling.test( tokens[0].type ) && testContext( context.parentNode ) || context
-					)) ) {
+		// Fetch a seed set for right-to-left matching
+		i = matchExpr["needsContext"].test( selector ) ? 0 : tokens.length;
+		while ( i-- ) {
+			token = tokens[i];
 
-						// If seed is empty or no tokens remain, we can return early
-						tokens.splice( i, 1 );
-						selector = seed.length && toSelector( tokens );
-						if ( !selector ) {
-							push.apply( results, seed );
-							return results;
-						}
+			// Abort if we hit a combinator
+			if ( Expr.relative[ (type = token.type) ] ) {
+				break;
+			}
+			if ( (find = Expr.find[ type ]) ) {
+				// Search, expanding context for leading sibling combinators
+				if ( (seed = find(
+					token.matches[0].replace( runescape, funescape ),
+					rsibling.test( tokens[0].type ) && testContext( context.parentNode ) || context
+				)) ) {
 
-						break;
+					// If seed is empty or no tokens remain, we can return early
+					tokens.splice( i, 1 );
+					selector = seed.length && toSelector( tokens );
+					if ( !selector ) {
+						push.apply( results, seed );
+						return results;
 					}
+
+					break;
 				}
 			}
 		}
 	}
 
-	// Compile and execute a filtering function
+	// Compile and execute a filtering function if one is not provided
 	// Provide `match` to avoid retokenization if we modified the selector above
-	compile( selector, match )(
+	( compiled || compile( selector, match ) )(
 		seed,
 		context,
 		!documentIsHTML,
@@ -4102,7 +4425,7 @@ function select( selector, context, results, seed ) {
 		rsibling.test( selector ) && testContext( context.parentNode ) || context
 	);
 	return results;
-}
+};
 
 // One-time assignments
 
@@ -4979,8 +5302,9 @@ jQuery.extend({
 		readyList.resolveWith( document, [ jQuery ] );
 
 		// Trigger any bound ready events
-		if ( jQuery.fn.trigger ) {
-			jQuery( document ).trigger("ready").off("ready");
+		if ( jQuery.fn.triggerHandler ) {
+			jQuery( document ).triggerHandler( "ready" );
+			jQuery( document ).off( "ready" );
 		}
 	}
 });
@@ -5352,11 +5676,15 @@ jQuery.fn.extend({
 				if ( elem.nodeType === 1 && !data_priv.get( elem, "hasDataAttrs" ) ) {
 					i = attrs.length;
 					while ( i-- ) {
-						name = attrs[ i ].name;
 
-						if ( name.indexOf( "data-" ) === 0 ) {
-							name = jQuery.camelCase( name.slice(5) );
-							dataAttr( elem, name, data[ name ] );
+						// Support: IE11+
+						// The attrs elements can be null (#14894)
+						if ( attrs[ i ] ) {
+							name = attrs[ i ].name;
+							if ( name.indexOf( "data-" ) === 0 ) {
+								name = jQuery.camelCase( name.slice(5) );
+								dataAttr( elem, name, data[ name ] );
+							}
 						}
 					}
 					data_priv.set( elem, "hasDataAttrs", true );
@@ -5586,10 +5914,17 @@ var rcheckableType = (/^(?:checkbox|radio)$/i);
 
 (function() {
 	var fragment = document.createDocumentFragment(),
-		div = fragment.appendChild( document.createElement( "div" ) );
+		div = fragment.appendChild( document.createElement( "div" ) ),
+		input = document.createElement( "input" );
 
 	// #11217 - WebKit loses check when the name is after the checked attribute
-	div.innerHTML = "<input type='radio' checked='checked' name='t'/>";
+	// Support: Windows Web Apps (WWA)
+	// `name` and `type` need .setAttribute for WWA
+	input.setAttribute( "type", "radio" );
+	input.setAttribute( "checked", "checked" );
+	input.setAttribute( "name", "t" );
+
+	div.appendChild( input );
 
 	// Support: Safari 5.1, iOS 5.1, Android 4.x, Android 2.3
 	// old WebKit doesn't clone checked state correctly in fragments
@@ -5609,7 +5944,7 @@ support.focusinBubbles = "onfocusin" in window;
 
 var
 	rkeyEvent = /^key/,
-	rmouseEvent = /^(?:mouse|contextmenu)|click/,
+	rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
 	rfocusMorph = /^(?:focusinfocus|focusoutblur)$/,
 	rtypenamespace = /^([^.]*)(?:\.(.+)|)$/;
 
@@ -6178,7 +6513,7 @@ jQuery.event = {
 
 				// Support: Firefox 20+
 				// Firefox doesn't alert if the returnValue field is not set.
-				if ( event.result !== undefined ) {
+				if ( event.result !== undefined && event.originalEvent ) {
 					event.originalEvent.returnValue = event.result;
 				}
 			}
@@ -6229,9 +6564,9 @@ jQuery.Event = function( src, props ) {
 		// Events bubbling up the document may have been marked as prevented
 		// by a handler lower down the tree; reflect the correct value.
 		this.isDefaultPrevented = src.defaultPrevented ||
-				// Support: Android < 4.0
 				src.defaultPrevented === undefined &&
-				src.getPreventDefault && src.getPreventDefault() ?
+				// Support: Android < 4.0
+				src.returnValue === false ?
 			returnTrue :
 			returnFalse;
 
@@ -6278,7 +6613,14 @@ jQuery.Event.prototype = {
 		}
 	},
 	stopImmediatePropagation: function() {
+		var e = this.originalEvent;
+
 		this.isImmediatePropagationStopped = returnTrue;
+
+		if ( e && e.stopImmediatePropagation ) {
+			e.stopImmediatePropagation();
+		}
+
 		this.stopPropagation();
 	}
 };
@@ -6287,7 +6629,9 @@ jQuery.Event.prototype = {
 // Support: Chrome 15+
 jQuery.each({
 	mouseenter: "mouseover",
-	mouseleave: "mouseout"
+	mouseleave: "mouseout",
+	pointerenter: "pointerover",
+	pointerleave: "pointerout"
 }, function( orig, fix ) {
 	jQuery.event.special[ orig ] = {
 		delegateType: fix,
@@ -6712,7 +7056,7 @@ jQuery.extend({
 	},
 
 	cleanData: function( elems ) {
-		var data, elem, events, type, key, j,
+		var data, elem, type, key,
 			special = jQuery.event.special,
 			i = 0;
 
@@ -6721,9 +7065,8 @@ jQuery.extend({
 				key = elem[ data_priv.expando ];
 
 				if ( key && (data = data_priv.cache[ key ]) ) {
-					events = Object.keys( data.events || {} );
-					if ( events.length ) {
-						for ( j = 0; (type = events[j]) !== undefined; j++ ) {
+					if ( data.events ) {
+						for ( type in data.events ) {
 							if ( special[ type ] ) {
 								jQuery.event.remove( elem, type );
 
@@ -7026,14 +7369,15 @@ var iframe,
  */
 // Called only from within defaultDisplay
 function actualDisplay( name, doc ) {
-	var elem = jQuery( doc.createElement( name ) ).appendTo( doc.body ),
+	var style,
+		elem = jQuery( doc.createElement( name ) ).appendTo( doc.body ),
 
 		// getDefaultComputedStyle might be reliably used only on attached element
-		display = window.getDefaultComputedStyle ?
+		display = window.getDefaultComputedStyle && ( style = window.getDefaultComputedStyle( elem[ 0 ] ) ) ?
 
 			// Use of this method is a temporary fix (more like optmization) until something better comes along,
 			// since it was removed from specification and supported only in FF
-			window.getDefaultComputedStyle( elem[ 0 ] ).display : jQuery.css( elem[ 0 ], "display" );
+			style.display : jQuery.css( elem[ 0 ], "display" );
 
 	// We don't have any data stored on the element,
 	// so use "detach" method as fast way to get rid of the element
@@ -7156,28 +7500,32 @@ function addGetHookIf( conditionFn, hookFn ) {
 
 (function() {
 	var pixelPositionVal, boxSizingReliableVal,
-		// Support: Firefox, Android 2.3 (Prefixed box-sizing versions).
-		divReset = "padding:0;margin:0;border:0;display:block;-webkit-box-sizing:content-box;" +
-			"-moz-box-sizing:content-box;box-sizing:content-box",
 		docElem = document.documentElement,
 		container = document.createElement( "div" ),
 		div = document.createElement( "div" );
+
+	if ( !div.style ) {
+		return;
+	}
 
 	div.style.backgroundClip = "content-box";
 	div.cloneNode( true ).style.backgroundClip = "";
 	support.clearCloneStyle = div.style.backgroundClip === "content-box";
 
-	container.style.cssText = "border:0;width:0;height:0;position:absolute;top:0;left:-9999px;" +
-		"margin-top:1px";
+	container.style.cssText = "border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;" +
+		"position:absolute";
 	container.appendChild( div );
 
 	// Executing both pixelPosition & boxSizingReliable tests require only one layout
 	// so they're executed at the same time to save the second computation.
 	function computePixelPositionAndBoxSizingReliable() {
-		// Support: Firefox, Android 2.3 (Prefixed box-sizing versions).
-		div.style.cssText = "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
-			"box-sizing:border-box;padding:1px;border:1px;display:block;width:4px;margin-top:1%;" +
-			"position:absolute;top:1%";
+		div.style.cssText =
+			// Support: Firefox<29, Android 2.3
+			// Vendor-prefix box-sizing
+			"-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
+			"box-sizing:border-box;display:block;margin-top:1%;top:1%;" +
+			"border:1px;padding:1px;width:4px;position:absolute";
+		div.innerHTML = "";
 		docElem.appendChild( container );
 
 		var divStyle = window.getComputedStyle( div, null );
@@ -7187,9 +7535,10 @@ function addGetHookIf( conditionFn, hookFn ) {
 		docElem.removeChild( container );
 	}
 
-	// Use window.getComputedStyle because jsdom on node.js will break without it.
+	// Support: node.js jsdom
+	// Don't assume that getComputedStyle is a property of the global object
 	if ( window.getComputedStyle ) {
-		jQuery.extend(support, {
+		jQuery.extend( support, {
 			pixelPosition: function() {
 				// This test is executed only once but we still do memoizing
 				// since we can use the boxSizingReliable pre-computing.
@@ -7211,7 +7560,13 @@ function addGetHookIf( conditionFn, hookFn ) {
 				// This support function is only executed once so no memoizing is needed.
 				var ret,
 					marginDiv = div.appendChild( document.createElement( "div" ) );
-				marginDiv.style.cssText = div.style.cssText = divReset;
+
+				// Reset CSS: box-sizing; display; margin; border; padding
+				marginDiv.style.cssText = div.style.cssText =
+					// Support: Firefox<29, Android 2.3
+					// Vendor-prefix box-sizing
+					"-webkit-box-sizing:content-box;-moz-box-sizing:content-box;" +
+					"box-sizing:content-box;display:block;margin:0;border:0;padding:0";
 				marginDiv.style.marginRight = marginDiv.style.width = "0";
 				div.style.width = "1px";
 				docElem.appendChild( container );
@@ -7219,9 +7574,6 @@ function addGetHookIf( conditionFn, hookFn ) {
 				ret = !parseFloat( window.getComputedStyle( marginDiv, null ).marginRight );
 
 				docElem.removeChild( container );
-
-				// Clean up the div for other support tests.
-				div.innerHTML = "";
 
 				return ret;
 			}
@@ -7261,8 +7613,8 @@ var
 
 	cssShow = { position: "absolute", visibility: "hidden", display: "block" },
 	cssNormalTransform = {
-		letterSpacing: 0,
-		fontWeight: 400
+		letterSpacing: "0",
+		fontWeight: "400"
 	},
 
 	cssPrefixes = [ "Webkit", "O", "Moz", "ms" ];
@@ -7409,13 +7761,10 @@ function showHide( elements, show ) {
 				values[ index ] = data_priv.access( elem, "olddisplay", defaultDisplay(elem.nodeName) );
 			}
 		} else {
+			hidden = isHidden( elem );
 
-			if ( !values[ index ] ) {
-				hidden = isHidden( elem );
-
-				if ( display && display !== "none" || !hidden ) {
-					data_priv.set( elem, "olddisplay", hidden ? display : jQuery.css(elem, "display") );
-				}
+			if ( display !== "none" || !hidden ) {
+				data_priv.set( elem, "olddisplay", hidden ? display : jQuery.css( elem, "display" ) );
 			}
 		}
 	}
@@ -7454,6 +7803,8 @@ jQuery.extend({
 	cssNumber: {
 		"columnCount": true,
 		"fillOpacity": true,
+		"flexGrow": true,
+		"flexShrink": true,
 		"fontWeight": true,
 		"lineHeight": true,
 		"opacity": true,
@@ -7518,9 +7869,6 @@ jQuery.extend({
 
 			// If a hook was provided, use that value, otherwise just set the specified value
 			if ( !hooks || !("set" in hooks) || (value = hooks.set( elem, value, extra )) !== undefined ) {
-				// Support: Chrome, Safari
-				// Setting style to blank string required to delete "style: x !important;"
-				style[ name ] = "";
 				style[ name ] = value;
 			}
 
@@ -7576,7 +7924,7 @@ jQuery.each([ "height", "width" ], function( i, name ) {
 			if ( computed ) {
 				// certain elements can have dimension info if we invisibly show them
 				// however, it must have a current display style that would benefit from this
-				return elem.offsetWidth === 0 && rdisplayswap.test( jQuery.css( elem, "display" ) ) ?
+				return rdisplayswap.test( jQuery.css( elem, "display" ) ) && elem.offsetWidth === 0 ?
 					jQuery.swap( elem, cssShow, function() {
 						return getWidthOrHeight( elem, name, extra );
 					}) :
@@ -7897,7 +8245,7 @@ function createTween( value, prop, animation ) {
 
 function defaultPrefilter( elem, props, opts ) {
 	/* jshint validthis: true */
-	var prop, value, toggle, tween, hooks, oldfire, display,
+	var prop, value, toggle, tween, hooks, oldfire, display, checkDisplay,
 		anim = this,
 		orig = {},
 		style = elem.style,
@@ -7941,13 +8289,12 @@ function defaultPrefilter( elem, props, opts ) {
 		// Set display property to inline-block for height/width
 		// animations on inline elements that are having width/height animated
 		display = jQuery.css( elem, "display" );
-		// Get default display if display is currently "none"
-		if ( display === "none" ) {
-			display = defaultDisplay( elem.nodeName );
-		}
-		if ( display === "inline" &&
-				jQuery.css( elem, "float" ) === "none" ) {
 
+		// Test default display if display is currently "none"
+		checkDisplay = display === "none" ?
+			data_priv.get( elem, "olddisplay" ) || defaultDisplay( elem.nodeName ) : display;
+
+		if ( checkDisplay === "inline" && jQuery.css( elem, "float" ) === "none" ) {
 			style.display = "inline-block";
 		}
 	}
@@ -7977,6 +8324,10 @@ function defaultPrefilter( elem, props, opts ) {
 				}
 			}
 			orig[ prop ] = dataShow && dataShow[ prop ] || jQuery.style( elem, prop );
+
+		// Any non-fx value stops us from restoring the original display value
+		} else {
+			display = undefined;
 		}
 	}
 
@@ -8019,6 +8370,10 @@ function defaultPrefilter( elem, props, opts ) {
 				}
 			}
 		}
+
+	// If this is a noop like .hide().hide(), restore an overwritten display value
+	} else if ( (display === "none" ? defaultDisplay( elem.nodeName ) : display) === "inline" ) {
+		style.display = display;
 	}
 }
 
@@ -8911,6 +9266,16 @@ jQuery.fn.extend({
 
 jQuery.extend({
 	valHooks: {
+		option: {
+			get: function( elem ) {
+				var val = jQuery.find.attr( elem, "value" );
+				return val != null ?
+					val :
+					// Support: IE10-11+
+					// option.text throws exceptions (#14686, #14858)
+					jQuery.trim( jQuery.text( elem ) );
+			}
+		},
 		select: {
 			get: function( elem ) {
 				var value, option,
@@ -8957,7 +9322,7 @@ jQuery.extend({
 
 				while ( i-- ) {
 					option = options[ i ];
-					if ( (option.selected = jQuery.inArray( jQuery(option).val(), values ) >= 0) ) {
+					if ( (option.selected = jQuery.inArray( option.value, values ) >= 0) ) {
 						optionSet = true;
 					}
 				}
@@ -10164,10 +10529,15 @@ jQuery.ajaxTransport(function( options ) {
 				// Create the abort callback
 				callback = xhrCallbacks[ id ] = callback("abort");
 
-				// Do send the request
-				// This may raise an exception which is actually
-				// handled in jQuery.ajax (so no try/catch here)
-				xhr.send( options.hasContent && options.data || null );
+				try {
+					// Do send the request (this may raise an exception)
+					xhr.send( options.hasContent && options.data || null );
+				} catch ( e ) {
+					// #14683: Only rethrow if this hasn't been notified as an error yet
+					if ( callback ) {
+						throw e;
+					}
+				}
 			},
 
 			abort: function() {
@@ -10374,7 +10744,7 @@ jQuery.fn.load = function( url, params, callback ) {
 		off = url.indexOf(" ");
 
 	if ( off >= 0 ) {
-		selector = url.slice( off );
+		selector = jQuery.trim( url.slice( off ) );
 		url = url.slice( 0, off );
 	}
 
@@ -10682,6 +11052,12 @@ jQuery.fn.andSelf = jQuery.fn.addBack;
 // derived from file names, and jQuery is normally delivered in a lowercase
 // file name. Do this after creating the global so that if an AMD module wants
 // to call noConflict to hide this version of jQuery, it will work.
+
+// Note that for maximum portability, libraries that are not jQuery should
+// declare themselves as anonymous modules, and avoid setting a global if an
+// AMD loader is present. jQuery is a special case. For more information, see
+// https://github.com/jrburke/requirejs/wiki/Updating-existing-libraries#wiki-anon
+
 if ( typeof define === "function" && define.amd ) {
 	define( "jquery", [], function() {
 		return jQuery;
@@ -10724,7 +11100,7 @@ return jQuery;
 
 }));
 
-},{}],9:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -17512,8 +17888,8 @@ return jQuery;
   }
 }.call(this));
 
-}).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],19:[function(require,module,exports){
 //  Underscore.string
 //  (c) 2010 Esa-Matti Suuronen <esa-matti aet suuronen dot org>
 //  Underscore.string is freely distributable under the terms of the MIT license.
@@ -18188,7 +18564,7 @@ return jQuery;
   root._.string = root._.str = _s;
 }(this, String);
 
-},{}],11:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 require('./evil');
 
 require('../vendor/angular');
@@ -18205,15 +18581,17 @@ module.exports = angular.module('camelot', [
     'ngRoute', 
     'firebase'
 ]);
-},{"../vendor/angular":31,"../vendor/angular-route":29,"../vendor/angular-winjs":30,"../vendor/angularfire":32,"../vendor/firebase":33,"./evil":14}],12:[function(require,module,exports){
+},{"../vendor/angular":43,"../vendor/angular-route":41,"../vendor/angular-winjs":42,"../vendor/angularfire":44,"../vendor/firebase":45,"./evil":23}],21:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
-ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
+ngModule.controller('CamelotCtrl', function ($rootScope, auth, $scope, goToRoute) {
 
     auth($rootScope);
+
+    $scope.goToHome = goToRoute.goToHome;
     
 });
-},{"../angular-module":11}],13:[function(require,module,exports){
+},{"../angular-module":20}],22:[function(require,module,exports){
 'use strict';
 
 // For an introduction to the Blank template, see the following documentation:
@@ -18251,7 +18629,7 @@ MSApp.execUnsafeLocalFunction(function () {
 });
 
 
-},{}],14:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var _ = require('lodash');
 
 var $ = window.jQuery = require('jquery');
@@ -18288,30 +18666,82 @@ methodsToOverride.forEach(function (methodName) {
 
     });
 
-},{"jquery":8,"lodash":9}],15:[function(require,module,exports){
+},{"jquery":17,"lodash":18}],24:[function(require,module,exports){
+module.exports = "﻿<div ng-click=\"goToPlayGame(game)\" ng-if=\"game && opponent\">\r\n    <p>vs. {{opponent.name}}</p>\r\n    <img ng-src=\"{{opponent.avatarUri}}\" />\r\n    <p>Turn {{game.gameState.turnCount}}</p>\r\n</div>";
+
+},{}],25:[function(require,module,exports){
+var ngModule = require('../../angular-module'),
+    _ = require('lodash');
+
+ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPlayer, goToRoute) {
+    return {
+        template: require('./game-list-entry.html'),
+        scope: {
+            game: '=',
+            gameId: '='
+        },
+        link: function ($scope) {
+            
+            function onGameOrUserChange(game, currentUserId) {
+
+                if (_.isUndefined(game) || _.isUndefined(currentUserId)) {
+                    return;
+                }
+
+                var otherUserId = getOtherPlayer(game, currentUserId);
+                bindModel(['users', otherUserId], $scope, 'opponent', _.constant({}));
+            }
+
+            $scope.$watch('game', function (game) {
+                return onGameOrUserChange(game, $rootScope.currentUserId.id);
+            });
+
+            $rootScope.$watch('currentUserId.id', function (currentUserId) {
+                return onGameOrUserChange($scope.game, currentUserId);
+            });
+
+            function goToPlayGame() {
+                goToRoute.goToPlayGame({ gameId: $scope.gameId });
+            }
+
+            $scope.goToPlayGame = goToPlayGame;
+        }
+    };
+});
+},{"../../angular-module":20,"./game-list-entry.html":24,"lodash":18}],26:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     route = require('../../route'),
     _ = require('lodash');
 
-ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute) {
+ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootScope) {
 
     bindModel(['games'], $scope, 'games', _.constant([]));
 
     function shouldShowNoGamesMessage() {
-        return _.isEmpty($scope.games);
+        return !_.isUndefined($scope.games) && _.isEmpty($scope.games);
+    }
+
+    function waitingOnCurrentPlayer(game) {
+        return game.waitingOn === $rootScope.currentUserId.id;
+    }
+
+    function notWaitingOnCurrentPlayer(game) {
+        return !waitingOnCurrentPlayer(game);
     }
 
     $scope.shouldShowNoGamesMessage = shouldShowNoGamesMessage;
     $scope.goToNewGame = goToRoute.goToNewGame;
+    $scope.waitingOnCurrentPlayer = waitingOnCurrentPlayer;
+    $scope.notWaitingOnCurrentPlayer = notWaitingOnCurrentPlayer;
 
 });
-},{"../../angular-module":11,"../../route":23,"lodash":9}],16:[function(require,module,exports){
-module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"game in games\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
+},{"../../angular-module":20,"../../route":34,"lodash":18}],27:[function(require,module,exports){
+module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div game-list-entry game=\"game\" game-id=\"gameId\" ng-repeat=\"(gameId, game) in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div game-list-entry game=\"game\" game-id=\"gameId\" ng-repeat=\"(gameId, game) in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
 
-},{}],17:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";
 
-},{}],18:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var ngModule = require('../../angular-module');
 
 ngModule.directive('johnsonBox', function () {
@@ -18323,7 +18753,7 @@ ngModule.directive('johnsonBox', function () {
         }
     };
 });
-},{"../../angular-module":11,"./johnson-box.html":17}],19:[function(require,module,exports){
+},{"../../angular-module":20,"./johnson-box.html":28}],30:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
@@ -18342,8 +18772,9 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
 
     function startNewGameWith(opponentId) {
         var newGame = createNewGame($rootScope.currentUserId.id, opponentId);
-        $scope.games.$add(newGame);
-        goToRoute.goToPlayGame();
+        $scope.games.$add(newGame).then(function (ref) {
+            goToRoute.goToPlayGame({gameId: ref.name()});
+        });
     }
 
     $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;
@@ -18351,19 +18782,33 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
     $scope.startNewGameWith = startNewGameWith;
 
 });
-},{"../../angular-module":11,"lodash":9}],20:[function(require,module,exports){
-module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
+},{"../../angular-module":20,"lodash":18}],31:[function(require,module,exports){
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\" ng-if=\"$root.currentUserId.id\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
 
-},{}],21:[function(require,module,exports){
-var angularModule = require('../../angular-module');
+},{}],32:[function(require,module,exports){
+var angularModule = require('../../angular-module'),
+    _ = require('lodash');
 
-angularModule.controller('PlayGameCtrl', function ($scope) {
+angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel) {
+    bindModel(['games', $routeParams.gameId], $scope, 'game', _.constant({}));
 
+    $scope.rows = [];
+    $scope.cols = [];
+
+    $scope.$watch('game', function (game) {
+
+        if (!game) {
+            return;
+        }
+
+        $scope.rows = _(game.gameState.boardSpaces).pluck('row').unique().sortBy(_.identity).valueOf();
+        $scope.cols = _(game.gameState.boardSpaces).pluck('col').unique().sortBy(_.identity).valueOf();
+    });
 });
-},{"../../angular-module":11}],22:[function(require,module,exports){
-module.exports = "﻿<h3>Play game</h3>";
+},{"../../angular-module":20,"lodash":18}],33:[function(require,module,exports){
+module.exports = "﻿<h3>Play game</h3>\r\n<div ng-repeat=\"row in rows\" class=\"board-row\">\r\n    <div ng-repeat=\"col in cols\" class=\"board-space\">\r\n    </div>\r\n</div>";
 
-},{}],23:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -18400,7 +18845,7 @@ ngModule.config(function ($routeProvider) {
 });
 
 module.exports = paths;
-},{"../templates/game.html":28,"../vendor/angular":31,"../vendor/angular-route":29,"./angular-module.js":11,"./features/home/home.html":16,"./features/new-game/new-game.html":20,"./features/play-game/play-game.html":22}],24:[function(require,module,exports){
+},{"../templates/game.html":40,"../vendor/angular":43,"../vendor/angular-route":41,"./angular-module.js":20,"./features/home/home.html":27,"./features/new-game/new-game.html":31,"./features/play-game/play-game.html":33}],35:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module'),
@@ -18422,7 +18867,7 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
         $scope.currentUserId = {};
 
         function getCurrentUser() {
-            if (!_.has($scope.currentUserId, 'id')) {
+            if (!_.has($scope.currentUserId, 'id') || !_.has($scope, 'users')) {
                 return null;
             }
 
@@ -18458,7 +18903,7 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
             });
     };
 });
-},{"../angular-module":11,"lodash":9}],25:[function(require,module,exports){
+},{"../angular-module":20,"lodash":18}],36:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     url = require('url'),   
     path = require('path');
@@ -18487,26 +18932,40 @@ angularModule
         };
     })
     .factory('bindModel', function (getFirebaseBinding) {
-
         return function (childPath, $scope, scopeAttr, getDefault) {
             getFirebaseBinding(childPath).$bind($scope, scopeAttr, getDefault);
         };
 });
-},{"../angular-module":11,"path":2,"url":7}],26:[function(require,module,exports){
-var angularModule = require('../angular-module');
+},{"../angular-module":20,"path":10,"url":16}],37:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    camelotEngine = require('camelot-engine');
 
 angularModule
     .factory('createNewGame', function () {
         return function (initiator, recepient) {
             return {
                 players: [initiator, recepient],
-                gameState: {},
+                gameState: camelotEngine.createEmptyGame(),
                 waitingOn: initiator,
                 winner: null
             };
         };
     });
-},{"../angular-module":11}],27:[function(require,module,exports){
+},{"../angular-module":20,"camelot-engine":1}],38:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    _ = require('lodash');
+
+angularModule
+    .factory('getOtherPlayer', function () {
+        return function (game, currentUserId) {
+            if (!_.isString(currentUserId)) {
+                throw new Error('currentUserId must be a string, but was: `' + currentUserId + '`');
+            }
+
+            return _(game.players).without(currentUserId).first();
+        };
+    });
+},{"../angular-module":20,"lodash":18}],39:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     route = require('../route'),
     _str = require('underscore.string'),
@@ -18515,17 +18974,21 @@ var angularModule = require('../angular-module'),
 angularModule.factory('goToRoute', function ($location) {
     return _(route)
         .map(function (routePath, routeName) {
-            return ['goTo' + _str.capitalize(routeName), function () {
-                $location.path(routePath);
+            return ['goTo' + _str.capitalize(routeName), function (args) {
+                var pathWithArgs = _.reduce(args, function (pathToReplace, argVal, argName) {
+                    return pathToReplace.replace(':' + argName, argVal);
+                }, routePath);
+
+                $location.path(pathWithArgs);
             }];
         })
         .zipObject()
         .valueOf();
 });
-},{"../angular-module":11,"../route":23,"lodash":9,"underscore.string":10}],28:[function(require,module,exports){
+},{"../angular-module":20,"../route":34,"lodash":18,"underscore.string":19}],40:[function(require,module,exports){
 module.exports = "﻿";
 
-},{}],29:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -19454,7 +19917,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],30:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*!
 * angular-winjs
 *
@@ -20607,7 +21070,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 }(this));
 
 
-},{}],31:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -42536,7 +42999,7 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}],32:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 // AngularFire is an officially supported AngularJS binding for Firebase.
 // The bindings let you associate a Firebase URL with a model (or set of
 // models), and they will be transparently kept in sync across all clients
@@ -43557,7 +44020,7 @@ var styleDirective = valueFn({
 })();
 
 
-},{}],33:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 (function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
 function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -43706,4 +44169,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[11,12,13,14,15,18,19,21,23,24,25,26,27]);
+},{}]},{},[20,21,22,23,25,26,29,30,32,34,35,36,37,38,39]);

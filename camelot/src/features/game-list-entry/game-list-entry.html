@@ -1,0 +1,5 @@
+﻿<div ng-click="goToPlayGame(game)" ng-if="game && opponent">
+    <p>vs. {{opponent.name}}</p>
+    <img ng-src="{{opponent.avatarUri}}" />
+    <p>Turn {{game.gameState.turnCount}}</p>
+</div>

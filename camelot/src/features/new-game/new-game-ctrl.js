@@ -16,8 +16,9 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
 
     function startNewGameWith(opponentId) {
         var newGame = createNewGame($rootScope.currentUserId.id, opponentId);
-        $scope.games.$add(newGame);
-        goToRoute.goToPlayGame();
+        $scope.games.$add(newGame).then(function (ref) {
+            goToRoute.goToPlayGame({gameId: ref.name()});
+        });
     }
 
     $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;

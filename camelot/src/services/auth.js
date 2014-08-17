@@ -19,7 +19,7 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
         $scope.currentUserId = {};
 
         function getCurrentUser() {
-            if (!_.has($scope.currentUserId, 'id')) {
+            if (!_.has($scope.currentUserId, 'id') || !_.has($scope, 'users')) {
                 return null;
             }
 
