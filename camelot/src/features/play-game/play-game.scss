@@ -1,0 +1,13 @@
+﻿.board-row {
+	float: left;
+	clear: both;
+}
+
+.board-space {
+	/* Can we get responsive? */
+	width: 100px;
+	height: 100px;
+	background: blue;
+	float: left;
+	margin: 5px;
+}

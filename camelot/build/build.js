@@ -18791,9 +18791,22 @@ var angularModule = require('../../angular-module'),
 
 angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel) {
     bindModel(['games', $routeParams.gameId], $scope, 'game', _.constant({}));
+
+    $scope.rows = [];
+    $scope.cols = [];
+
+    $scope.$watch('game', function (game) {
+
+        if (!game) {
+            return;
+        }
+
+        $scope.rows = _(game.gameState.boardSpaces).pluck('row').unique().sortBy(_.identity).valueOf();
+        $scope.cols = _(game.gameState.boardSpaces).pluck('col').unique().sortBy(_.identity).valueOf();
+    });
 });
 },{"../../angular-module":20,"lodash":18}],33:[function(require,module,exports){
-module.exports = "﻿<h3>Play game</h3>\r\n{{game}}";
+module.exports = "﻿<h3>Play game</h3>\r\n<div ng-repeat=\"row in rows\" class=\"board-row\">\r\n    <div ng-repeat=\"col in cols\" class=\"board-space\">\r\n    </div>\r\n</div>";
 
 },{}],34:[function(require,module,exports){
 require('../vendor/angular');

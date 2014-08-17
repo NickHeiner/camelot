@@ -73,6 +73,7 @@
     <Content Include="src\features\new-game\new-game-ctrl.js" />
     <Content Include="src\features\play-game\play-game.html" />
     <Content Include="src\features\play-game\play-game-ctrl.js" />
+    <Content Include="src\features\play-game\play-game.scss" />
     <Content Include="src\route.js" />
     <Content Include="src\services\auth.js" />
     <Content Include="src\services\bind-model.js" />
