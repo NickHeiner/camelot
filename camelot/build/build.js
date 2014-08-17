@@ -18584,9 +18584,11 @@ module.exports = angular.module('camelot', [
 },{"../vendor/angular":43,"../vendor/angular-route":41,"../vendor/angular-winjs":42,"../vendor/angularfire":44,"../vendor/firebase":45,"./evil":23}],21:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
-ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
+ngModule.controller('CamelotCtrl', function ($rootScope, auth, $scope, goToRoute) {
 
     auth($rootScope);
+
+    $scope.goToHome = goToRoute.goToHome;
     
 });
 },{"../angular-module":20}],22:[function(require,module,exports){
