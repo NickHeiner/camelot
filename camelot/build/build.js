@@ -18667,7 +18667,7 @@ methodsToOverride.forEach(function (methodName) {
     });
 
 },{"jquery":17,"lodash":18}],24:[function(require,module,exports){
-module.exports = "﻿<div ng-click=\"goToPlayGame(game)\" ng-if=\"game && opponent\">\r\n    <p>vs. {{opponent.name}}</p>\r\n    <img ng-src=\"{{opponent.avatarUri}}\" />\r\n</div>";
+module.exports = "﻿<div ng-click=\"goToPlayGame(game)\" ng-if=\"game && opponent\">\r\n    <p>vs. {{opponent.name}}</p>\r\n    <img ng-src=\"{{opponent.avatarUri}}\" />\r\n    <p>Turn {{game.gameState.turnCount}}</p>\r\n</div>";
 
 },{}],25:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
