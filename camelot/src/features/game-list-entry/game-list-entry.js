@@ -1,7 +1,7 @@
 ﻿var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
-ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPlayer) {
+ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPlayer, goToRoute) {
     return {
         template: require('./game-list-entry.html'),
         scope: {
@@ -26,6 +26,8 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
             $rootScope.$watch('currentUserId.id', function (currentUserId) {
                 return onGameOrUserChange($scope.game, currentUserId);
             });
+
+            $scope.goToPlayGame = goToRoute.goToPlayGame;
         }
     };
 });

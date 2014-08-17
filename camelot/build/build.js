@@ -18447,13 +18447,13 @@ methodsToOverride.forEach(function (methodName) {
     });
 
 },{"jquery":8,"lodash":9}],15:[function(require,module,exports){
-module.exports = "﻿<p>vs. {{opponent.name}}</p>\r\n<img ng-src=\"{{opponent.avatarUri}}\" />";
+module.exports = "﻿<div ng-click=\"goToPlayGame(game)\" ng-if=\"game && opponent\">\r\n    <p>vs. {{opponent.name}}</p>\r\n    <img ng-src=\"{{opponent.avatarUri}}\" />\r\n</div>";
 
 },{}],16:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
-ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPlayer) {
+ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPlayer, goToRoute) {
     return {
         template: require('./game-list-entry.html'),
         scope: {
@@ -18478,6 +18478,8 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
             $rootScope.$watch('currentUserId.id', function (currentUserId) {
                 return onGameOrUserChange($scope.game, currentUserId);
             });
+
+            $scope.goToPlayGame = goToRoute.goToPlayGame;
         }
     };
 });

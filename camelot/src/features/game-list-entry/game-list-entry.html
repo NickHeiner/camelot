@@ -1,2 +1,4 @@
-﻿<p>vs. {{opponent.name}}</p>
-<img ng-src="{{opponent.avatarUri}}" />
+﻿<div ng-click="goToPlayGame(game)" ng-if="game && opponent">
+    <p>vs. {{opponent.name}}</p>
+    <img ng-src="{{opponent.avatarUri}}" />
+</div>
