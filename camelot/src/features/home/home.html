@@ -3,12 +3,11 @@
 </div>
 
 <h3>Your Turn</h3>
-<div ng-repeat="game in games" ng-if="waitingOnCurrentPlayer(game)">
-    {{game}}
+<div game-list-entry game="game" ng-repeat="game in games" ng-if="waitingOnCurrentPlayer(game)">
 </div>
 
 <h3>Their Turn</h3>
-<div ng-repeat="game in games" ng-if="notWaitingOnCurrentPlayer(game)">
+<div game-list-entry game="game" ng-repeat="game in games" ng-if="notWaitingOnCurrentPlayer(game)">
     {{game}}
 </div>
 

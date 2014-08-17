@@ -26,7 +26,6 @@ angularModule
         };
     })
     .factory('bindModel', function (getFirebaseBinding) {
-
         return function (childPath, $scope, scopeAttr, getDefault) {
             getFirebaseBinding(childPath).$bind($scope, scopeAttr, getDefault);
         };

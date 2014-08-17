@@ -18363,7 +18363,7 @@ module.exports = angular.module('camelot', [
     'ngRoute', 
     'firebase'
 ]);
-},{"../vendor/angular":31,"../vendor/angular-route":29,"../vendor/angular-winjs":30,"../vendor/angularfire":32,"../vendor/firebase":33,"./evil":14}],12:[function(require,module,exports){
+},{"../vendor/angular":34,"../vendor/angular-route":32,"../vendor/angular-winjs":33,"../vendor/angularfire":35,"../vendor/firebase":36,"./evil":14}],12:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
 ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
@@ -18447,6 +18447,41 @@ methodsToOverride.forEach(function (methodName) {
     });
 
 },{"jquery":8,"lodash":9}],15:[function(require,module,exports){
+module.exports = "﻿<p>vs. {{opponent.name}}</p>\r\n<img ng-src=\"{{opponent.avatarUri}}\" />";
+
+},{}],16:[function(require,module,exports){
+var ngModule = require('../../angular-module'),
+    _ = require('lodash');
+
+ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPlayer) {
+    return {
+        template: require('./game-list-entry.html'),
+        scope: {
+            game: '='
+        },
+        link: function ($scope) {
+            
+            function onGameOrUserChange(game, currentUserId) {
+
+                if (_.isUndefined(game) || _.isUndefined(currentUserId)) {
+                    return;
+                }
+
+                var otherUserId = getOtherPlayer(game, currentUserId);
+                bindModel(['users', otherUserId], $scope, 'opponent', _.constant({}));
+            }
+
+            $scope.$watch('game', function (game) {
+                return onGameOrUserChange(game, $rootScope.currentUserId.id);
+            });
+
+            $rootScope.$watch('currentUserId.id', function (currentUserId) {
+                return onGameOrUserChange($scope.game, currentUserId);
+            });
+        }
+    };
+});
+},{"../../angular-module":11,"./game-list-entry.html":15,"lodash":9}],17:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     route = require('../../route'),
     _ = require('lodash');
@@ -18473,13 +18508,13 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
     $scope.notWaitingOnCurrentPlayer = notWaitingOnCurrentPlayer;
 
 });
-},{"../../angular-module":11,"../../route":23,"lodash":9}],16:[function(require,module,exports){
-module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div ng-repeat=\"game in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div ng-repeat=\"game in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
+},{"../../angular-module":11,"../../route":25,"lodash":9}],18:[function(require,module,exports){
+module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div game-list-entry game=\"game\" ng-repeat=\"game in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div game-list-entry game=\"game\" ng-repeat=\"game in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";
 
-},{}],18:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var ngModule = require('../../angular-module');
 
 ngModule.directive('johnsonBox', function () {
@@ -18491,7 +18526,7 @@ ngModule.directive('johnsonBox', function () {
         }
     };
 });
-},{"../../angular-module":11,"./johnson-box.html":17}],19:[function(require,module,exports){
+},{"../../angular-module":11,"./johnson-box.html":19}],21:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
@@ -18519,19 +18554,19 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
     $scope.startNewGameWith = startNewGameWith;
 
 });
-},{"../../angular-module":11,"lodash":9}],20:[function(require,module,exports){
+},{"../../angular-module":11,"lodash":9}],22:[function(require,module,exports){
 module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
 
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var angularModule = require('../../angular-module');
 
 angularModule.controller('PlayGameCtrl', function ($scope) {
 
 });
-},{"../../angular-module":11}],22:[function(require,module,exports){
+},{"../../angular-module":11}],24:[function(require,module,exports){
 module.exports = "﻿<h3>Play game</h3>";
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -18568,7 +18603,7 @@ ngModule.config(function ($routeProvider) {
 });
 
 module.exports = paths;
-},{"../templates/game.html":28,"../vendor/angular":31,"../vendor/angular-route":29,"./angular-module.js":11,"./features/home/home.html":16,"./features/new-game/new-game.html":20,"./features/play-game/play-game.html":22}],24:[function(require,module,exports){
+},{"../templates/game.html":31,"../vendor/angular":34,"../vendor/angular-route":32,"./angular-module.js":11,"./features/home/home.html":18,"./features/new-game/new-game.html":22,"./features/play-game/play-game.html":24}],26:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module'),
@@ -18590,7 +18625,7 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
         $scope.currentUserId = {};
 
         function getCurrentUser() {
-            if (!_.has($scope.currentUserId, 'id')) {
+            if (!_.has($scope.currentUserId, 'id') || !_.has($scope, 'users')) {
                 return null;
             }
 
@@ -18626,7 +18661,7 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
             });
     };
 });
-},{"../angular-module":11,"lodash":9}],25:[function(require,module,exports){
+},{"../angular-module":11,"lodash":9}],27:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     url = require('url'),   
     path = require('path');
@@ -18655,12 +18690,11 @@ angularModule
         };
     })
     .factory('bindModel', function (getFirebaseBinding) {
-
         return function (childPath, $scope, scopeAttr, getDefault) {
             getFirebaseBinding(childPath).$bind($scope, scopeAttr, getDefault);
         };
 });
-},{"../angular-module":11,"path":1,"url":7}],26:[function(require,module,exports){
+},{"../angular-module":11,"path":1,"url":7}],28:[function(require,module,exports){
 var angularModule = require('../angular-module');
 
 angularModule
@@ -18674,7 +18708,21 @@ angularModule
             };
         };
     });
-},{"../angular-module":11}],27:[function(require,module,exports){
+},{"../angular-module":11}],29:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    _ = require('lodash');
+
+angularModule
+    .factory('getOtherPlayer', function () {
+        return function (game, currentUserId) {
+            if (!_.isString(currentUserId)) {
+                throw new Error('currentUserId must be a string, but was: `' + currentUserId + '`');
+            }
+
+            return _(game.players).without(currentUserId).first();
+        };
+    });
+},{"../angular-module":11,"lodash":9}],30:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     route = require('../route'),
     _str = require('underscore.string'),
@@ -18690,10 +18738,10 @@ angularModule.factory('goToRoute', function ($location) {
         .zipObject()
         .valueOf();
 });
-},{"../angular-module":11,"../route":23,"lodash":9,"underscore.string":10}],28:[function(require,module,exports){
+},{"../angular-module":11,"../route":25,"lodash":9,"underscore.string":10}],31:[function(require,module,exports){
 module.exports = "﻿";
 
-},{}],29:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -19622,7 +19670,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],30:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 /*!
 * angular-winjs
 *
@@ -20775,7 +20823,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 }(this));
 
 
-},{}],31:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -42704,7 +42752,7 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // AngularFire is an officially supported AngularJS binding for Firebase.
 // The bindings let you associate a Firebase URL with a model (or set of
 // models), and they will be transparently kept in sync across all clients
@@ -43725,7 +43773,7 @@ var styleDirective = valueFn({
 })();
 
 
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 (function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
 function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -43874,4 +43922,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[11,12,13,14,15,18,19,21,23,24,25,26,27]);
+},{}]},{},[11,12,13,14,16,17,20,21,23,25,26,27,28,29,30]);

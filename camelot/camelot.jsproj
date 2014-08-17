@@ -63,6 +63,8 @@
     <Content Include="src\controllers\camelot-ctrl.js" />
     <Content Include="src\default.js" />
     <Content Include="src\evil.js" />
+    <Content Include="src\features\game-list-entry\game-list-entry.html" />
+    <Content Include="src\features\game-list-entry\game-list-entry.js" />
     <Content Include="src\features\home\home-ctrl.js" />
     <Content Include="src\features\home\home.html" />
     <Content Include="src\features\johnson-box\johnson-box.html" />
@@ -75,6 +77,7 @@
     <Content Include="src\services\auth.js" />
     <Content Include="src\services\bind-model.js" />
     <Content Include="src\services\create-new-game.js" />
+    <Content Include="src\services\get-other-player.js" />
     <Content Include="src\services\go-to-route.js" />
     <Content Include="vendor\angular-winjs.js" />
     <Content Include="vendor\angularfire.js" />
