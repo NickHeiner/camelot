@@ -18675,7 +18675,8 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
     return {
         template: require('./game-list-entry.html'),
         scope: {
-            game: '='
+            game: '=',
+            gameId: '='
         },
         link: function ($scope) {
             
@@ -18697,7 +18698,11 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
                 return onGameOrUserChange($scope.game, currentUserId);
             });
 
-            $scope.goToPlayGame = goToRoute.goToPlayGame;
+            function goToPlayGame() {
+                goToRoute.goToPlayGame({ gameId: $scope.gameId });
+            }
+
+            $scope.goToPlayGame = goToPlayGame;
         }
     };
 });
@@ -18729,7 +18734,7 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
 
 });
 },{"../../angular-module":20,"../../route":34,"lodash":18}],27:[function(require,module,exports){
-module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div game-list-entry game=\"game\" ng-repeat=\"game in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div game-list-entry game=\"game\" ng-repeat=\"game in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
+module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div game-list-entry game=\"game\" game-id=\"gameId\" ng-repeat=\"(gameId, game) in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div game-list-entry game=\"game\" game-id=\"gameId\" ng-repeat=\"(gameId, game) in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
 
 },{}],28:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";
@@ -18765,8 +18770,9 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
 
     function startNewGameWith(opponentId) {
         var newGame = createNewGame($rootScope.currentUserId.id, opponentId);
-        $scope.games.$add(newGame);
-        goToRoute.goToPlayGame();
+        $scope.games.$add(newGame).then(function (ref) {
+            goToRoute.goToPlayGame({gameId: ref.name()});
+        });
     }
 
     $scope.shouldShowNoUsersMessage = shouldShowNoUsersMessage;
@@ -18775,16 +18781,17 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
 
 });
 },{"../../angular-module":20,"lodash":18}],31:[function(require,module,exports){
-module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
+module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\" ng-if=\"$root.currentUserId.id\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
 
 },{}],32:[function(require,module,exports){
-var angularModule = require('../../angular-module');
+var angularModule = require('../../angular-module'),
+    _ = require('lodash');
 
-angularModule.controller('PlayGameCtrl', function ($scope) {
-
+angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel) {
+    bindModel(['games', $routeParams.gameId], $scope, 'game', _.constant({}));
 });
-},{"../../angular-module":20}],33:[function(require,module,exports){
-module.exports = "﻿<h3>Play game</h3>";
+},{"../../angular-module":20,"lodash":18}],33:[function(require,module,exports){
+module.exports = "﻿<h3>Play game</h3>\r\n{{game}}";
 
 },{}],34:[function(require,module,exports){
 require('../vendor/angular');
@@ -18952,8 +18959,12 @@ var angularModule = require('../angular-module'),
 angularModule.factory('goToRoute', function ($location) {
     return _(route)
         .map(function (routePath, routeName) {
-            return ['goTo' + _str.capitalize(routeName), function () {
-                $location.path(routePath);
+            return ['goTo' + _str.capitalize(routeName), function (args) {
+                var pathWithArgs = _.reduce(args, function (pathToReplace, argVal, argName) {
+                    return pathToReplace.replace(':' + argName, argVal);
+                }, routePath);
+
+                $location.path(pathWithArgs);
             }];
         })
         .zipObject()

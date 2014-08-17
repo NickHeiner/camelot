@@ -5,7 +5,8 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
     return {
         template: require('./game-list-entry.html'),
         scope: {
-            game: '='
+            game: '=',
+            gameId: '='
         },
         link: function ($scope) {
             
@@ -27,7 +28,11 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
                 return onGameOrUserChange($scope.game, currentUserId);
             });
 
-            $scope.goToPlayGame = goToRoute.goToPlayGame;
+            function goToPlayGame() {
+                goToRoute.goToPlayGame({ gameId: $scope.gameId });
+            }
+
+            $scope.goToPlayGame = goToPlayGame;
         }
     };
 });
