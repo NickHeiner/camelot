@@ -31,6 +31,7 @@
     "zurb-foundation": "https://github.com/zurb/foundation/tarball/v5.2.1",
     "jquery": "^2.1.0",
     "guid": "0.0.12",
-    "underscore.string": "^2.3.3"
+    "underscore.string": "^2.3.3",
+    "camelot-engine": "^1.3.0"
   }
 }

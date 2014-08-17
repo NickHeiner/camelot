@@ -1,4 +1,222 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+	createEmptyGame: require('./init/create-empty-game')
+};
+
+},{"./init/create-empty-game":4}],2:[function(require,module,exports){
+'use strict';
+
+function getConstants() {
+    var WHITE = 'white',
+        BLACK = 'black',
+        BOARD_HEIGHT = 17;
+
+    return {
+        BOARD_WIDTH: 12,
+        BOARD_HEIGHT: BOARD_HEIGHT,
+        KNIGHT: 'knight',
+        PAWN: 'pawn',
+        WHITE: WHITE,
+        BLACK: BLACK,
+
+        COUNT_PIECES_NEEDED_TO_WIN: 2,
+
+        WHITE_GOAL_ROW: 0,
+        BLACK_GOAL_ROW: BOARD_HEIGHT - 1,
+
+        // This could be de-duplicated
+        STARTING_POSITIONS: [
+            {
+                ROW: 5,
+                COL_START: 3,
+                COUNT_PAWNS: 6,
+                COLOR: WHITE
+            },
+            {
+                ROW: 6,
+                COL_START: 4,
+                COUNT_PAWNS: 4,
+                COLOR: WHITE
+            },
+            {
+                ROW: 9,
+                COL_START: 4,
+                COUNT_PAWNS: 4,
+                COLOR: BLACK
+            },
+            {
+                ROW: 10,
+                COL_START: 3,
+                COUNT_PAWNS: 6,
+                COLOR: BLACK
+            },
+        ]
+    };
+}
+
+module.exports = getConstants;
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash'),
+    getRangeForRow = require('./get-range-for-row');
+
+function getBoardSpaces() {
+
+    // TODO verify that this is actually correct
+
+    return _.flatten([
+        getRangeForRow(0, 5),
+        getRangeForRow(1, 2),
+        getRangeForRow(2, 1),
+        _.range(3, 14).map(function(row) {
+            return getRangeForRow(row, 0);
+        }),
+        getRangeForRow(14, 1),
+        getRangeForRow(15, 2),
+        getRangeForRow(16, 5),
+    ]);
+
+}
+
+module.exports = getBoardSpaces;
+
+},{"./get-range-for-row":5,"lodash":18}],4:[function(require,module,exports){
+'use strict';
+
+var createBoardSpaces = require('./create-board-spaces'),
+    withStartingPieces = require('./with-starting-pieces');
+
+function createEmptyGame() {
+    return withStartingPieces({
+        turnCount: 0,
+        capturedPieces: {
+            playerA: {
+                small: 0,
+                large: 0
+            },
+            playerB: {
+                small: 0,
+                large: 0
+            }
+        },
+        boardSpaces: createBoardSpaces()
+    });
+}
+
+module.exports = createEmptyGame;
+
+},{"./create-board-spaces":3,"./with-starting-pieces":6}],5:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash'),
+    getConstants = require('../get-constants');
+
+function createBoardSpace(row, col) {
+    return {
+        row: row,
+        col: col
+    };
+}
+
+function getRangeForRow(row, firstCol) {
+    var lastCol = getConstants().BOARD_WIDTH - firstCol;
+    return _.map(_.range(firstCol, lastCol), function(col) {
+        return createBoardSpace(row, col);
+    });
+}
+
+module.exports = getRangeForRow;
+
+},{"../get-constants":2,"lodash":18}],6:[function(require,module,exports){
+'use strict';
+
+var updateBoardSpace = require('../update/update-board-space'),
+    constants = require('../get-constants')(),
+    repeat = require('../util/repeat'),
+    _ = require('lodash');
+
+function makePieceRow(gameState, countPawns, row, colStart, color) {
+
+    var pieces = [constants.KNIGHT].concat(repeat(constants.PAWN, countPawns)).concat([constants.KNIGHT]),
+        collOffsets = _.range(countPawns + 2);
+
+    return _.reduce(collOffsets, function(gameStateAcc, colOffset) {
+        return updateBoardSpace(gameStateAcc, row, colOffset + colStart, {piece: pieces[colOffset], color: color});
+    }, gameState);
+
+}
+
+function withStartingPieces(gameState) {
+
+    return _.reduce(constants.STARTING_POSITIONS, function(gameStateAcc, startingPosition) {
+        return makePieceRow(
+            gameStateAcc,
+            startingPosition.COUNT_PAWNS,
+            startingPosition.ROW,
+            startingPosition.COL_START,
+            startingPosition.COLOR
+        );
+    }, gameState);
+
+}
+
+module.exports = withStartingPieces;
+
+},{"../get-constants":2,"../update/update-board-space":8,"../util/repeat":9,"lodash":18}],7:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash');
+
+function getBoardSpace(gameState, rowOrBoardSpaceObj, colOrUndefined) {
+
+    var row,
+        col;
+
+    if (_.isObject(rowOrBoardSpaceObj)) {
+        row = rowOrBoardSpaceObj.row;
+        col = rowOrBoardSpaceObj.col;
+    } else {
+        row = rowOrBoardSpaceObj;
+        col = colOrUndefined;
+    }
+
+    return _.find(gameState.boardSpaces, {row: row, col: col}) || null;
+}
+
+module.exports = getBoardSpace;
+
+},{"lodash":18}],8:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash'),
+    getBoardSpace = require('../query/get-board-space');
+
+function updateBoardSpace(gameState, row, col, newBoardSpace) {
+    var newGameState = _.cloneDeep(gameState);
+
+    _.merge(getBoardSpace(newGameState, row, col), newBoardSpace);
+
+    return newGameState;
+}
+
+module.exports = updateBoardSpace; 
+
+},{"../query/get-board-space":7,"lodash":18}],9:[function(require,module,exports){
+'use strict';
+
+var _ = require('lodash');
+
+function repeat(val, count) {
+    return _.map(_.range(count), _.constant(val));
+}
+
+module.exports = repeat;
+
+},{"lodash":18}],10:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -226,7 +444,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":2}],2:[function(require,module,exports){
+},{"_process":11}],11:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -291,7 +509,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],3:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -802,7 +1020,7 @@ process.chdir = function (dir) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -888,7 +1106,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],5:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -975,13 +1193,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":4,"./encode":5}],7:[function(require,module,exports){
+},{"./decode":13,"./encode":14}],16:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1690,7 +1908,7 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":3,"querystring":6}],8:[function(require,module,exports){
+},{"punycode":12,"querystring":15}],17:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.1
  * http://jquery.com/
@@ -10882,7 +11100,7 @@ return jQuery;
 
 }));
 
-},{}],9:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (global){
 /**
  * @license
@@ -17671,7 +17889,7 @@ return jQuery;
 }.call(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 //  Underscore.string
 //  (c) 2010 Esa-Matti Suuronen <esa-matti aet suuronen dot org>
 //  Underscore.string is freely distributable under the terms of the MIT license.
@@ -18346,7 +18564,7 @@ return jQuery;
   root._.string = root._.str = _s;
 }(this, String);
 
-},{}],11:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 require('./evil');
 
 require('../vendor/angular');
@@ -18363,7 +18581,7 @@ module.exports = angular.module('camelot', [
     'ngRoute', 
     'firebase'
 ]);
-},{"../vendor/angular":34,"../vendor/angular-route":32,"../vendor/angular-winjs":33,"../vendor/angularfire":35,"../vendor/firebase":36,"./evil":14}],12:[function(require,module,exports){
+},{"../vendor/angular":43,"../vendor/angular-route":41,"../vendor/angular-winjs":42,"../vendor/angularfire":44,"../vendor/firebase":45,"./evil":23}],21:[function(require,module,exports){
 var ngModule = require('../angular-module');
 
 ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
@@ -18371,7 +18589,7 @@ ngModule.controller('CamelotCtrl', function ($rootScope, auth) {
     auth($rootScope);
     
 });
-},{"../angular-module":11}],13:[function(require,module,exports){
+},{"../angular-module":20}],22:[function(require,module,exports){
 'use strict';
 
 // For an introduction to the Blank template, see the following documentation:
@@ -18409,7 +18627,7 @@ MSApp.execUnsafeLocalFunction(function () {
 });
 
 
-},{}],14:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var _ = require('lodash');
 
 var $ = window.jQuery = require('jquery');
@@ -18446,10 +18664,10 @@ methodsToOverride.forEach(function (methodName) {
 
     });
 
-},{"jquery":8,"lodash":9}],15:[function(require,module,exports){
+},{"jquery":17,"lodash":18}],24:[function(require,module,exports){
 module.exports = "﻿<div ng-click=\"goToPlayGame(game)\" ng-if=\"game && opponent\">\r\n    <p>vs. {{opponent.name}}</p>\r\n    <img ng-src=\"{{opponent.avatarUri}}\" />\r\n</div>";
 
-},{}],16:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
@@ -18483,7 +18701,7 @@ ngModule.directive('gameListEntry', function (bindModel, $rootScope, getOtherPla
         }
     };
 });
-},{"../../angular-module":11,"./game-list-entry.html":15,"lodash":9}],17:[function(require,module,exports){
+},{"../../angular-module":20,"./game-list-entry.html":24,"lodash":18}],26:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     route = require('../../route'),
     _ = require('lodash');
@@ -18510,13 +18728,13 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
     $scope.notWaitingOnCurrentPlayer = notWaitingOnCurrentPlayer;
 
 });
-},{"../../angular-module":11,"../../route":25,"lodash":9}],18:[function(require,module,exports){
+},{"../../angular-module":20,"../../route":34,"lodash":18}],27:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"shouldShowNoGamesMessage()\">\r\n    <p>You have no games.</p>\r\n</div>\r\n\r\n<h3>Your Turn</h3>\r\n<div game-list-entry game=\"game\" ng-repeat=\"game in games\" ng-if=\"waitingOnCurrentPlayer(game)\">\r\n</div>\r\n\r\n<h3>Their Turn</h3>\r\n<div game-list-entry game=\"game\" ng-repeat=\"game in games\" ng-if=\"notWaitingOnCurrentPlayer(game)\">\r\n    {{game}}\r\n</div>\r\n\r\n<div>\r\n    <button ng-click=\"goToNewGame()\">New game</button>\r\n</div>";
 
-},{}],19:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = "﻿<div ng-show=\"user\" class=\"johnson-box-has-user-root\">\r\n    <div class=\"user-name\"><h3 class=\"user-name\">{{user.name}}</h3></div>\r\n    <div class=\"user-avatar\">\r\n        <img class=\"profile-pic\" ng-src=\"{{user.avatarUri}}\" />\r\n    </div>\r\n</div>\r\n<div ng-hide=\"user\">\r\n    <div>Not logged in.</div>        \r\n</div>";
 
-},{}],20:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 var ngModule = require('../../angular-module');
 
 ngModule.directive('johnsonBox', function () {
@@ -18528,7 +18746,7 @@ ngModule.directive('johnsonBox', function () {
         }
     };
 });
-},{"../../angular-module":11,"./johnson-box.html":19}],21:[function(require,module,exports){
+},{"../../angular-module":20,"./johnson-box.html":28}],30:[function(require,module,exports){
 var ngModule = require('../../angular-module'),
     _ = require('lodash');
 
@@ -18556,19 +18774,19 @@ ngModule.controller('NewGameCtrl', function ($scope, $rootScope, bindModel, crea
     $scope.startNewGameWith = startNewGameWith;
 
 });
-},{"../../angular-module":11,"lodash":9}],22:[function(require,module,exports){
+},{"../../angular-module":20,"lodash":18}],31:[function(require,module,exports){
 module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>Only users who have logged into this app before will appear here.</small></h2>\r\n\r\n<div ng-show=\"shouldShowNoUsersMessage()\">\r\n    <p>No one is available to play with.</p>\r\n</div>\r\n\r\n<div ng-repeat=\"(id, user) in getPossibleOpponents()\" ng-click=\"startNewGameWith(id)\">\r\n    <!-- Formatting a user like this may be a good candidate for refactoring into a directive. -->\r\n    <img ng-src=\"{{user.avatarUri}}\" />\r\n    {{user.name}}\r\n</div>";
 
-},{}],23:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var angularModule = require('../../angular-module');
 
 angularModule.controller('PlayGameCtrl', function ($scope) {
 
 });
-},{"../../angular-module":11}],24:[function(require,module,exports){
+},{"../../angular-module":20}],33:[function(require,module,exports){
 module.exports = "﻿<h3>Play game</h3>";
 
-},{}],25:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 require('../vendor/angular');
 require('../vendor/angular-route');
 
@@ -18605,7 +18823,7 @@ ngModule.config(function ($routeProvider) {
 });
 
 module.exports = paths;
-},{"../templates/game.html":31,"../vendor/angular":34,"../vendor/angular-route":32,"./angular-module.js":11,"./features/home/home.html":18,"./features/new-game/new-game.html":22,"./features/play-game/play-game.html":24}],26:[function(require,module,exports){
+},{"../templates/game.html":40,"../vendor/angular":43,"../vendor/angular-route":41,"./angular-module.js":20,"./features/home/home.html":27,"./features/new-game/new-game.html":31,"./features/play-game/play-game.html":33}],35:[function(require,module,exports){
 /// <reference path="///LiveSDKHTML/js/wl.js" />
 
 var ngModule = require('../angular-module'),
@@ -18663,7 +18881,7 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
             });
     };
 });
-},{"../angular-module":11,"lodash":9}],27:[function(require,module,exports){
+},{"../angular-module":20,"lodash":18}],36:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     url = require('url'),   
     path = require('path');
@@ -18696,21 +18914,22 @@ angularModule
             getFirebaseBinding(childPath).$bind($scope, scopeAttr, getDefault);
         };
 });
-},{"../angular-module":11,"path":1,"url":7}],28:[function(require,module,exports){
-var angularModule = require('../angular-module');
+},{"../angular-module":20,"path":10,"url":16}],37:[function(require,module,exports){
+var angularModule = require('../angular-module'),
+    camelotEngine = require('camelot-engine');
 
 angularModule
     .factory('createNewGame', function () {
         return function (initiator, recepient) {
             return {
                 players: [initiator, recepient],
-                gameState: {},
+                gameState: camelotEngine.createEmptyGame(),
                 waitingOn: initiator,
                 winner: null
             };
         };
     });
-},{"../angular-module":11}],29:[function(require,module,exports){
+},{"../angular-module":20,"camelot-engine":1}],38:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     _ = require('lodash');
 
@@ -18724,7 +18943,7 @@ angularModule
             return _(game.players).without(currentUserId).first();
         };
     });
-},{"../angular-module":11,"lodash":9}],30:[function(require,module,exports){
+},{"../angular-module":20,"lodash":18}],39:[function(require,module,exports){
 var angularModule = require('../angular-module'),
     route = require('../route'),
     _str = require('underscore.string'),
@@ -18740,10 +18959,10 @@ angularModule.factory('goToRoute', function ($location) {
         .zipObject()
         .valueOf();
 });
-},{"../angular-module":11,"../route":25,"lodash":9,"underscore.string":10}],31:[function(require,module,exports){
+},{"../angular-module":20,"../route":34,"lodash":18,"underscore.string":19}],40:[function(require,module,exports){
 module.exports = "﻿";
 
-},{}],32:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -19672,7 +19891,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 
 })(window, window.angular);
 
-},{}],33:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /*!
 * angular-winjs
 *
@@ -20825,7 +21044,7 @@ function ngViewFillContentFactory($compile, $controller, $route) {
 }(this));
 
 
-},{}],34:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.0-beta.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -42754,7 +42973,7 @@ var styleDirective = valueFn({
 })(window, document);
 
 !angular.$$csp() && angular.element(document).find('head').prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\\:form{display:block;}</style>');
-},{}],35:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 // AngularFire is an officially supported AngularJS binding for Firebase.
 // The bindings let you associate a Firebase URL with a model (or set of
 // models), and they will be transparently kept in sync across all clients
@@ -43775,7 +43994,7 @@ var styleDirective = valueFn({
 })();
 
 
-},{}],36:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 (function() {function g(a){throw a;}var aa=void 0,j=!0,k=null,l=!1;function ba(a){return function(){return this[a]}}function o(a){return function(){return a}}var s,ca=this;function da(){}function ea(a){a.mb=function(){return a.ed?a.ed:a.ed=new a}}
 function fa(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function t(a){return a!==aa}function ga(a){var b=fa(a);return"array"==b||"object"==b&&"number"==typeof a.length}function u(a){return"string"==typeof a}function ha(a){return"number"==typeof a}function ia(a){var b=typeof a;return"object"==b&&a!=k||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ja(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -43924,4 +44143,4 @@ H.prototype.setOnDisconnect=H.prototype.Sd;H.prototype.hb=function(a,b,c){z("Fir
 H.goOffline=function(){z("Firebase.goOffline",0,0,arguments.length);Y.mb().Ia()};H.goOnline=function(){z("Firebase.goOnline",0,0,arguments.length);Y.mb().ab()};function Tb(a,b){y(!b||a===j||a===l,"Can't turn on custom loggers persistently.");a===j?("undefined"!==typeof console&&("function"===typeof console.log?Rb=v(console.log,console):"object"===typeof console.log&&(Rb=function(a){console.log(a)})),b&&ob.set("logging_enabled",j)):a?Rb=a:(Rb=k,ob.remove("logging_enabled"))}H.enableLogging=Tb;
 H.ServerValue={TIMESTAMP:{".sv":"timestamp"}};H.INTERNAL=Z;H.Context=Y;})();
 
-},{}]},{},[11,12,13,14,16,17,20,21,23,25,26,27,28,29,30]);
+},{}]},{},[20,21,22,23,25,26,29,30,32,34,35,36,37,38,39]);
