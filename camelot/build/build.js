@@ -4,32 +4,34 @@
 function camelotEngine() {
     return {
         createEmptyGame: require('./init/create-empty-game'),
-        query: require('./query/query')
+        query: require('./query/query'),
+        constants: require('./get-constants')
     };
 }
 
 module.exports = camelotEngine;
 
-},{"./init/create-empty-game":4,"./query/query":13}],2:[function(require,module,exports){
+},{"./get-constants":2,"./init/create-empty-game":4,"./query/query":13}],2:[function(require,module,exports){
 'use strict';
 
 function getConstants() {
-    var WHITE = 'white',
-        BLACK = 'black',
-        BOARD_HEIGHT = 17;
+    var BOARD_HEIGHT = 17,
+        PLAYER_A = 'playerA',
+        PLAYER_B = 'playerB';
 
     return {
         BOARD_WIDTH: 12,
         BOARD_HEIGHT: BOARD_HEIGHT,
         KNIGHT: 'knight',
         PAWN: 'pawn',
-        WHITE: WHITE,
-        BLACK: BLACK,
+
+        PLAYER_A: PLAYER_A,
+        PLAYER_B: PLAYER_B,
 
         COUNT_PIECES_NEEDED_TO_WIN: 2,
 
-        WHITE_GOAL_ROW: 0,
-        BLACK_GOAL_ROW: BOARD_HEIGHT - 1,
+        PLAYER_A_GOAL_ROW: 0,
+        PLAYER_B_GOAL_ROW: BOARD_HEIGHT - 1,
 
         // This could be de-duplicated
         STARTING_POSITIONS: [
@@ -37,25 +39,25 @@ function getConstants() {
                 ROW: 5,
                 COL_START: 3,
                 COUNT_PAWNS: 6,
-                COLOR: WHITE
+                COLOR: PLAYER_A
             },
             {
                 ROW: 6,
                 COL_START: 4,
                 COUNT_PAWNS: 4,
-                COLOR: WHITE
+                COLOR: PLAYER_A
             },
             {
                 ROW: 9,
                 COL_START: 4,
                 COUNT_PAWNS: 4,
-                COLOR: BLACK
+                COLOR: PLAYER_B
             },
             {
                 ROW: 10,
                 COL_START: 3,
                 COUNT_PAWNS: 6,
-                COLOR: BLACK
+                COLOR: PLAYER_B
             },
         ]
     };
@@ -93,28 +95,32 @@ module.exports = getBoardSpaces;
 'use strict';
 
 var createBoardSpaces = require('./create-board-spaces'),
-    withStartingPieces = require('./with-starting-pieces');
+    withStartingPieces = require('./with-starting-pieces'),
+    constants = require('../get-constants')(),
+    _ = require('lodash');
 
 function createEmptyGame() {
+
+    var capturedPieces = _([constants.PLAYER_A, constants.PLAYER_B])
+            .map(function(playerName) {
+                return [playerName, {
+                    small: 0,
+                    large: 0
+                }];
+            })
+            .zipObject()
+            .valueOf();
+
     return withStartingPieces({
         turnCount: 0,
-        capturedPieces: {
-            playerA: {
-                small: 0,
-                large: 0
-            },
-            playerB: {
-                small: 0,
-                large: 0
-            }
-        },
+        capturedPieces: capturedPieces,
         boardSpaces: createBoardSpaces()
     });
 }
 
 module.exports = createEmptyGame;
 
-},{"./create-board-spaces":3,"./with-starting-pieces":6}],5:[function(require,module,exports){
+},{"../get-constants":2,"./create-board-spaces":3,"./with-starting-pieces":6,"lodash":28}],5:[function(require,module,exports){
 'use strict';
 
 var _ = require('lodash'),
@@ -144,13 +150,18 @@ var updateBoardSpace = require('../update/update-board-space'),
     repeat = require('../util/repeat'),
     _ = require('lodash');
 
-function makePieceRow(gameState, countPawns, row, colStart, color) {
+function makePieceRow(gameState, countPawns, row, colStart, player) {
 
     var pieces = [constants.KNIGHT].concat(repeat(constants.PAWN, countPawns)).concat([constants.KNIGHT]),
         collOffsets = _.range(countPawns + 2);
 
     return _.reduce(collOffsets, function(gameStateAcc, colOffset) {
-        return updateBoardSpace(gameStateAcc, row, colOffset + colStart, {piece: pieces[colOffset], color: color});
+        return updateBoardSpace(gameStateAcc, row, colOffset + colStart, {
+            piece: {
+                type: pieces[colOffset],
+                player: player
+            }
+        });
     }, gameState);
 
 }
@@ -208,22 +219,29 @@ module.exports = getBoardSpace;
 
 var _ = require('lodash'),
     getAllBoardSpaces = require('./get-all-board-spaces'),
+    util = require('util'),
     constants = require('../get-constants')();
 
 function getGameWinner(gameState) {
-    function hasEnoughPieces(color) {
-        return _.filter(getAllBoardSpaces(gameState), {color: color}).length > constants.COUNT_PIECES_NEEDED_TO_WIN;
+    function hasEnoughPieces(player) {
+        return _.filter(getAllBoardSpaces(gameState), function(boardPiece) {
+            return boardPiece.piece && boardPiece.piece.player === player;
+        }).length > constants.COUNT_PIECES_NEEDED_TO_WIN;
     }
 
     function isRowFilled(row) {
+        if (!_.isNumber(row)) {
+            throw new Error('isRowFilled: row must be a number, but was: `' + util.inspect(row) + '`');
+        }
+
         var piecesInRow = _.filter(getAllBoardSpaces(gameState), {row: row});
         return piecesInRow.length === _.filter(piecesInRow, 'piece').length;
     }
 
-    if (!hasEnoughPieces(constants.WHITE) || isRowFilled(constants.WHITE_GOAL_ROW)) {
-        return constants.BLACK;
-    } else if (!hasEnoughPieces(constants.BLACK) || isRowFilled(constants.BLACK_GOAL_ROW)) {
-        return constants.WHITE;
+    if (!hasEnoughPieces(constants.PLAYER_A) || isRowFilled(constants.PLAYER_A_GOAL_ROW)) {
+        return constants.PLAYER_B;
+    } else if (!hasEnoughPieces(constants.PLAYER_B) || isRowFilled(constants.PLAYER_B_GOAL_ROW)) {
+        return constants.PLAYER_A;
     }
 
     return null;
@@ -231,7 +249,7 @@ function getGameWinner(gameState) {
 
 module.exports = getGameWinner;
 
-},{"../get-constants":2,"./get-all-board-spaces":7,"lodash":28}],10:[function(require,module,exports){
+},{"../get-constants":2,"./get-all-board-spaces":7,"lodash":28,"util":26}],10:[function(require,module,exports){
 'use strict';
 
 function getSpaceBetween(space1, space2) {
@@ -309,7 +327,7 @@ var applyMove = require('../update/apply-move'),
 
 function isValidMove(gameState, moveParts) {
 
-    function isValidMoveRec(gameState, moveParts, jumpedColor, nonJumpHasOccurred) {
+    function isValidMoveRec(gameState, moveParts, jumpedPlayer, nonJumpHasOccurred) {
 
         var srcBoardSpace,
             destBoardSpace,
@@ -341,10 +359,10 @@ function isValidMove(gameState, moveParts) {
             return false;
         }
 
-        if (srcBoardSpace.color === constants.WHITE && destBoardSpace.row === constants.WHITE_GOAL_ROW) {
+        if (srcBoardSpace.piece.player === constants.PLAYER_A && destBoardSpace.row === constants.PLAYER_A_GOAL_ROW) {
             return false;
         }
-        if (srcBoardSpace.color === constants.BLACK && destBoardSpace.row === constants.BLACK_GOAL_ROW) {
+        if (srcBoardSpace.piece.player === constants.PLAYER_B && destBoardSpace.row === constants.PLAYER_B_GOAL_ROW) {
             return false;
         }
 
@@ -364,21 +382,21 @@ function isValidMove(gameState, moveParts) {
             if (!getBoardSpace(gameState, spaceBetween).piece) {
                 return false;
             }
-            if (jumpedColor !== null &&
-                boardSpaceBetween.color !== jumpedColor &&
-                srcBoardSpace.piece !== constants.KNIGHT) {
+            if (jumpedPlayer !== null &&
+                boardSpaceBetween.piece.player !== jumpedPlayer &&
+                srcBoardSpace.piece.type !== constants.KNIGHT) {
                 return false;
             }
-            jumpedColor = boardSpaceBetween.color;
+            jumpedPlayer = boardSpaceBetween.piece.player;
         } else {
-            if (jumpedColor !== null) {
+            if (jumpedPlayer !== null) {
                 return false;
             }
             nonJumpHasOccurred = true;
         }
 
         gameAfterFirstMove = applyMove(gameState, moveParts[0], moveParts[1]);
-        return isValidMoveRec(gameAfterFirstMove, _.rest(moveParts), jumpedColor, nonJumpHasOccurred);
+        return isValidMoveRec(gameAfterFirstMove, _.rest(moveParts), jumpedPlayer, nonJumpHasOccurred);
 
     }
 
@@ -416,8 +434,6 @@ function applyMove(gameState, moveStart, moveEnd) {
         withMovingPieceNotAtSrc = updateBoardSpace(gameState, moveStart.row, moveStart.col, {piece: null}),
         withMovingPieceAtDest = updateBoardSpace(withMovingPieceNotAtSrc, moveEnd.row, moveEnd.col, {piece: movingPiece}),
         spaceBetween = getSpaceBetween(moveStart, moveEnd);
-
-    // TODO This moves the piece but not the color. `piece` should probably be an object instead of two fields.
 
     if (spaceBetween === null) {
         return withMovingPieceAtDest;
@@ -19862,13 +19878,20 @@ angularModule
 });
 },{"../angular-module":30,"path":18,"url":24}],47:[function(require,module,exports){
 var angularModule = require('../angular-module'),
-    camelotEngine = require('camelot-engine');
+    camelotEngine = require('camelot-engine')();
 
 angularModule
     .factory('createNewGame', function () {
         return function (initiator, recepient) {
+
+            var constants = camelotEngine.constants(),
+                players = _.zipObject([
+                    [constants.PLAYER_A, initiator],
+                    [constants.PLAYER_B, recepient]
+                ]);
+
             return {
-                players: [initiator, recepient],
+                players: players,
                 gameState: camelotEngine.createEmptyGame(),
                 waitingOn: initiator,
                 winner: null
@@ -19886,7 +19909,7 @@ angularModule
                 throw new Error('currentUserId must be a string, but was: `' + currentUserId + '`');
             }
 
-            return _(game.players).without(currentUserId).first();
+            return _(game.players).values().without(currentUserId).first();
         };
     });
 },{"../angular-module":30,"lodash":28}],49:[function(require,module,exports){

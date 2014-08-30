@@ -1,11 +1,18 @@
 ﻿var angularModule = require('../angular-module'),
-    camelotEngine = require('camelot-engine');
+    camelotEngine = require('camelot-engine')();
 
 angularModule
     .factory('createNewGame', function () {
         return function (initiator, recepient) {
+
+            var constants = camelotEngine.constants(),
+                players = _.zipObject([
+                    [constants.PLAYER_A, initiator],
+                    [constants.PLAYER_B, recepient]
+                ]);
+
             return {
-                players: [initiator, recepient],
+                players: players,
                 gameState: camelotEngine.createEmptyGame(),
                 waitingOn: initiator,
                 winner: null
