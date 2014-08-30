@@ -44,6 +44,14 @@
 	&.pawn::before {
 		content: 'P';
 	}
+
+	&.friendly {
+		color: white;
+	}
+
+	&.hostile {
+		color: black;
+	}
 }
 
 

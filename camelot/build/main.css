@@ -3643,6 +3643,10 @@ th.hide-for-touch {
     content: 'K'; }
   .board-space.pawn::before {
     content: 'P'; }
+  .board-space.friendly {
+    color: white; }
+  .board-space.hostile {
+    color: black; }
 
 .user-name {
   -ms-grid-row: 2;

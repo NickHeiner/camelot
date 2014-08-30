@@ -19696,24 +19696,19 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return camelotQuery.getBoardSpace(game.gameState, row, col) === null;
         }
 
-        function isKnight(row, col) {
+        function boardSpacePieceMatches(row, col, key, val) {
             var boardSpace = camelotQuery.getBoardSpace(game.gameState, row, col);
-            return boardSpace && boardSpace.piece && boardSpace.piece.type === camelotConstants.KNIGHT;
-        }
-
-        function isPawn(row, col) {
-            var boardSpace = camelotQuery.getBoardSpace(game.gameState, row, col);
-            return boardSpace && boardSpace.piece && boardSpace.piece.type === camelotConstants.PAWN;
+            return boardSpace && boardSpace.piece && boardSpace.piece[key] === val;
         }
 
         function getBoardSpaceClasses(row, col) {
             return {
                 hidden: boardSpaceDoesNotExist(row, col),
                 goal: camelotQuery.isGoal(game.gameState, row, col),
-                friendly: _.noop,
-                hostile: _.noop,
-                knight: isKnight(row, col),
-                pawn: isPawn(row, col),
+                friendly: boardSpacePieceMatches(row, col, 'player', 'playerA'),
+                hostile: boardSpacePieceMatches(row, col, 'player', 'playerB'),
+                knight: boardSpacePieceMatches(row, col, 'type', camelotConstants.KNIGHT),
+                pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
 
                 'possible-move': _.noop,
                 'active-move': _.noop
