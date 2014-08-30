@@ -18592,7 +18592,7 @@ ngModule.controller('CamelotCtrl', function ($rootScope, auth, $scope, goToRoute
     $scope.getCurrentUser().then(function (user) {
         // We could use automate promise unwrapping here but that
         // feature is either deprecated already or will be soon.
-        $scope.user = user;
+        $scope.currentUser = user;
     });
 });
 },{"../angular-module":20}],22:[function(require,module,exports){
