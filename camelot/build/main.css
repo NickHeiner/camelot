@@ -3625,6 +3625,8 @@ th.hide-for-touch {
   margin: 2px; }
   .board-space.hidden {
     background: transparent; }
+  .board-space.goal {
+    background: green; }
 
 .user-name {
   -ms-grid-row: 2;

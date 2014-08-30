@@ -14,5 +14,9 @@
 	&.hidden {
 		background: transparent;
 	}
+
+	&.goal {
+		background: green;
+	}
 }
 
