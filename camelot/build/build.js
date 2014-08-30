@@ -19751,12 +19751,22 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             $scope.activeMoveCoords.push({ row: row, col: col });
         }
 
+        function clearMove() {
+            $scope.activeMoveCoords = [];
+        }
+
+        function submitMove() {
+            clearMove();
+        }
+
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
         $scope.onClickBoardSpace = onClickBoardSpace;
+        $scope.clearMove = clearMove;
+        $scope.submitMove = submitMove;
     });
 });
 },{"../../angular-module":30,"camelot-engine":1,"lodash":28}],43:[function(require,module,exports){
-module.exports = "﻿<h3>Play game</h3>\r\n<div ng-repeat=\"row in rows\" class=\"board-row\">\r\n    <div ng-repeat=\"col in cols\" class=\"board-space\" ng-class=\"getBoardSpaceClasses(row, col)\" ng-click=\"onClickBoardSpace(row, col)\">\r\n    </div>\r\n</div>";
+module.exports = "﻿<h3>Play game</h3>\r\n<div>\r\n    <div ng-repeat=\"col in cols\" class=\"board-row\">\r\n        <div ng-repeat=\"row in rows\" class=\"board-space\" ng-class=\"getBoardSpaceClasses(row, col)\" ng-click=\"onClickBoardSpace(row, col)\">\r\n        </div>\r\n    </div>\r\n</div>\r\n<div>\r\n    <button ng-click=\"clearMove()\">Clear move</button>\r\n    <button ng-click=\"submitMove()\">Submit move</button>\r\n</div>";
 
 },{}],44:[function(require,module,exports){
 require('../vendor/angular');

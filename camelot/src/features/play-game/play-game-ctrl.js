@@ -82,7 +82,17 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             $scope.activeMoveCoords.push({ row: row, col: col });
         }
 
+        function clearMove() {
+            $scope.activeMoveCoords = [];
+        }
+
+        function submitMove() {
+            clearMove();
+        }
+
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
         $scope.onClickBoardSpace = onClickBoardSpace;
+        $scope.clearMove = clearMove;
+        $scope.submitMove = submitMove;
     });
 });

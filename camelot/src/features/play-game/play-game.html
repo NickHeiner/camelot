@@ -1,5 +1,11 @@
 ﻿<h3>Play game</h3>
-<div ng-repeat="row in rows" class="board-row">
-    <div ng-repeat="col in cols" class="board-space" ng-class="getBoardSpaceClasses(row, col)" ng-click="onClickBoardSpace(row, col)">
+<div>
+    <div ng-repeat="col in cols" class="board-row">
+        <div ng-repeat="row in rows" class="board-space" ng-class="getBoardSpaceClasses(row, col)" ng-click="onClickBoardSpace(row, col)">
+        </div>
     </div>
+</div>
+<div>
+    <button ng-click="clearMove()">Clear move</button>
+    <button ng-click="submitMove()">Submit move</button>
 </div>
