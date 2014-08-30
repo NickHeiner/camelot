@@ -54,14 +54,17 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
                 knight: boardSpacePieceMatches(row, col, 'type', camelotConstants.KNIGHT),
                 pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
 
-                'possible-move': boardSpaceIsInPossibleMoves(row, col),
+                'possible-move': shouldShowMoveAsPossible(row, col),
                 'active-move': boardSpaceIsInActiveMoves(row, col)
             };
         }
 
+        function shouldShowMoveAsPossible (row, col){
+            return $scope.activeMoveCoords.length && boardSpaceIsInPossibleMoves(row, col);
+        }
+
         function boardSpaceIsInPossibleMoves(row, col) {
-            // This length check is necessary until https://github.com/NickHeiner/camelot-engine/issues/8 is resolved
-            return $scope.activeMoveCoords.length && camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat({row: row, col: col}));
+            return camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat({row: row, col: col}), playerForCurrentUser);
         }
 
         function boardSpaceIsInActiveMoves(row, col) {
@@ -75,7 +78,7 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
                 return;
             }
 
-            if (!camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat({ row: row, col: col }))) {
+            if (!boardSpaceIsInPossibleMoves(row, col)) {
                 return;
             }
 
