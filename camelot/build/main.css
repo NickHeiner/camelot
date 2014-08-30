@@ -3627,6 +3627,8 @@ th.hide-for-touch {
     background: transparent; }
   .board-space.goal {
     background: green; }
+  .board-space.active-move {
+    background: yellow; }
   .board-space.knight {
     font-size: 2.5em;
     text-align: center;

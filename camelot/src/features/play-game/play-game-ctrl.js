@@ -9,6 +9,7 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
     $scope.rows = [];
     $scope.cols = [];
+    $scope.activeMoveCoords = [];
 
     $scope.$watch('game', function (game) {
 
@@ -54,10 +55,32 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
                 pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
 
                 'possible-move': _.noop,
-                'active-move': _.noop
+                'active-move': spaceIsInActiveMoves(row, col)
             };
         }
 
+        function spaceIsInActiveMoves(row, col) {
+            return _.find($scope.activeMoveCoords, { row: row, col: col });
+        }
+
+        function onClickBoardSpace(row, col) {
+            var isPieceForCurrentPlayer = boardSpacePieceMatches(row, col, 'player', playerForCurrentUser),
+                currCoord;
+
+            if (!isPieceForCurrentPlayer && !$scope.activeMoveCoords.length) {
+                return;
+            }
+
+            currCoord = { row: row, col: col };
+
+            if (!camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat(currCoord))) {
+                return;
+            }
+
+            $scope.activeMoveCoords.push(currCoord);
+        }
+
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
+        $scope.onClickBoardSpace = onClickBoardSpace;
     });
 });

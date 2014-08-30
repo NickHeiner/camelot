@@ -19678,6 +19678,7 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
     $scope.rows = [];
     $scope.cols = [];
+    $scope.activeMoveCoords = [];
 
     $scope.$watch('game', function (game) {
 
@@ -19723,15 +19724,37 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
                 pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
 
                 'possible-move': _.noop,
-                'active-move': _.noop
+                'active-move': spaceIsInActiveMoves(row, col)
             };
         }
 
+        function spaceIsInActiveMoves(row, col) {
+            return _.find($scope.activeMoveCoords, { row: row, col: col });
+        }
+
+        function onClickBoardSpace(row, col) {
+            var isPieceForCurrentPlayer = boardSpacePieceMatches(row, col, 'player', playerForCurrentUser),
+                currCoord;
+
+            if (!isPieceForCurrentPlayer && !$scope.activeMoveCoords.length) {
+                return;
+            }
+
+            currCoord = { row: row, col: col };
+
+            if (!camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat(currCoord))) {
+                return;
+            }
+
+            $scope.activeMoveCoords.push(currCoord);
+        }
+
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
+        $scope.onClickBoardSpace = onClickBoardSpace;
     });
 });
 },{"../../angular-module":30,"camelot-engine":1,"lodash":28}],43:[function(require,module,exports){
-module.exports = "﻿<h3>Play game</h3>\r\n<div ng-repeat=\"row in rows\" class=\"board-row\">\r\n    <div ng-repeat=\"col in cols\" class=\"board-space\" ng-class=\"getBoardSpaceClasses(row, col)\">\r\n    </div>\r\n</div>";
+module.exports = "﻿<h3>Play game</h3>\r\n<div ng-repeat=\"row in rows\" class=\"board-row\">\r\n    <div ng-repeat=\"col in cols\" class=\"board-space\" ng-class=\"getBoardSpaceClasses(row, col)\" ng-click=\"onClickBoardSpace(row, col)\">\r\n    </div>\r\n</div>";
 
 },{}],44:[function(require,module,exports){
 require('../vendor/angular');
