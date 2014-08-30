@@ -19678,14 +19678,26 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return camelotQuery.getBoardSpace(game.gameState, row, col) === null;
         }
 
+        function isKnight(row, col) {
+            // TODO have camelot-engine export constants
+            var boardSpace = camelotQuery.getBoardSpace(game.gameState, row, col);
+            return boardSpace && boardSpace.piece === 'knight';
+        }
+
+        function isPawn(row, col) {
+            // TODO have camelot-engine export constants
+            var boardSpace = camelotQuery.getBoardSpace(game.gameState, row, col);
+            return boardSpace && boardSpace.piece === 'pawn';
+        }
+
         function getBoardSpaceClasses(row, col) {
             return {
                 hidden: boardSpaceDoesNotExist(row, col),
                 goal: camelotQuery.isGoal(game.gameState, row, col),
                 friendly: _.noop,
                 hostile: _.noop,
-                knight: _.noop,
-                pawn: _.noop,
+                knight: isKnight(row, col),
+                pawn: isPawn(row, col),
 
                 'possible-move': _.noop,
                 'active-move': _.noop

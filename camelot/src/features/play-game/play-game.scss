@@ -18,5 +18,13 @@
 	&.goal {
 		background: green;
 	}
+
+	&.knight::before {
+		content: 'K'
+	}
+
+	&.pawn::before {
+		content: 'P'
+	}
 }
 

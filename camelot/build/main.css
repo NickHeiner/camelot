@@ -3627,6 +3627,10 @@ th.hide-for-touch {
     background: transparent; }
   .board-space.goal {
     background: green; }
+  .board-space.knight::before {
+    content: 'K'; }
+  .board-space.pawn::before {
+    content: 'P'; }
 
 .user-name {
   -ms-grid-row: 2;
