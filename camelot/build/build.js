@@ -19668,7 +19668,9 @@ module.exports = "﻿<h2>Pick a user to invite to a new game</h2>\r\n<h2><small>
 
 },{}],42:[function(require,module,exports){
 var angularModule = require('../../angular-module'),
-    camelotQuery = require('camelot-engine')().query();
+    camelotEngine = require('camelot-engine')(),
+    camelotQuery = camelotEngine.query(),
+    camelotConstants = camelotEngine.constants(),
     _ = require('lodash');
 
 angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel) {
@@ -19695,15 +19697,13 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         }
 
         function isKnight(row, col) {
-            // TODO have camelot-engine export constants
             var boardSpace = camelotQuery.getBoardSpace(game.gameState, row, col);
-            return boardSpace && boardSpace.piece === 'knight';
+            return boardSpace && boardSpace.piece && boardSpace.piece.type === camelotConstants.KNIGHT;
         }
 
         function isPawn(row, col) {
-            // TODO have camelot-engine export constants
             var boardSpace = camelotQuery.getBoardSpace(game.gameState, row, col);
-            return boardSpace && boardSpace.piece === 'pawn';
+            return boardSpace && boardSpace.piece && boardSpace.piece.type === camelotConstants.PAWN;
         }
 
         function getBoardSpaceClasses(row, col) {
