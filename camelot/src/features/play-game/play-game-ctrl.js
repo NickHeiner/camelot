@@ -15,5 +15,17 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
         $scope.rows = _(game.gameState.boardSpaces).pluck('row').unique().sortBy(_.identity).valueOf();
         $scope.cols = _(game.gameState.boardSpaces).pluck('col').unique().sortBy(_.identity).valueOf();
+
+        function boardSpaceDoesNotExist(row, col) {
+            return !_.any(game.gameState.boardSpaces, { row: row, col: col });
+        }
+
+        function getBoardSpaceClasses(row, col) {
+            return {
+                hidden: boardSpaceDoesNotExist(row, col)
+            };
+        }
+
+        $scope.getBoardSpaceClasses = getBoardSpaceClasses;
     });
 });
