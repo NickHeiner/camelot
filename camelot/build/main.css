@@ -3617,8 +3617,9 @@ th.hide-for-touch {
   clear: both; }
 
 .board-space {
-  width: 10%;
-  height: 10%;
+  /* Can we get responsive? */
+  width: 100px;
+  height: 100px;
   background: blue;
   float: left;
   margin: 5px; }
