@@ -19673,7 +19673,7 @@ var angularModule = require('../../angular-module'),
     camelotConstants = camelotEngine.constants(),
     _ = require('lodash');
 
-angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel) {
+angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel, $rootScope, getOtherPlayer) {
     bindModel(['games', $routeParams.gameId], $scope, 'game', _.constant({}));
 
     $scope.rows = [];
@@ -19681,11 +19681,23 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
     $scope.$watch('game', function (game) {
 
-        var allBoardSpaces;
+        var allBoardSpaces,
+            playerForCurrentUser,
+            otherUserId,
+            playerForOpponent;
 
         if (!game) {
             return;
         }
+
+        function getPlayerForUserId(userId) {
+            return _.invert(game.players)[userId];
+        }
+
+        // TODO Is it always safe to assume that currentUserId will be available at this point?
+        playerForCurrentUser = getPlayerForUserId($rootScope.currentUserId.id);
+        otherUserId = getOtherPlayer(game, $rootScope.currentUserId.id);
+        playerForOpponent = getPlayerForUserId(otherUserId);
 
         _allBoardSpaces = _(camelotQuery.getAllBoardSpaces(game.gameState));
 
@@ -19705,8 +19717,8 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return {
                 hidden: boardSpaceDoesNotExist(row, col),
                 goal: camelotQuery.isGoal(game.gameState, row, col),
-                friendly: boardSpacePieceMatches(row, col, 'player', 'playerA'),
-                hostile: boardSpacePieceMatches(row, col, 'player', 'playerB'),
+                friendly: boardSpacePieceMatches(row, col, 'player', playerForCurrentUser),
+                hostile: boardSpacePieceMatches(row, col, 'player', playerForOpponent),
                 knight: boardSpacePieceMatches(row, col, 'type', camelotConstants.KNIGHT),
                 pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
 

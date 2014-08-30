@@ -18,6 +18,7 @@ module.exports = function (grunt) {
             }
         },
 
+        // TODO this is not catching many errors.
         jshint: {
             lib: {
                 options: {
