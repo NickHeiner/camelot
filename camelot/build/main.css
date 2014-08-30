@@ -3622,11 +3622,23 @@ th.hide-for-touch {
   height: 50px;
   background: blue;
   float: left;
-  margin: 2px; }
+  margin: 2.5px; }
   .board-space.hidden {
     background: transparent; }
   .board-space.goal {
     background: green; }
+  .board-space.knight {
+    font-size: 2.5em;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 50px;
+    display: inline-block; }
+  .board-space.pawn {
+    font-size: 2.5em;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 50px;
+    display: inline-block; }
   .board-space.knight::before {
     content: 'K'; }
   .board-space.pawn::before {

@@ -4,12 +4,14 @@
 }
 
 .board-space {
+	$board-side-length: 50px;
+
 	/* Can we get responsive? */
-	width: 50px;
-	height: 50px;
+	width: $board-side-length;
+	height: $board-side-length;
 	background: blue;
 	float: left;
-	margin: 2px;
+	margin: $board-side-length / 20;
 
 	&.hidden {
 		background: transparent;
@@ -19,12 +21,30 @@
 		background: green;
 	}
 
+	@mixin board-text() {
+		font-size: 2.5em;
+		text-align: center;
+		vertical-align: middle;
+		line-height: $board-side-length;
+		display: inline-block;
+	}
+
+	&.knight {
+		@include board-text();
+	}
+
+	&.pawn {
+		@include board-text();
+	}
+
 	&.knight::before {
-		content: 'K'
+		content: 'K';
 	}
 
 	&.pawn::before {
-		content: 'P'
+		content: 'P';
 	}
 }
+
+
 
