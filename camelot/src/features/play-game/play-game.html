@@ -7,5 +7,5 @@
 </div>
 <div>
     <button ng-click="clearMove()">Clear move</button>
-    <button ng-click="submitMove()">Submit move</button>
+    <button ng-click="submitMove()" ng-disabled="!activeMoveCoords.length">Submit move</button>
 </div>

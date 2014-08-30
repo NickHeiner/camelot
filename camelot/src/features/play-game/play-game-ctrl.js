@@ -1,6 +1,7 @@
 ﻿var angularModule = require('../../angular-module'),
     camelotEngine = require('camelot-engine')(),
     camelotQuery = camelotEngine.query(),
+    camelotUpdate = camelotEngine.update(),
     camelotConstants = camelotEngine.constants(),
     _ = require('lodash');
 
@@ -90,6 +91,11 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         }
 
         function submitMove() {
+            if (!$scope.activeMoveCoords.length) {
+                return;
+            }
+
+            $scope.game.gameState = camelotUpdate.applyMoves(game.gameState, $scope.activeMoveCoords);
             clearMove();
         }
 
