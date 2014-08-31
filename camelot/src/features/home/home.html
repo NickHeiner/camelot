@@ -4,7 +4,7 @@
     </div>
 
     <div class="row">
-        <div ng-repeat="category in gamesByCategory" class="game-list-column">
+        <div ng-repeat="category in gamesByCategory" class="small-3 columns">
             <h3 class="win-type-x-large">{{category.name}}</h3>
             <win-list-view item-data-source="category.games" layout="{ type: listLayout }" items-draggable="true">
                 <win-item-template>

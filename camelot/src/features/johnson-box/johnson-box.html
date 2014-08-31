@@ -1,9 +1,9 @@
-﻿<div class="johnson-box ">
-    <div ng-if="user" class="user-logged-in">
+﻿<div class="johnson-box">
+    <div ng-if="user">
         <img class="user-avatar" ng-src="{{user.avatarUri}}" />
-        <h3 class="win-type-medium user-name">{{user.name}}</h3>
+        <h3 class="win-type-medium logged-in-status">{{user.name}}</h3>
     </div>
     <div ng-if="!user">
-        <p>Not logged in.</p>
+        <p class="logged-in-status">Not logged in.</p>
     </div>
 </div>

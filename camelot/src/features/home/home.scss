@@ -1,11 +1,4 @@
-﻿.game-list-column {
-  @include grid-column(
-    $columns:3,
-    $collapse:true
-  );
-}
-
-.games {
+﻿.games {
 	height: 85%;
 }
 
