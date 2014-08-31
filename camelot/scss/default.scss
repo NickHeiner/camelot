@@ -39,15 +39,3 @@ $header-height: $windows-live-profile-pic-size + 4px;
 @import '../src/features/home/home.scss';
 @import '../src/features/johnson-box/johnson-box.scss';
 @import '../src/features/game-list-entry/game-list-entry.scss';
-
-@media screen and (-ms-view-state: fullscreen-landscape) {
-}
-
-@media screen and (-ms-view-state: filled) {
-}
-
-@media screen and (-ms-view-state: snapped) {
-}
-
-@media screen and (-ms-view-state: fullscreen-portrait) {
-}

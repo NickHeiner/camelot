@@ -10,7 +10,7 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
 
         var categories = [
                 {
-                    name: 'Your turn', 
+                    name: 'Your turn',
                     pred: waitingOnCurrentPlayer
                 },
                 {
@@ -19,10 +19,12 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
                 },
                 {
                     name: 'You won',
+                    class: 'you-won',
                     pred: currentPlayerHasWon,
                 },
                 {
                     name: 'You lost',
+                    class: 'you-lost',
                     pred: currentPlayerHasLost
                 }
             ],
@@ -38,6 +40,7 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
         $scope.gamesByCategory = _.map(categories, function (category) {
             return {
                 name: category.name,
+                class: category.class,
                 games: _.filter(gameEntries, function (gameEntry) {
                     return category.pred(gameEntry.game);
                 })
