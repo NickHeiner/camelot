@@ -6,6 +6,8 @@
     </div>
 </div>
 <div>
+    <p ng-if="isCurrentPlayerTurn()">Your turn</p>
+    <p ng-if="!isCurrentPlayerTurn()">Waiting on other player.</p>
     <button ng-click="clearMove()" ng-disabled="disableClearMove()">Clear move</button>
     <button ng-click="submitMove()" ng-disabled="disableSubmitMove()">Submit move</button>
 </div>

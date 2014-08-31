@@ -73,7 +73,13 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         }
 
         function onClickBoardSpace(row, col) {
-            var isPieceForCurrentPlayer = boardSpacePieceMatches(row, col, 'player', playerForCurrentUser);
+            var isPieceForCurrentPlayer;
+
+            if (!isCurrentPlayerTurn()) {
+                return;
+            }
+            
+            isPieceForCurrentPlayer = boardSpacePieceMatches(row, col, 'player', playerForCurrentUser);
 
             if (!isPieceForCurrentPlayer && !$scope.activeMoveCoords.length) {
                 return;
@@ -91,11 +97,14 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         }
 
         function submitMove() {
-            if (!$scope.activeMoveCoords.length) {
+            var nextPlayerToMove;
+            if (!$scope.activeMoveCoords.length || !isCurrentPlayerTurn()) {
                 return;
             }
 
             $scope.game.gameState = camelotUpdate.applyMoves(game.gameState, $scope.activeMoveCoords);
+            nextPlayerToMove = getOtherPlayer(game, game.waitingOn);
+            game.waitingOn = nextPlayerToMove;
             clearMove();
         }
         
@@ -107,11 +116,16 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return $scope.activeMoveCoords.length < 1;
         }
 
+        function isCurrentPlayerTurn() {
+            return $rootScope.currentUserId.id === game.waitingOn;
+        }
+
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
         $scope.onClickBoardSpace = onClickBoardSpace;
         $scope.clearMove = clearMove;
         $scope.submitMove = submitMove;
         $scope.disableSubmitMove = disableSubmitMove;
         $scope.disableClearMove = disableClearMove;
+        $scope.isCurrentPlayerTurn = isCurrentPlayerTurn;
     });
 });
