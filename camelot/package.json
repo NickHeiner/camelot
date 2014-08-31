@@ -32,6 +32,6 @@
     "jquery": "^2.1.0",
     "guid": "0.0.12",
     "underscore.string": "^2.3.3",
-    "camelot-engine": "^2.0.0"
+    "camelot-engine": "^4.0.0"
   }
 }
