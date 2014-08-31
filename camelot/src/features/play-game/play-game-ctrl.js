@@ -117,7 +117,23 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         }
 
         function isCurrentPlayerTurn() {
-            return $rootScope.currentUserId.id === game.waitingOn;
+            return $rootScope.currentUserId.id === game.waitingOn && !eitherPlayerHasWon();
+        }
+
+        function isOpponentTurn() {
+            return otherUserId === game.waitingOn && !eitherPlayerHasWon();
+        }
+
+        function eitherPlayerHasWon() {
+            return currentPlayerHasWon() || opponentHasWon();
+        }
+
+        function currentPlayerHasWon() {
+            return camelotQuery.getGameWinner(game.gameState) === playerForCurrentUser;
+        }
+
+        function opponentHasWon() {
+            return camelotQuery.getGameWinner(game.gameState) === playerForOpponent;
         }
 
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
@@ -127,5 +143,8 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         $scope.disableSubmitMove = disableSubmitMove;
         $scope.disableClearMove = disableClearMove;
         $scope.isCurrentPlayerTurn = isCurrentPlayerTurn;
+        $scope.currentPlayerHasWon = currentPlayerHasWon;
+        $scope.opponentHasWon = opponentHasWon;
+        $scope.isOpponentTurn = isOpponentTurn;
     });
 });
