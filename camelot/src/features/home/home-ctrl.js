@@ -33,6 +33,8 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
                 };
             });
 
+        $scope.listLayout = WinJS.UI.ListLayout;
+
         $scope.gamesByCategory = _.map(categories, function (category) {
             return {
                 name: category.name,
