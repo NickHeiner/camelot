@@ -37,7 +37,7 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
             return {
                 name: category.name,
                 games: _.filter(gameEntries, function (gameEntry) {
-                    return pred(gameEntry.game);
+                    return category.pred(gameEntry.game);
                 })
             };
         });
