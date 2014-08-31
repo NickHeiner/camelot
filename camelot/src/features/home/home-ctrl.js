@@ -7,12 +7,31 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
     bindModel(['games'], $scope, 'games', _.constant([]));
 
     $scope.$watch('games', function (games) {
-        $scope.gamesForWinJs = _.map(withoutAngularFire(games), function (game, gameId) {
-            return {
-                id: gameId,
-                game: game
-            };
-        });
+
+        var categories = {
+                'Your turn': waitingOnCurrentPlayer,
+                'Their turn': waitingOnOtherPlayer,
+                'You won': currentPlayerHasWon,
+                'You lost': currentPlayerHasLost
+            },
+            gameEntries = _.map(withoutAngularFire(games), function (game, gameId) {
+                return {
+                    id: gameId,
+                    game: game
+                };
+            });
+
+        $scope.gamesByCategory = _(categories)
+            .map(function (pred, name) {
+                return [
+                    name,
+                    _.filter(gameEntries, function (gameEntry) {
+                        return pred(gameEntry.game);
+                    })
+                ];
+            })
+            .zipObject()
+            .valueOf();
     });
 
     function shouldShowNoGamesMessage() {
@@ -23,7 +42,7 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
         return gameUtils.isTurnOf(game, $rootScope.currentUserId.id);
     }
 
-    function notWaitingOnCurrentPlayer(game) {
+    function waitingOnOtherPlayer(game) {
         return !waitingOnCurrentPlayer(game) && !gameUtils.eitherPlayerHasWon(game);
     }
 
@@ -37,9 +56,5 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
     
     $scope.shouldShowNoGamesMessage = shouldShowNoGamesMessage;
     $scope.goToNewGame = goToRoute.goToNewGame;
-    $scope.waitingOnCurrentPlayer = waitingOnCurrentPlayer;
-    $scope.notWaitingOnCurrentPlayer = notWaitingOnCurrentPlayer;
-    $scope.currentPlayerHasWon = currentPlayerHasWon;
-    $scope.currentPlayerHasLost = currentPlayerHasLost;
 
 });

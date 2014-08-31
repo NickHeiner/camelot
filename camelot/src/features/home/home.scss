@@ -1,0 +1,6 @@
+﻿.game-list-column {
+  @include grid-column(
+    $columns:3,
+    $collapse:true
+  );
+}
