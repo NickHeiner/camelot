@@ -78,6 +78,7 @@
     <Content Include="src\services\auth.js" />
     <Content Include="src\services\bind-model.js" />
     <Content Include="src\services\create-new-game.js" />
+    <Content Include="src\services\game-utils.js" />
     <Content Include="src\services\get-other-player.js" />
     <Content Include="src\services\go-to-route.js" />
     <Content Include="vendor\angular-winjs.js" />

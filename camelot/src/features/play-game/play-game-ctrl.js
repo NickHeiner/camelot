@@ -5,7 +5,7 @@
     camelotConstants = camelotEngine.constants(),
     _ = require('lodash');
 
-angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel, $rootScope, getOtherPlayer) {
+angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindModel, $rootScope, getOtherPlayer, gameUtils) {
     bindModel(['games', $routeParams.gameId], $scope, 'game', _.constant({}));
 
     $scope.rows = [];
@@ -23,14 +23,16 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return;
         }
 
-        function getPlayerForUserId(userId) {
-            return _.invert(game.players)[userId];
-        }
+        otherUserId = getOtherPlayer(game, $rootScope.currentUserId.id);
 
         // TODO Is it always safe to assume that currentUserId will be available at this point?
-        playerForCurrentUser = getPlayerForUserId($rootScope.currentUserId.id);
-        otherUserId = getOtherPlayer(game, $rootScope.currentUserId.id);
-        playerForOpponent = getPlayerForUserId(otherUserId);
+        $scope.isCurrentPlayerTurn = _.partial(gameUtils.isTurnOf, game, $rootScope.currentUserId.id);
+        $scope.currentPlayerHasWon = _.partial(gameUtils.userHasWon, game, $rootScope.currentUserId.id);
+        $scope.opponentHasWon = _.partial(gameUtils.userHasWon, game, otherUserId);
+        $scope.isOpponentTurn = _.partial(gameUtils.isTurnOf, game, otherUserId);
+
+        playerForCurrentUser = gameUtils.getPlayerForUserId(game, $rootScope.currentUserId.id);
+        playerForOpponent = gameUtils.getPlayerForUserId(game, otherUserId);
 
         _allBoardSpaces = _(camelotQuery.getAllBoardSpaces(game.gameState));
 
@@ -116,35 +118,11 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return $scope.activeMoveCoords.length < 1;
         }
 
-        function isCurrentPlayerTurn() {
-            return $rootScope.currentUserId.id === game.waitingOn && !eitherPlayerHasWon();
-        }
-
-        function isOpponentTurn() {
-            return otherUserId === game.waitingOn && !eitherPlayerHasWon();
-        }
-
-        function eitherPlayerHasWon() {
-            return currentPlayerHasWon() || opponentHasWon();
-        }
-
-        function currentPlayerHasWon() {
-            return camelotQuery.getGameWinner(game.gameState) === playerForCurrentUser;
-        }
-
-        function opponentHasWon() {
-            return camelotQuery.getGameWinner(game.gameState) === playerForOpponent;
-        }
-
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
         $scope.onClickBoardSpace = onClickBoardSpace;
         $scope.clearMove = clearMove;
         $scope.submitMove = submitMove;
         $scope.disableSubmitMove = disableSubmitMove;
         $scope.disableClearMove = disableClearMove;
-        $scope.isCurrentPlayerTurn = isCurrentPlayerTurn;
-        $scope.currentPlayerHasWon = currentPlayerHasWon;
-        $scope.opponentHasWon = opponentHasWon;
-        $scope.isOpponentTurn = isOpponentTurn;
     });
 });

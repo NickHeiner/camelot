@@ -11,6 +11,16 @@
     {{game}}
 </div>
 
+<h3>You Won</h3>
+<div game-list-entry game="game" game-id="gameId" ng-repeat="(gameId, game) in games" ng-if="currentPlayerHasWon(game)">
+    {{game}}
+</div>
+
+<h3>You Lost</h3>
+<div game-list-entry game="game" game-id="gameId" ng-repeat="(gameId, game) in games" ng-if="currentPlayerHasLost(game)">
+    {{game}}
+</div>
+
 <div>
     <button ng-click="goToNewGame()">New game</button>
 </div>
