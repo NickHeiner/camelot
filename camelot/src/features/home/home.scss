@@ -6,9 +6,14 @@
 }
 
 .games {
-	height: 90%;
+	height: 85%;
 }
 
 .after-games {
-	height: 10%;
+	height: 15%;
+
+	button {
+		display: table;
+		margin: 0 auto;
+	}
 }
