@@ -2,7 +2,7 @@
     route = require('../../route'),
     _ = require('lodash');
 
-ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootScope) {
+ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootScope, gameUtils) {
 
     bindModel(['games'], $scope, 'games', _.constant([]));
 
@@ -11,16 +11,26 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
     }
 
     function waitingOnCurrentPlayer(game) {
-        return game.waitingOn === $rootScope.currentUserId.id;
+        return gameUtils.isTurnOf(game, $rootScope.currentUserId.id);
     }
 
     function notWaitingOnCurrentPlayer(game) {
-        return !waitingOnCurrentPlayer(game);
+        return !waitingOnCurrentPlayer(game) && !gameUtils.eitherPlayerHasWon(game);
+    }
+
+    function currentPlayerHasWon(game) {
+        return gameUtils.userHasWon(game, $rootScope.currentUserId.id);
+    }
+
+    function currentPlayerHasLost(game) {
+        return gameUtils.eitherPlayerHasWon(game) && !gameUtils.userHasWon(game, $rootScope.currentUserId.id);
     }
 
     $scope.shouldShowNoGamesMessage = shouldShowNoGamesMessage;
     $scope.goToNewGame = goToRoute.goToNewGame;
     $scope.waitingOnCurrentPlayer = waitingOnCurrentPlayer;
     $scope.notWaitingOnCurrentPlayer = notWaitingOnCurrentPlayer;
+    $scope.currentPlayerHasWon = currentPlayerHasWon;
+    $scope.currentPlayerHasLost = currentPlayerHasLost;
 
 });

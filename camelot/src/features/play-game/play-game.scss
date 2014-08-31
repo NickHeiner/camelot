@@ -4,10 +4,63 @@
 }
 
 .board-space {
+	$board-side-length: 50px;
+
 	/* Can we get responsive? */
-	width: 100px;
-	height: 100px;
+	width: $board-side-length;
+	height: $board-side-length;
 	background: blue;
 	float: left;
-	margin: 5px;
+	margin: $board-side-length / 20;
+
+	&.hidden {
+		background: transparent;
+	}
+
+	&.goal {
+		background: green;
+	}
+
+	&.active-move {
+		background: yellow;
+	}
+
+	&.possible-move {
+		background: cyan;
+	}
+
+	@mixin board-text() {
+		font-size: 2.5em;
+		text-align: center;
+		vertical-align: middle;
+		line-height: $board-side-length;
+		display: inline-block;
+	}
+
+	&.knight {
+		@include board-text();
+	}
+
+	&.pawn {
+		@include board-text();
+	}
+
+	&.knight::before {
+		content: 'K';
+	}
+
+	&.pawn::before {
+		content: 'P';
+	}
+
+	&.friendly {
+		color: white;
+	}
+
+	&.hostile {
+		color: black;
+	}
 }
+
+
+

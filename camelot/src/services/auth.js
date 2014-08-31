@@ -19,12 +19,28 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
         $scope.currentUserId = {};
 
         function getCurrentUser() {
-            if (!_.has($scope.currentUserId, 'id') || !_.has($scope, 'users')) {
-                return null;
+            var deferred = $q.defer();
+
+            function scopeIsPopulated() {
+                return _.has($scope.currentUserId, 'id') && _.has($scope, 'users');
             }
 
-            $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
-            return $scope.users[$scope.currentUserId.id];
+            if (!scopeIsPopulated()) {
+
+                var unregister = $scope.$watch(scopeIsPopulated, function (isPopulated) {
+                    if (isPopulated) {
+                        unregister();
+                        $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
+                        deferred.resolve($scope.users[$scope.currentUserId.id]);
+                    }
+                });
+
+            } else {
+                $scope.users[$scope.currentUserId.id] = $scope.users[$scope.currentUserId.id] || {};
+                deferred.resolve($scope.users[$scope.currentUserId.id]);
+            }
+
+            return deferred.promise;
         }
 
         $scope.getCurrentUser = getCurrentUser;
@@ -41,7 +57,9 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
 
                     $scope.currentUserId.id = response.id;
 
-                    getCurrentUser().name = response.name;
+                    return getCurrentUser().then(function (user) {
+                        user.name = response.name;
+                    });
                 });
 
                 return updateUserNamePromise.then(function () {
@@ -49,7 +67,11 @@ ngModule.factory('auth', function ($q, $window, bindModel) {
                         path: 'me/picture',
                         method: 'GET'
                     })).then(function (response) {
-                        getCurrentUser().avatarUri = response.location;
+
+                        getCurrentUser().then(function (user) {
+                            user.avatarUri = response.location;
+                        });
+
                     });
                 });
             });

@@ -71,13 +71,14 @@
     <Content Include="src\features\johnson-box\johnson-box.js" />
     <Content Include="src\features\new-game\new-game.html" />
     <Content Include="src\features\new-game\new-game-ctrl.js" />
-    <Content Include="src\features\play-game\play-game.html" />
     <Content Include="src\features\play-game\play-game-ctrl.js" />
+    <Content Include="src\features\play-game\play-game.html" />
     <Content Include="src\features\play-game\play-game.scss" />
     <Content Include="src\route.js" />
     <Content Include="src\services\auth.js" />
     <Content Include="src\services\bind-model.js" />
     <Content Include="src\services\create-new-game.js" />
+    <Content Include="src\services\game-utils.js" />
     <Content Include="src\services\get-other-player.js" />
     <Content Include="src\services\go-to-route.js" />
     <Content Include="vendor\angular-winjs.js" />

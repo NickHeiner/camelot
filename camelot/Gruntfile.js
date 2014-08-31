@@ -18,6 +18,7 @@ module.exports = function (grunt) {
             }
         },
 
+        // TODO this is not catching many errors.
         jshint: {
             lib: {
                 options: {
@@ -54,6 +55,7 @@ module.exports = function (grunt) {
     grunt.registerTask('test', 'jshint');
 
     grunt.registerTask('build', [
+        'test',
         'browserify:dist',
         'sass:dist'
     ]);

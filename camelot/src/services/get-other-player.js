@@ -8,6 +8,6 @@ angularModule
                 throw new Error('currentUserId must be a string, but was: `' + currentUserId + '`');
             }
 
-            return _(game.players).without(currentUserId).first();
+            return _(game.players).values().without(currentUserId).first();
         };
     });

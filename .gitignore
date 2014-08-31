@@ -1,4 +1,4 @@
-camelot/node_modules
-camelot/bin
-camelot/bld
-camelot/build
+/camelot/node_modules/
+/camelot/bin/
+/camelot/bld/
+/camelot/build/
