@@ -12,22 +12,10 @@ $profile-pic-height: 10em;
 .app-grid {
 	height: 20%;
 	padding: 2em;
-	display: -ms-grid;
-	-ms-grid-columns: auto 1fr auto;
-	-ms-grid-rows: auto auto;
 }
 
 .main-view {
 	height: 80%
-}
-
-.app-title {
-    -ms-grid-row: 1;
-    -ms-grid-column: 1;
-}
-.johnson-box {
-    -ms-grid-row: 1;
-    -ms-grid-column: 3;
 }
 
 @mixin round-image($side-length) {
