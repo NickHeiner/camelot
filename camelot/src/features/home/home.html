@@ -1,11 +1,11 @@
-﻿<div ng-show="shouldShowNoGamesMessage()">
-    <p>You have no games.</p>
+﻿<div class="row" ng-show="shouldShowNoGamesMessage()">
+    <p>You have no games. Want to start a new one?</p>
 </div>
 
 <!-- TODO It would be nice to clean up this duplication. -->
 <div class="row">
     <div ng-repeat="category in gamesByCategory" class="game-list-column">
-        <h3 class="win-type-large">{{category.name}}</h3>
+        <h3 class="win-type-x-large">{{category.name}}</h3>
         <win-list-view item-data-source="category.games" layout="{ type: listLayout }" items-draggable="true">
             <win-item-template>
                 <!-- We need to set the size on this elem, not a child, so unfortunately .game-list-entry must be applied here. -->
@@ -15,6 +15,8 @@
     </div>
 </div>
 
-<div>
-    <button ng-click="goToNewGame()">New game</button>
+<div class="row">
+    <div class="small-1 small-centered columns">
+        <button ng-click="goToNewGame()">New game</button>
+    </div>
 </div>
