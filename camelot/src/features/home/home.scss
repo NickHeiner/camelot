@@ -3,6 +3,10 @@
 
 	.category-name {
 		text-align: center;
+
+		/* This is a hack to center the names over the lists.
+		   I don't know what the right way to do this is. */
+		margin-left: -17px;
 	}
 }
 
