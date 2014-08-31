@@ -1,4 +1,5 @@
 ﻿var angularModule = require('../angular-module'),
+    _ = require('lodash'),
     camelotEngine = require('camelot-engine')();
 
 angularModule
