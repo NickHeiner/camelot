@@ -65,6 +65,7 @@
     <Content Include="src\evil.js" />
     <Content Include="src\features\game-list-entry\game-list-entry.html" />
     <Content Include="src\features\game-list-entry\game-list-entry.js" />
+    <Content Include="src\features\game-list-entry\game-list-entry.scss" />
     <Content Include="src\features\home\home-ctrl.js" />
     <Content Include="src\features\home\home.html" />
     <Content Include="src\features\johnson-box\johnson-box.html" />
@@ -81,6 +82,7 @@
     <Content Include="src\services\game-utils.js" />
     <Content Include="src\services\get-other-player.js" />
     <Content Include="src\services\go-to-route.js" />
+    <Content Include="src\services\without-angular-fire.js" />
     <Content Include="vendor\angularfire.js" />
     <Content Include="vendor\firebase.js" />
     <None Include="camelot_StoreKey.pfx" />

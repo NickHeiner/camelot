@@ -2,24 +2,12 @@
     <p>You have no games.</p>
 </div>
 
-<h3>Your Turn</h3>
-<div game-list-entry game="game" game-id="gameId" ng-repeat="(gameId, game) in games" ng-if="waitingOnCurrentPlayer(game)">
-</div>
-
-<h3>Their Turn</h3>
-<div game-list-entry game="game" game-id="gameId" ng-repeat="(gameId, game) in games" ng-if="notWaitingOnCurrentPlayer(game)">
-    {{game}}
-</div>
-
-<h3>You Won</h3>
-<div game-list-entry game="game" game-id="gameId" ng-repeat="(gameId, game) in games" ng-if="currentPlayerHasWon(game)">
-    {{game}}
-</div>
-
-<h3>You Lost</h3>
-<div game-list-entry game="game" game-id="gameId" ng-repeat="(gameId, game) in games" ng-if="currentPlayerHasLost(game)">
-    {{game}}
-</div>
+<win-list-view item-data-source="gamesForWinJs">
+    <win-item-template>
+        <!-- We need to set the size on this elem, not a child, so unfortunately .game-list-entry must be applied here. -->
+        <div game-list-entry game="item.data.game" game-id="item.data.id" class="game-list-entry"></div>
+    </win-item-template>
+</win-list-view>
 
 <div>
     <button ng-click="goToNewGame()">New game</button>

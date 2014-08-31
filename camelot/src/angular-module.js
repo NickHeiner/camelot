@@ -12,5 +12,6 @@ require('angular-winjs');
 
 module.exports = angular.module('camelot', [
     'ngRoute', 
-    'firebase'
+    'firebase',
+    'winjs'
 ]);

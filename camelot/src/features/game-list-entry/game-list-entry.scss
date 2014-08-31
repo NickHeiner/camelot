@@ -1,0 +1,15 @@
+﻿.game-list-entry {
+	width: 160px;
+	height: 200px;
+
+	text-align: center;
+
+	/* I happened to observe this once. Is this a constant? */
+	$windows-live-profile-pic-size:	96px;	
+
+	.user-img {
+		width: $windows-live-profile-pic-size;
+		height: $windows-live-profile-pic-size;
+		@include round-image($windows-live-profile-pic-size);
+	}
+}

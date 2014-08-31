@@ -1,10 +1,6 @@
 ﻿$include-html-type-classes: false;
 $include-html-global-classes: false;
 
-@import 'foundation/_functions';
-
-$include-html-grid-classes: false;
-
 @import 'foundation';
 
 $show-row-borders: false;
@@ -26,10 +22,14 @@ $profile-pic-height: 10em;
     -ms-grid-column: 3;
 }
 
+@mixin round-image($side-length) {
+	border-radius: $side-length / 2;
+}
+
 .profile-pic {
 	width: $profile-pic-height;
 	height: $profile-pic-height;
-	border-radius: $profile-pic-height / 2;
+	@include round-image($profile-pic-height);
 }
 
 .johnson-box-has-user-root {
@@ -39,6 +39,7 @@ $profile-pic-height: 10em;
 }
 
 @import '../src/features/play-game/play-game.scss';
+@import '../src/features/game-list-entry/game-list-entry.scss';
 
 .user-name {
 	-ms-grid-row: 2;
