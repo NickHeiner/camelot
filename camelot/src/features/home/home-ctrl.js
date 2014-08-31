@@ -8,12 +8,24 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
 
     $scope.$watch('games', function (games) {
 
-        var categories = {
-                'Your turn': waitingOnCurrentPlayer,
-                'Their turn': waitingOnOtherPlayer,
-                'You won': currentPlayerHasWon,
-                'You lost': currentPlayerHasLost
-            },
+        var categories = [
+                {
+                    name: 'Your turn', 
+                    pred: waitingOnCurrentPlayer
+                },
+                {
+                    name: 'Their turn',
+                    pred: waitingOnOtherPlayer,
+                },
+                {
+                    name: 'You won',
+                    pred: currentPlayerHasWon,
+                },
+                {
+                    name: 'You lost',
+                    pred: currentPlayerHasLost
+                }
+            ],
             gameEntries = _.map(withoutAngularFire(games), function (game, gameId) {
                 return {
                     id: gameId,
@@ -21,17 +33,14 @@ ngModule.controller('HomeCtrl', function ($scope, bindModel, goToRoute, $rootSco
                 };
             });
 
-        $scope.gamesByCategory = _(categories)
-            .map(function (pred, name) {
-                return [
-                    name,
-                    _.filter(gameEntries, function (gameEntry) {
-                        return pred(gameEntry.game);
-                    })
-                ];
-            })
-            .zipObject()
-            .valueOf();
+        $scope.gamesByCategory = _.map(categories, function (category) {
+            return {
+                name: category.name,
+                games: _.filter(gameEntries, function (gameEntry) {
+                    return pred(gameEntry.game);
+                })
+            };
+        });
     });
 
     function shouldShowNoGamesMessage() {
