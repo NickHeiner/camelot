@@ -71,6 +71,7 @@
     <Content Include="src\features\home\home.scss" />
     <Content Include="src\features\johnson-box\johnson-box.html" />
     <Content Include="src\features\johnson-box\johnson-box.js" />
+    <Content Include="src\features\johnson-box\johnson-box.scss" />
     <Content Include="src\features\new-game\new-game.html" />
     <Content Include="src\features\new-game\new-game-ctrl.js" />
     <Content Include="src\features\play-game\play-game-ctrl.js" />
