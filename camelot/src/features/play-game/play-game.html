@@ -6,6 +6,6 @@
     </div>
 </div>
 <div>
-    <button ng-click="clearMove()">Clear move</button>
-    <button ng-click="submitMove()" ng-disabled="!activeMoveCoords.length">Submit move</button>
+    <button ng-click="clearMove()" ng-disabled="disableClearMove()">Clear move</button>
+    <button ng-click="submitMove()" ng-disabled="disableSubmitMove()">Submit move</button>
 </div>

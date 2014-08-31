@@ -98,10 +98,20 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             $scope.game.gameState = camelotUpdate.applyMoves(game.gameState, $scope.activeMoveCoords);
             clearMove();
         }
+        
+        function disableSubmitMove() {
+            return $scope.activeMoveCoords.length <= 1;
+        }
+
+        function disableClearMove() {
+            return $scope.activeMoveCoords.length < 1;
+        }
 
         $scope.getBoardSpaceClasses = getBoardSpaceClasses;
         $scope.onClickBoardSpace = onClickBoardSpace;
         $scope.clearMove = clearMove;
         $scope.submitMove = submitMove;
+        $scope.disableSubmitMove = disableSubmitMove;
+        $scope.disableClearMove = disableClearMove;
     });
 });
