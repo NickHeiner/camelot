@@ -10,10 +10,15 @@ $show-row-borders: false;
 $profile-pic-height: 10em;
 
 .app-grid {
+	height: 20%;
 	padding: 2em;
 	display: -ms-grid;
 	-ms-grid-columns: auto 1fr auto;
 	-ms-grid-rows: auto auto;
+}
+
+.main-view {
+	height: 80%
 }
 
 .app-title {
