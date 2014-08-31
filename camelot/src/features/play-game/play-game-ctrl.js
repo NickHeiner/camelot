@@ -77,7 +77,7 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
         function onClickBoardSpace(row, col) {
             var isPieceForCurrentPlayer;
 
-            if (!isCurrentPlayerTurn()) {
+            if (!$scope.isCurrentPlayerTurn()) {
                 return;
             }
             
@@ -100,7 +100,7 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
         function submitMove() {
             var nextPlayerToMove;
-            if (!$scope.activeMoveCoords.length || !isCurrentPlayerTurn()) {
+            if (!$scope.activeMoveCoords.length || !$scope.isCurrentPlayerTurn()) {
                 return;
             }
 
