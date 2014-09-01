@@ -5,7 +5,7 @@
 
     <div class="row">
         <div ng-repeat="category in gamesByCategory" class="small-3 columns">
-            <h3 class="win-type-x-large">{{category.name}}</h3>
+            <h3 class="win-type-x-large category-name">{{category.name}}</h3>
             <win-list-view item-data-source="category.games" layout="{ type: listLayout }">
                 <win-item-template>
                     <!-- We need to set the size on this elem, not a child, so unfortunately .game-list-entry must be applied here. -->
