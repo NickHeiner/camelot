@@ -8,9 +8,10 @@ require('../vendor/firebase');
 Firebase.INTERNAL.forceWebSockets();
 
 require('../vendor/angularfire');
-require('../vendor/angular-winjs');
+require('angular-winjs');
 
 module.exports = angular.module('camelot', [
     'ngRoute', 
-    'firebase'
+    'firebase',
+    'winjs'
 ]);

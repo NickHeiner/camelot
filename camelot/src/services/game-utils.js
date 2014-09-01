@@ -1,4 +1,6 @@
-﻿var angularModule = require('../angular-module'),
+﻿'use strict';
+
+var angularModule = require('../angular-module'),
     camelotEngine = require('camelot-engine')(),
     _ = require('lodash'),
     camelotQuery = camelotEngine.query();

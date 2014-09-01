@@ -1,0 +1,21 @@
+﻿.johnson-box {
+
+	$user-logged-in-height: 100px;
+
+	.user-logged-in {
+		width: 100%;
+		height: $user-logged-in-height;	
+	}
+
+	.user-avatar {
+		float: right;
+	}
+
+	.logged-in-status {
+		float: right;
+		padding-right: 3%;
+
+		/* This is to vertically align the text. I wonder if there is a better way. */
+		line-height: $user-logged-in-height;
+	}
+}

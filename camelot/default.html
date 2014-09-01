@@ -1,25 +1,27 @@
 ﻿<!DOCTYPE html>
 <html ng-app="camelot">
-<head>
-    <meta charset="utf-8" />
-    <title>Camelot</title>
+    <head>
+        <meta charset="utf-8" />
+        <title>Camelot</title>
 
-    <!-- WinJS references -->
-    <link href="//Microsoft.WinJS.2.0/css/ui-dark.css" rel="stylesheet" />
-    <script src="//Microsoft.WinJS.2.0/js/base.js"></script>
-    <script src="//Microsoft.WinJS.2.0/js/ui.js"></script>
-    <script src="///LiveSDKHTML/js/wl.js"></script>
+        <!-- WinJS references -->
+        <link href="//Microsoft.WinJS.2.0/css/ui-dark.css" rel="stylesheet" />
+        <script src="//Microsoft.WinJS.2.0/js/base.js"></script>
+        <script src="//Microsoft.WinJS.2.0/js/ui.js"></script>
+        <script src="///LiveSDKHTML/js/wl.js"></script>
 
-    <link href="/build/main.css" rel="stylesheet" />
-    <script src="/build/build.js"></script>
+        <link href="/build/main.css" rel="stylesheet" />
+        <script src="/build/build.js"></script>
 
-</head>
-<body ng-controller="CamelotCtrl">
-    <div class="app-grid">
-        <h1 class="app-title" ng-click="goToHome()">Camelot</h1>
-        <div johnson-box user="currentUser" class="johnson-box"></div>
-    </div>
+    </head>
+    <body ng-controller="CamelotCtrl">
+        <div class="header">
+            <div class="row">
+                <h1 class="win-type-xx-large small-2 columns" ng-click="goToHome()">Camelot</h1>
+                <div johnson-box user="currentUser" class="small-3 columns"></div>
+            </div>
+        </div>
 
-    <div ng-view></div>
-</body>
+        <div ng-view class="main-view"></div>
+    </body>
 </html>
