@@ -12,6 +12,14 @@
 	.you-won, .you-lost {
 		@extend .show-for-medium-up
 	}
+
+	.category-column {
+		@include grid-column(
+			$columns: 3,
+			/* If I don't do this, then the category columns do not fit on one row. This seems odd - shouldn't they automatically? */
+			$collapse: true
+		)
+	}
 }
 
 .after-games {
