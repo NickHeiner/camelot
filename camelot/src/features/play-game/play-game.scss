@@ -13,7 +13,9 @@
 .board-space {
 	$board-side-length: 50px;
 
-	width: 5%;
+	/* There are 17 spaces in a row so I'm not sure why this value needs to be 18 but it overflows otherwise haha */
+	width: (100%/18);
+
 	height: 100%;
 	background: blue;
 	float: left;
