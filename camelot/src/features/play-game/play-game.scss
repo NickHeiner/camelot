@@ -1,19 +1,30 @@
 ﻿.board-row {
 	float: left;
 	clear: both;
+	width: 100%;
+	height: 8%;
+}
+
+.board {
+	width: 100%;
+	height: 100%
 }
 
 .board-space {
 	$board-side-length: 50px;
 
-	/* Can we get responsive? */
-	width: $board-side-length;
-	height: $board-side-length;
+	width: 5%;
+	height: 100%;
 	background: blue;
 	float: left;
-	margin: $board-side-length / 20;
+
+	$border-width: 2px;
+	border: $border-width solid black;
 
 	&.hidden {
+		/* If we don't have this invisible border, there will be an odd offset in the board. 
+		   It seems that borders act like margin, not padding. */
+		border: $border-width solid transparent;
 		background: transparent;
 	}
 
