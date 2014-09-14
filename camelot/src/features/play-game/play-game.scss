@@ -21,6 +21,9 @@
 	$border-width: 2px;
 	border: $border-width solid black;
 
+	/* This is necessary to make the borders look even. I don't know why. */
+	border-top-width: $border-width + 1;
+
 	&.hidden {
 		/* If we don't have this invisible border, there will be an odd offset in the board. 
 		   It seems that borders act like margin, not padding. */
