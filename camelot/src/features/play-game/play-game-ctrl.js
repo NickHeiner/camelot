@@ -14,25 +14,75 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
     $scope.$watch('game', function (game) {
 
-        var allBoardSpaces,
-            playerForCurrentUser,
-            otherUserId,
-            playerForOpponent;
+        var _allBoardSpaces;
 
         if (!game) {
             return;
         }
 
-        otherUserId = getOtherPlayer(game, $rootScope.currentUserId.id);
+        $rootScope.getCurrentUser().then(function (currentUserId) {
+            var otherUserId = getOtherPlayer(game, $rootScope.currentUserId.id),
+                playerForCurrentUser,
+                playerForOpponent;
 
-        // TODO Is it always safe to assume that currentUserId will be available at this point?
-        $scope.isCurrentPlayerTurn = _.partial(gameUtils.isTurnOf, game, $rootScope.currentUserId.id);
-        $scope.currentPlayerHasWon = _.partial(gameUtils.userHasWon, game, $rootScope.currentUserId.id);
-        $scope.opponentHasWon = _.partial(gameUtils.userHasWon, game, otherUserId);
-        $scope.isOpponentTurn = _.partial(gameUtils.isTurnOf, game, otherUserId);
+            $scope.ids = {
+                opponent: otherUserId,
+                current: $rootScope.currentUserId.id
+            };
 
-        playerForCurrentUser = gameUtils.getPlayerForUserId(game, $rootScope.currentUserId.id);
-        playerForOpponent = gameUtils.getPlayerForUserId(game, otherUserId);
+            $scope.isCurrentPlayerTurn = _.partial(gameUtils.isTurnOf, game, $rootScope.currentUserId.id);
+            $scope.currentPlayerHasWon = _.partial(gameUtils.userHasWon, game, $rootScope.currentUserId.id);
+            $scope.opponentHasWon = _.partial(gameUtils.userHasWon, game, otherUserId);
+            $scope.isOpponentTurn = _.partial(gameUtils.isTurnOf, game, otherUserId);
+
+            playerForCurrentUser = gameUtils.getPlayerForUserId(game, $rootScope.currentUserId.id);
+            playerForOpponent = gameUtils.getPlayerForUserId(game, otherUserId);
+
+            function getBoardSpaceClasses(row, col) {
+                return {
+                    hidden: boardSpaceDoesNotExist(row, col),
+                    goal: camelotQuery.isGoal(game.gameState, row, col),
+                    friendly: boardSpacePieceMatches(row, col, 'player', playerForCurrentUser),
+                    hostile: boardSpacePieceMatches(row, col, 'player', playerForOpponent),
+                    knight: boardSpacePieceMatches(row, col, 'type', camelotConstants.KNIGHT),
+                    pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
+
+                    'possible-move': shouldShowMoveAsPossible(row, col),
+                    'active-move': boardSpaceIsInActiveMoves(row, col)
+                };
+            }
+
+            function boardSpaceIsInPossibleMoves(row, col) {
+                return camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat({ row: row, col: col }), playerForCurrentUser);
+            }
+
+            function shouldShowMoveAsPossible(row, col) {
+                return $scope.activeMoveCoords.length && boardSpaceIsInPossibleMoves(row, col);
+            }
+
+            function onClickBoardSpace(row, col) {
+                var isPieceForCurrentPlayer;
+
+                if (!$scope.isCurrentPlayerTurn()) {
+                    return;
+                }
+
+                isPieceForCurrentPlayer = boardSpacePieceMatches(row, col, 'player', playerForCurrentUser);
+
+                if (!isPieceForCurrentPlayer && !$scope.activeMoveCoords.length) {
+                    return;
+                }
+
+                if (!boardSpaceIsInPossibleMoves(row, col)) {
+                    return;
+                }
+
+                $scope.activeMoveCoords.push({ row: row, col: col });
+            }
+
+            $scope.onClickBoardSpace = onClickBoardSpace;
+            $scope.getBoardSpaceClasses = getBoardSpaceClasses;
+        });
 
         _allBoardSpaces = _(camelotQuery.getAllBoardSpaces(game.gameState));
 
@@ -48,50 +98,8 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return boardSpace && boardSpace.piece && boardSpace.piece[key] === val;
         }
 
-        function getBoardSpaceClasses(row, col) {
-            return {
-                hidden: boardSpaceDoesNotExist(row, col),
-                goal: camelotQuery.isGoal(game.gameState, row, col),
-                friendly: boardSpacePieceMatches(row, col, 'player', playerForCurrentUser),
-                hostile: boardSpacePieceMatches(row, col, 'player', playerForOpponent),
-                knight: boardSpacePieceMatches(row, col, 'type', camelotConstants.KNIGHT),
-                pawn: boardSpacePieceMatches(row, col, 'type', camelotConstants.PAWN),
-
-                'possible-move': shouldShowMoveAsPossible(row, col),
-                'active-move': boardSpaceIsInActiveMoves(row, col)
-            };
-        }
-
-        function shouldShowMoveAsPossible (row, col){
-            return $scope.activeMoveCoords.length && boardSpaceIsInPossibleMoves(row, col);
-        }
-
-        function boardSpaceIsInPossibleMoves(row, col) {
-            return camelotQuery.isValidMove(game.gameState, $scope.activeMoveCoords.concat({row: row, col: col}), playerForCurrentUser);
-        }
-
         function boardSpaceIsInActiveMoves(row, col) {
             return _.find($scope.activeMoveCoords, { row: row, col: col });
-        }
-
-        function onClickBoardSpace(row, col) {
-            var isPieceForCurrentPlayer;
-
-            if (!$scope.isCurrentPlayerTurn()) {
-                return;
-            }
-            
-            isPieceForCurrentPlayer = boardSpacePieceMatches(row, col, 'player', playerForCurrentUser);
-
-            if (!isPieceForCurrentPlayer && !$scope.activeMoveCoords.length) {
-                return;
-            }
-
-            if (!boardSpaceIsInPossibleMoves(row, col)) {
-                return;
-            }
-
-            $scope.activeMoveCoords.push({ row: row, col: col });
         }
 
         function clearMove() {
@@ -118,8 +126,6 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return $scope.activeMoveCoords.length < 1;
         }
 
-        $scope.getBoardSpaceClasses = getBoardSpaceClasses;
-        $scope.onClickBoardSpace = onClickBoardSpace;
         $scope.clearMove = clearMove;
         $scope.submitMove = submitMove;
         $scope.disableSubmitMove = disableSubmitMove;

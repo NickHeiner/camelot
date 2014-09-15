@@ -1,6 +1,6 @@
 ﻿<div class="row play-game-root">
-    <div class="player-info">
-        <h3>you</h3>
+    <div class="player-info-col">
+        <div player-info player-id="ids.current"></div>
     </div>
     <div class="board">
         <div ng-repeat="col in cols" class="board-row">
@@ -8,8 +8,8 @@
             </div>
         </div>
     </div>
-    <div class="player-info">
-        <h3>opponent</h3>
+    <div class="player-info-col">
+        <div player-info player-id="ids.opponent"></div>
     </div>    
 </div>
 
