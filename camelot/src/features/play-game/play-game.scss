@@ -1,66 +1,93 @@
-﻿.board-row {
-	float: left;
-	clear: both;
+﻿.play-game-root {
+	width: 100%;
+	height: 100%;
+	
+	.board-row {
+		float: left;
+		clear: both;
+		width: 100%;
+		height: 8%;
+	}
+
+	$board-width: 80%;
+
+	.board {
+		width: $board-width;
+		height: 100%;
+		float: left;
+	}
+
+	.player-info-col {
+		width: (100-$board-width)/2;
+		float: left;
+	}
+
+	.board-space {
+		$board-side-length: 50px;
+
+		/* There are only 17 spaces but we need to account for room taken up by the borders as well, which acts as a margin. 
+			Is there a better way to handle this? */
+		width: (100%/19);
+
+		height: 100%;
+		background: blue;
+		float: left;
+
+		$border-width: 2px;
+		border: $border-width solid black;
+
+		/* This is necessary to make the borders look even. I don't know why. */
+		border-top-width: $border-width + 1;
+
+		&.hidden {
+			/* If we don't have this invisible border, there will be an odd offset in the board. 
+			   It seems that borders act like margin, not padding. */
+			border: $border-width solid transparent;
+			background: transparent;
+		}
+
+		&.goal {
+			background: green;
+		}
+
+		&.active-move {
+			background: yellow;
+		}
+
+		&.possible-move {
+			background: cyan;
+		}
+
+		@mixin board-text() {
+			font-size: 2.5em;
+			text-align: center;
+			vertical-align: middle;
+			line-height: $board-side-length;
+			display: inline-block;
+		}
+
+		&.knight {
+			@include board-text();
+		}
+
+		&.pawn {
+			@include board-text();
+		}
+
+		&.knight::before {
+			content: 'K';
+		}
+
+		&.pawn::before {
+			content: 'P';
+		}
+
+		&.friendly {
+			color: white;
+		}
+
+		&.hostile {
+			color: black;
+		}
+	}
 }
-
-.board-space {
-	$board-side-length: 50px;
-
-	/* Can we get responsive? */
-	width: $board-side-length;
-	height: $board-side-length;
-	background: blue;
-	float: left;
-	margin: $board-side-length / 20;
-
-	&.hidden {
-		background: transparent;
-	}
-
-	&.goal {
-		background: green;
-	}
-
-	&.active-move {
-		background: yellow;
-	}
-
-	&.possible-move {
-		background: cyan;
-	}
-
-	@mixin board-text() {
-		font-size: 2.5em;
-		text-align: center;
-		vertical-align: middle;
-		line-height: $board-side-length;
-		display: inline-block;
-	}
-
-	&.knight {
-		@include board-text();
-	}
-
-	&.pawn {
-		@include board-text();
-	}
-
-	&.knight::before {
-		content: 'K';
-	}
-
-	&.pawn::before {
-		content: 'P';
-	}
-
-	&.friendly {
-		color: white;
-	}
-
-	&.hostile {
-		color: black;
-	}
-}
-
-
-

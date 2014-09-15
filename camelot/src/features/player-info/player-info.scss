@@ -1,0 +1,7 @@
+﻿.avatar-halo {
+	$halo-side-length: $windows-live-profile-pic-size + 20;
+	width: $halo-side-length;
+	height: $halo-side-length;
+	@include round-image($halo-side-length);
+	background: red;
+}

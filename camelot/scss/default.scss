@@ -12,7 +12,7 @@ $show-row-borders: false;
 	border-radius: $side-length / 2;
 }
 
-/* I happened to observe this once. Is this a constant? */
+/* I happened to observe this once. Is this a constant? Is there a way we can be more responsive about it? Perhaps this should be a max- dimension. */
 $windows-live-profile-pic-size:	96px;	
 
 .user-avatar {
@@ -35,7 +35,9 @@ $header-height: $windows-live-profile-pic-size + 4px;
 	height: 85%
 }
 
+/* Can we drop the .scss from the imports? */
 @import '../src/features/play-game/play-game.scss';
 @import '../src/features/home/home.scss';
 @import '../src/features/johnson-box/johnson-box.scss';
 @import '../src/features/game-list-entry/game-list-entry.scss';
+@import '../src/features/player-info/player-info.scss';
