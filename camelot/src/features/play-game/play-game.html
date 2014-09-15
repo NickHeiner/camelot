@@ -1,14 +1,22 @@
-﻿<div class="board">
-    <div ng-repeat="col in cols" class="board-row">
-        <div ng-repeat="row in rows" class="board-space" ng-class="getBoardSpaceClasses(row, col)" ng-click="onClickBoardSpace(row, col)">
+﻿<div class="row play-game-root">
+    <div class="player-info">
+        <h3>you</h3>
+    </div>
+    <div class="board">
+        <div ng-repeat="col in cols" class="board-row">
+            <div ng-repeat="row in rows" class="board-space" ng-class="getBoardSpaceClasses(row, col)" ng-click="onClickBoardSpace(row, col)">
+            </div>
         </div>
     </div>
+    <div class="player-info">
+        <h3>opponent</h3>
+    </div>    
 </div>
+
 <div>
-    <p ng-if="isCurrentPlayerTurn()">Your turn</p>
+    <!--<p ng-if="isCurrentPlayerTurn()">Your turn</p>
     <p ng-if="isOpponentTurn()">Waiting on other player.</p>
     <p ng-if="currentPlayerHasWon()">You won!</p>
-    <p ng-if="opponentHasWon()">You lost!</p>
-    <button ng-click="clearMove()" ng-disabled="disableClearMove()">Clear move</button>
-    <button ng-click="submitMove()" ng-disabled="disableSubmitMove()">Submit move</button>
+    <p ng-if="opponentHasWon()">You lost!</p>-->
+    
 </div>

@@ -1,82 +1,92 @@
-﻿.board-row {
-	float: left;
-	clear: both;
+﻿.play-game-root {
 	width: 100%;
-	height: 8%;
-}
-
-.board {
-	width: 100%;
-	height: 100%
-}
-
-.board-space {
-	$board-side-length: 50px;
-
-	/* There are 17 spaces in a row so I'm not sure why this value needs to be 18 but it overflows otherwise haha */
-	width: (100%/18);
-
 	height: 100%;
-	background: blue;
-	float: left;
-
-	$border-width: 2px;
-	border: $border-width solid black;
-
-	/* This is necessary to make the borders look even. I don't know why. */
-	border-top-width: $border-width + 1;
-
-	&.hidden {
-		/* If we don't have this invisible border, there will be an odd offset in the board. 
-		   It seems that borders act like margin, not padding. */
-		border: $border-width solid transparent;
-		background: transparent;
+	
+	.board-row {
+		float: left;
+		clear: both;
+		width: 100%;
+		height: 8%;
 	}
 
-	&.goal {
-		background: green;
+	$board-width: 80%;
+
+	.board {
+		width: $board-width;
+		height: 100%;
+		float: left;
 	}
 
-	&.active-move {
-		background: yellow;
+	.player-info {
+		width: (100-$board-width)/2;
+		float: left;
 	}
 
-	&.possible-move {
-		background: cyan;
-	}
+	.board-space {
+		$board-side-length: 50px;
 
-	@mixin board-text() {
-		font-size: 2.5em;
-		text-align: center;
-		vertical-align: middle;
-		line-height: $board-side-length;
-		display: inline-block;
-	}
+		/* There are only 17 spaces but we need to account for room taken up by the borders as well, which acts as a margin. */
+		width: (100%/19);
 
-	&.knight {
-		@include board-text();
-	}
+		height: 100%;
+		background: blue;
+		float: left;
 
-	&.pawn {
-		@include board-text();
-	}
+		$border-width: 2px;
+		border: $border-width solid black;
 
-	&.knight::before {
-		content: 'K';
-	}
+		/* This is necessary to make the borders look even. I don't know why. */
+		border-top-width: $border-width + 1;
 
-	&.pawn::before {
-		content: 'P';
-	}
+		&.hidden {
+			/* If we don't have this invisible border, there will be an odd offset in the board. 
+			   It seems that borders act like margin, not padding. */
+			border: $border-width solid transparent;
+			background: transparent;
+		}
 
-	&.friendly {
-		color: white;
-	}
+		&.goal {
+			background: green;
+		}
 
-	&.hostile {
-		color: black;
+		&.active-move {
+			background: yellow;
+		}
+
+		&.possible-move {
+			background: cyan;
+		}
+
+		@mixin board-text() {
+			font-size: 2.5em;
+			text-align: center;
+			vertical-align: middle;
+			line-height: $board-side-length;
+			display: inline-block;
+		}
+
+		&.knight {
+			@include board-text();
+		}
+
+		&.pawn {
+			@include board-text();
+		}
+
+		&.knight::before {
+			content: 'K';
+		}
+
+		&.pawn::before {
+			content: 'P';
+		}
+
+		&.friendly {
+			color: white;
+		}
+
+		&.hostile {
+			color: black;
+		}
 	}
 }
-
-
-
