@@ -1,12 +1,14 @@
 ﻿.play-game-root {
+
+	$row-count: 12;
+	$col-count: 17;
+
 	width: 100%;
 	height: 100%;
 	
 	.board-row {
-		float: left;
-		clear: both;
 		width: 100%;
-		height: 8%;
+		height: 100%/$row-count;
 	}
 
 	$board-width: 80%;
@@ -19,30 +21,37 @@
 
 	.player-info-col {
 		width: (100-$board-width)/2;
+		height: 100%;
+		float: left;
+	}
+
+	/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
+	.top-spacer {
+		height: 38%;
+	}
+
+	.player-info-root {
+		height: 49%;
+	}
+
+	.board-space-wrapper {
+		width: (100%/$col-count);
+		height: 100%;
 		float: left;
 	}
 
 	.board-space {
+		/* This breaks on different screen sizes */
 		$board-side-length: 50px;
 
-		/* There are only 17 spaces but we need to account for room taken up by the borders as well, which acts as a margin. 
-			Is there a better way to handle this? */
-		width: (100%/19);
+		$wrapped-board-space-side-length: 93%;
 
-		height: 100%;
+		width: $wrapped-board-space-side-length;
+		height: $wrapped-board-space-side-length;
+		
 		background: blue;
-		float: left;
-
-		$border-width: 2px;
-		border: $border-width solid black;
-
-		/* This is necessary to make the borders look even. I don't know why. */
-		border-top-width: $border-width + 1;
 
 		&.hidden {
-			/* If we don't have this invisible border, there will be an odd offset in the board. 
-			   It seems that borders act like margin, not padding. */
-			border: $border-width solid transparent;
 			background: transparent;
 		}
 
