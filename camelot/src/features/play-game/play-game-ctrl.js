@@ -126,9 +126,19 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
             return $scope.activeMoveCoords.length < 1;
         }
 
+        function capturePiecesOfPlayerId(playerId) {
+            if (!playerId) {
+                return null;
+            }
+
+            var playerName = _.invert(game.players)[playerId];
+            return game.gameState.capturedPieces[playerName];
+        }
+
         $scope.clearMove = clearMove;
         $scope.submitMove = submitMove;
         $scope.disableSubmitMove = disableSubmitMove;
         $scope.disableClearMove = disableClearMove;
+        $scope.capturePiecesOfPlayerId = capturePiecesOfPlayerId;
     });
 });

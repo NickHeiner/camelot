@@ -1,6 +1,6 @@
 ﻿<div class="row play-game-root">
     <div class="player-info-col">
-        <div player-info player-id="ids.current" is-turn="isCurrentPlayerTurn"></div>
+        <div player-info player-id="ids.current" is-turn="isCurrentPlayerTurn" captured-pieces="capturePiecesOfPlayerId(ids.opponent)"></div>
     </div>
     <div class="board">
         <div ng-repeat="col in cols" class="board-row">
@@ -9,7 +9,7 @@
         </div>
     </div>
     <div class="player-info-col">
-        <div player-info player-id="ids.opponent" is-turn="isOpponentTurn"></div>
+        <div player-info player-id="ids.opponent" is-turn="isOpponentTurn" captured-pieces="capturePiecesOfPlayerId(ids.current)"></div>
     </div>    
 </div>
 
