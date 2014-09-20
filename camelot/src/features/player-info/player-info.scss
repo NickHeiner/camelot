@@ -1,7 +1,10 @@
-﻿.avatar-halo {
-	$halo-side-length: $windows-live-profile-pic-size + 20;
-	width: $halo-side-length;
-	height: $halo-side-length;
-	@include round-image($halo-side-length);
-	background: red;
+﻿.player-info {
+
+	@mixin border($opacity) {
+		border: 10px solid rgba(0, 100, 0, $opacity)
+	}
+
+	.user-avatar {
+		@include border(0);	
+	}
 }
