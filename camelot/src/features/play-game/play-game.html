@@ -6,7 +6,8 @@
     </div>
     <div class="board">
         <div ng-repeat="col in cols" class="board-row">
-            <div ng-repeat="row in rows" class="board-space" ng-class="getBoardSpaceClasses(row, col)" ng-click="onClickBoardSpace(row, col)">
+            <div ng-repeat="row in rows" class="board-space-wrapper" ng-click="onClickBoardSpace(row, col)">
+                <div class="board-space" ng-class="getBoardSpaceClasses(row, col)"></div>
             </div>
         </div>
     </div>

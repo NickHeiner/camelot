@@ -1,11 +1,14 @@
 ﻿.play-game-root {
+
+	$row-count: 12;
+	$col-count: 17;
+
 	width: 100%;
 	height: 100%;
 	
 	.board-row {
-		clear: both;
 		width: 100%;
-		height: 8%;
+		height: 100%/$row-count;
 	}
 
 	$board-width: 80%;
@@ -31,24 +34,21 @@
 		height: 49%;
 	}
 
+	.board-space-wrapper {
+		width: (100%/$col-count);
+		height: 100%;
+		float: left;
+	}
+
 	.board-space {
 		$board-side-length: 50px;
 
-		/* There are only 17 spaces but we need to account for room taken up by the borders as well, which acts as a margin. 
-			Is there a better way to handle this? */
-		width: (100%/19);
-
-		height: 100%;
+		width: 80%;
+		height: 80%;
+		
 		background: blue;
-		float: left;
-
-		$border-width: 2px;
-		border: $border-width solid black;
 
 		&.hidden {
-			/* If we don't have this invisible border, there will be an odd offset in the board. 
-			   It seems that borders act like margin, not padding. */
-			border: $border-width solid transparent;
 			background: transparent;
 		}
 
