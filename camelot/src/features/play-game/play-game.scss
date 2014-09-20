@@ -41,10 +41,13 @@
 	}
 
 	.board-space {
+		/* This breaks on different screen sizes */
 		$board-side-length: 50px;
 
-		width: 80%;
-		height: 80%;
+		$wrapped-board-space-side-length: 93%;
+
+		width: $wrapped-board-space-side-length;
+		height: $wrapped-board-space-side-length;
 		
 		background: blue;
 
