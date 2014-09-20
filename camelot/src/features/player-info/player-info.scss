@@ -1,5 +1,7 @@
 ﻿.player-info {
 
+	text-align: center;
+
 	@mixin isTurnBorder($opacity) {
 		border: 10px solid rgba(0, 100, 0, $opacity)
 	}
