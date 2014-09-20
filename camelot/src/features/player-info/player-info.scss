@@ -1,10 +1,15 @@
 ﻿.player-info {
 
-	@mixin border($opacity) {
+	@mixin isTurnBorder($opacity) {
 		border: 10px solid rgba(0, 100, 0, $opacity)
 	}
 
 	.user-avatar {
-		@include border(0);	
+		@include isTurnBorder(0);	
+		
+		&.is-turn {
+			@include isTurnBorder(1);
+		}
 	}
+
 }
