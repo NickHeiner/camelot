@@ -1,9 +1,8 @@
 ﻿<div class="games">
-    <div class="row" ng-show="shouldShowNoGamesMessage()">
+    <div class="row" ng-if="shouldShowNoGamesMessage()">
         <p>You have no games. Want to start a new one?</p>
     </div>
-
-    <div class="row">
+    <div class="row" ng-if="!shouldShowNoGamesMessage()">
         <div ng-repeat="category in gamesByCategory" class="category-column">
             <h3 class="win-type-x-large category-name">{{category.name}}</h3>
             <win-list-view item-data-source="category.games" layout="{ type: listLayout }">

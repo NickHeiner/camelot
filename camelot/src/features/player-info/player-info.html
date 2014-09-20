@@ -4,14 +4,14 @@
             <img ng-src="{{player.avatarUri}}" class="user-avatar" ng-class="{'is-turn': isTurn()}" />
         </div>
     </div>
-    <div class="row">
+    <div class="row" ng-if="capturedPieces">
         <div class="small-12 columns">
-            <p>K: {{capturedPieces.large}}</p>
+            <p>K: {{capturedPieces.knight}}</p>
         </div>
     </div>
-    <div class="row">
+    <div class="row" ng-if="capturedPieces">
         <div class="small-12 columns">
-            <p>P: {{capturedPieces.small}}</p>
+            <p>P: {{capturedPieces.pawn}}</p>
         </div>
     </div>
 </div>
