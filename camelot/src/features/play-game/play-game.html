@@ -1,6 +1,8 @@
 ﻿<div class="row play-game-root">
     <div class="player-info-col">
-        <div player-info player-id="ids.current" is-turn="isCurrentPlayerTurn" captured-pieces="capturePiecesOfPlayerId(ids.opponent)"></div>
+        <div class="top-spacer"></div>
+        <div class="player-info-root" player-info player-id="ids.current" is-turn="isCurrentPlayerTurn" captured-pieces="capturePiecesOfPlayerId(ids.opponent)"></div>
+        <button ng-click="submitMove()" ng-disabled="disableSubmitMove()" class="win-type-x-large">Submit move</button>
     </div>
     <div class="board">
         <div ng-repeat="col in cols" class="board-row">
@@ -9,14 +11,14 @@
         </div>
     </div>
     <div class="player-info-col">
-        <div player-info player-id="ids.opponent" is-turn="isOpponentTurn" captured-pieces="capturePiecesOfPlayerId(ids.current)"></div>
+        <div class="top-spacer"></div>
+        <div player-info class="player-info-root" player-id="ids.opponent" is-turn="isOpponentTurn" captured-pieces="capturePiecesOfPlayerId(ids.current)"></div>
+        <button ng-click="clearMove()" ng-disabled="disableClearMove()" class="win-type-x-large">Reset move</button>
     </div>    
 </div>
 
 <div>
-    <!--<p ng-if="isCurrentPlayerTurn()">Your turn</p>
-    <p ng-if="isOpponentTurn()">Waiting on other player.</p>
+    <!--
     <p ng-if="currentPlayerHasWon()">You won!</p>
     <p ng-if="opponentHasWon()">You lost!</p>-->
-    
 </div>

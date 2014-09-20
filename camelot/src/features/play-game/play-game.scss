@@ -19,7 +19,17 @@
 
 	.player-info-col {
 		width: (100-$board-width)/2;
+		height: 100%;
 		float: left;
+	}
+
+	/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
+	.top-spacer {
+		height: 38%;
+	}
+
+	.player-info-root {
+		height: 49%;
 	}
 
 	.board-space {
