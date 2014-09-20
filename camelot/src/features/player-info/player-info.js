@@ -6,6 +6,8 @@ ngModule.directive('playerInfo', function (bindModel) {
         template: require('./player-info.html'),
         scope: {
             playerId: '=',
+            isTurn: '=',
+            capturedPieces: '='
         },
         link: function ($scope) {
             $scope.$watch('playerId', function () {

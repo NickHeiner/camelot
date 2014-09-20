@@ -8,8 +8,8 @@ $row-width: 90%;
 
 $show-row-borders: false;
 
-@mixin round-image($side-length) {
-	border-radius: $side-length / 2;
+@mixin round-image() {
+	border-radius: 100%;
 }
 
 /* I happened to observe this once. Is this a constant? Is there a way we can be more responsive about it? Perhaps this should be a max- dimension. */
@@ -18,7 +18,7 @@ $windows-live-profile-pic-size:	96px;
 .user-avatar {
 	width: $windows-live-profile-pic-size;
 	height: $windows-live-profile-pic-size;
-	@include round-image($windows-live-profile-pic-size);
+	@include round-image();
 }
 
 $header-height: $windows-live-profile-pic-size + 4px;
