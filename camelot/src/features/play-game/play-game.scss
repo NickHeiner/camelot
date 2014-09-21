@@ -4,17 +4,6 @@
 	$col-count: 17;
 
 	@include full-size();
-	
-	.board-row {
-		width: 100%;
-		height: (100%/$col-count);
-	}
-
-	.board-space-wrapper {
-		width: (100%/$row-count);
-		height: 100%;
-		float: left;
-	}
 
 	.board-space {
 		/* This breaks on different screen sizes */
@@ -94,6 +83,17 @@
 			@include grid-row();
 		}
 
+		.board-space-wrapper {
+			width: (100%/$row-count);
+			height: 100%;
+			float: left;
+		}
+
+		.board-row {
+			width: 100%;
+			height: (100%/$col-count);
+		}
+
 		.player-info-wrapper {
 			@include grid-column(
 				$collapse: true,
@@ -111,6 +111,17 @@
 
 	@media #{$large-up} { 
 		$board-width: 80%;
+
+		.board-space-wrapper {
+			width: (100%/$col-count);
+			height: 100%;
+			float: left;
+		}
+		
+		.board-row {
+			width: 100%;
+			height: (100%/$row-count);
+		}
 
 		.player-info-col {
 			width: (100-$board-width)/2;
