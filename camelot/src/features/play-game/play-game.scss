@@ -3,8 +3,7 @@
 	$row-count: 12;
 	$col-count: 17;
 
-	width: 100%;
-	height: 100%;
+	@include full-size();
 	
 	.board-row {
 		width: 100%;
@@ -17,21 +16,6 @@
 		width: $board-width;
 		height: 100%;
 		float: left;
-	}
-
-	.player-info-col {
-		width: (100-$board-width)/2;
-		height: 100%;
-		float: left;
-	}
-
-	/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
-	.top-spacer {
-		height: 38%;
-	}
-
-	.player-info-root {
-		height: 49%;
 	}
 
 	.board-space-wrapper {
@@ -98,5 +82,37 @@
 		&.hostile {
 			color: black;
 		}
+	}
+
+	.large-up-root {
+		@extend .show-for-large-up;
+		@include full-size();
+	}
+
+	.medium-down-root {
+		@extend .show-for-medium-down;	
+		@include full-size();
+	}
+
+	@media #{$small-up} {
+
+	}
+
+	@media #{$large-up} { 
+		.player-info-col {
+			width: (100-$board-width)/2;
+			height: 100%;
+			float: left;
+		}
+
+		/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
+		.top-spacer {
+			height: 38%;
+		}
+
+		.player-info-root {
+			height: 49%;
+		}
+
 	}
 }
