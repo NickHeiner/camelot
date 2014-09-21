@@ -1,13 +1,23 @@
 ﻿.player-info {
 
+	@mixin hide() {
+		display: none;
+	}
+
 	@media #{$small-up} {
 
 		@include grid-row();
 
 		.player-info-section {
+			/* The content will wrap unless I set collapse: true. Why? */
 			@include grid-column(
-				$columns: 4
+				$columns: 4,
+				$collapse: true
 			);
+		}
+
+		.user-avatar {
+			@include hide();
 		}
 	}
 
@@ -21,6 +31,10 @@
 					$columns: 12
 				);
 			}
+
+			.user-name {
+				@include hide();
+			}
 		}
 	}
 	
@@ -30,10 +44,13 @@
 		border: 10px solid rgba(0, 100, 0, $opacity)
 	}
 
-	.user-avatar {
+	.is-turn {
 		@include isTurnBorder(0);	
-		
-		&.is-turn {
+
+		.user-avatar {
+			@include isTurnBorder(1);
+		}
+		p {
 			@include isTurnBorder(1);
 		}
 	}

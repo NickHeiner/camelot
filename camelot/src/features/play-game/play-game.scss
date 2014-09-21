@@ -4,6 +4,17 @@
 	$col-count: 17;
 
 	@include full-size();
+	
+	.board-row {
+		width: 100%;
+		height: (100%/$col-count);
+	}
+
+	.board-space-wrapper {
+		width: (100%/$row-count);
+		height: 100%;
+		float: left;
+	}
 
 	.board-space {
 		/* This breaks on different screen sizes */
@@ -76,25 +87,12 @@
 	}
 
 	@media #{$small-up} {
-
 		.board {
 			width: 100%;
-			height: 80%;
+			height: 92%;
 
 			@include grid-row();
 		}
-
-		.board-row {
-			width: 100%;
-			height: (100%/$row-count);
-		}
-
-		.board-space-wrapper {
-			width: (100%/$row-count);
-			height: 100%;
-			float: left;
-		}
-
 	}
 
 	@media #{$large-up} { 
@@ -108,17 +106,6 @@
 
 		.board {
 			width: $board-width;
-			height: 100%;
-			float: left;
-		}
-
-		.board-row {
-			width: 100%;
-			height: 100%/$row-count;
-		}
-
-		.board-space-wrapper {
-			width: (100%/$col-count);
 			height: 100%;
 			float: left;
 		}

@@ -1,7 +1,8 @@
 ﻿<div class="player-info">
     <div class="player-info-section">
-        <div class="player-info-entry">
-            <img ng-src="{{player.avatarUri}}" class="user-avatar" ng-class="{'is-turn': isTurn()}" />
+        <div class="player-info-entry" ng-class="{'is-turn': isTurn()}">
+            <img ng-src="{{player.avatarUri}}" class="user-avatar" />
+            <p class="user-name">{{player.name}}</p>
         </div>
     </div>
     <div class="player-info-section" ng-if="capturedPieces">

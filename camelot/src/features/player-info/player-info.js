@@ -15,6 +15,8 @@ ngModule.directive('playerInfo', function (bindModel) {
                     return;
                 }
 
+                // TODO This is actually a fairly expensive operation and will introduce a visible loading delay.
+                // Can we just save some common info like 'users' onto $rootScope?
                 bindModel(['users', $scope.playerId], $scope, 'player', _.constant({}));
             });
         }
