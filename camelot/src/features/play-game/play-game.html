@@ -6,10 +6,14 @@
                 <div class="player-info-root" player-info player-id="ids.current" is-turn="isCurrentPlayerTurn" captured-pieces="capturePiecesOfPlayerId(ids.opponent)"></div>
             </div>
             <div class="move-button-wrapper">
-                <button ng-click="clearMove()" ng-disabled="disableClearMove()" class="win-type-x-large">Reset move</button>
+                <button ng-click="clearMove()" ng-disabled="disableClearMove()" class="win-type-x-large">
+                    Reset <span class="show-for-medium-up">move</span>
+                </button>
             </div>
             <div class="move-button-wrapper">
-                <button ng-click="submitMove()" ng-disabled="disableSubmitMove()" class="win-type-x-large">Submit move</button>
+                <button ng-click="submitMove()" ng-disabled="disableSubmitMove()" class="win-type-x-large">
+                    Submit <span class="show-for-medium-up">move</span>
+                </button>
             </div>
         </div>
         <div class="board">
