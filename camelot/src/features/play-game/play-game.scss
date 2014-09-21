@@ -77,10 +77,12 @@
 
 	@media #{$small-up} {
 		.board {
-			width: 100%;
-			height: 92%;
 
 			@include grid-row();
+
+			width: 100%;
+			max-width: 100%;
+			height: 92%;
 		}
 
 		.board-space-wrapper {
