@@ -93,6 +93,20 @@
 
 			@include grid-row();
 		}
+
+		.player-info-wrapper {
+			@include grid-column(
+				$collapse: true,
+				$columns: 6
+			)
+		}
+
+		.move-button-wrapper {
+			@include grid-column(
+				$collapse: true,
+				$columns: 3
+			)
+		}
 	}
 
 	@media #{$large-up} { 

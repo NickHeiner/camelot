@@ -2,13 +2,13 @@
     <!-- Is having two different roots incredibly unperformant and just the stupidest fucking thing? -->
     <div class="medium-down-root">
         <div class="row">
-            <div class="medium-6 columns">
+            <div class="player-info-wrapper">
                 <div class="player-info-root" player-info player-id="ids.current" is-turn="isCurrentPlayerTurn" captured-pieces="capturePiecesOfPlayerId(ids.opponent)"></div>
             </div>
-            <div class="medium-2 columns">
+            <div class="move-button-wrapper">
                 <button ng-click="clearMove()" ng-disabled="disableClearMove()" class="win-type-x-large">Reset move</button>
             </div>
-            <div class="medium-2 columns">
+            <div class="move-button-wrapper">
                 <button ng-click="submitMove()" ng-disabled="disableSubmitMove()" class="win-type-x-large">Submit move</button>
             </div>
         </div>
