@@ -1,5 +1,29 @@
 ﻿.player-info {
 
+	@media #{$small-up} {
+
+		@include grid-row();
+
+		.player-info-section {
+			@include grid-column(
+				$columns: 4
+			);
+		}
+	}
+
+	@media #{$large-up} { 
+		.player-info-section {
+			
+			@include grid-row();
+
+			.player-info-entry {
+				@include grid-column(
+					$columns: 12
+				);
+			}
+		}
+	}
+	
 	text-align: center;
 
 	@mixin isTurnBorder($opacity) {

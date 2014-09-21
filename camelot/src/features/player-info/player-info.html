@@ -1,16 +1,16 @@
 ﻿<div class="player-info">
-    <div class="row">
-        <div class="small-12 columns">
+    <div class="player-info-section">
+        <div class="player-info-entry">
             <img ng-src="{{player.avatarUri}}" class="user-avatar" ng-class="{'is-turn': isTurn()}" />
         </div>
     </div>
-    <div class="row" ng-if="capturedPieces">
-        <div class="small-12 columns">
+    <div class="player-info-section" ng-if="capturedPieces">
+        <div class="player-info-entry">
             <p>K: {{capturedPieces.knight}}</p>
         </div>
     </div>
-    <div class="row" ng-if="capturedPieces">
-        <div class="small-12 columns">
+    <div class="player-info-section" ng-if="capturedPieces">
+        <div class="player-info-entry">
             <p>P: {{capturedPieces.pawn}}</p>
         </div>
     </div>
