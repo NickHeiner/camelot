@@ -2,7 +2,7 @@
 $include-html-global-classes: false;
 $include-html-button-classes: false;
 
-$row-width: 90%;
+$row-width: 95%;
 
 /* I just randomly picked this upper bound as "when the game board starts to look shitty" */
 $medium-range: (40.063em, 900px); 
@@ -41,8 +41,16 @@ $header-height: $windows-live-profile-pic-size + 4px;
 	}
 }
 
-.main-view {
-	height: 85%
+@media #{$small-up} {
+	.main-view {
+		height: 100%;
+	}
+}
+
+@media #{$large-up} {
+	.main-view {
+		height: 85%
+	}
 }
 
 /* Can we drop the .scss from the imports? */

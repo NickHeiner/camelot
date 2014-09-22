@@ -5,6 +5,8 @@
 
 	@include full-size();
 
+	display: flex;
+
 	.board-space {
 		/* This breaks on different screen sizes */
 		$board-side-length: 50px;
@@ -65,17 +67,10 @@
 		}
 	}
 
-	.large-up-root {
-		@extend .show-for-large-up;
-		@include full-size();
-	}
-
-	.medium-down-root {
-		@extend .show-for-medium-down;	
-		@include full-size();
-	}
-
 	@media #{$small-up} {
+
+		flex-flow: column;
+
 		.board {
 
 			@include grid-row();
@@ -114,6 +109,8 @@
 	@media #{$large-up} { 
 		$board-width: 80%;
 
+		flex-flow: row;
+
 		.board-space-wrapper {
 			width: (100%/$col-count);
 			height: 100%;
@@ -128,7 +125,6 @@
 		.player-info-col {
 			width: (100-$board-width)/2;
 			height: 100%;
-			float: left;
 		}
 
 		.board {
