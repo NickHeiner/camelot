@@ -19,7 +19,7 @@
 
 		width: $wrapped-board-space-side-length;
 		padding-bottom: $wrapped-board-space-side-length;
-		
+
 		background: blue;
 
 		&.hidden {
@@ -46,12 +46,36 @@
 			display: inline-block;
 		}
 
+		.board-space-content {
+			$padding: 10%;
+			position: absolute;
+			height: $padding * 2;
+			width: $padding * 2;
+			padding: $padding;
+		}
+
+		.board-space-content {
+			@include board-text();
+		}
+
+		&.knight {
+			.board-space-content::before {
+				content: 'K';
+			}
+		}
+
+		&.pawn {
+			.board-space-content::before {
+				content: 'P';
+			}
+		}
+
 		&.friendly {
-			background-color: white;
+			color: white;
 		}
 
 		&.hostile {
-			background-color: black;
+			color: black;
 		}
 	}
 
