@@ -68,17 +68,6 @@
 			height: 92%;
 		}
 
-		.board-space-wrapper {
-			width: (100%/$row-count);
-			height: 100%;
-			float: left;
-		}
-
-		.board-row {
-			width: 100%;
-			height: (100%/$col-count);
-		}
-
 		.player-info-wrapper {
 			@include grid-column(
 				$collapse: true,
@@ -98,17 +87,6 @@
 		$board-width: 71%;
 
 		flex-direction: row;
-
-		.board-space-wrapper {
-			width: (100%/$col-count);
-			height: 100%;
-			float: left;
-		}
-		
-		.board-row {
-			width: 100%;
-			height: (100%/$row-count);
-		}
 
 		.player-info-col {
 			width: (100-$board-width)/2;

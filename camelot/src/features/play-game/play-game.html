@@ -7,18 +7,7 @@
         </button>
     </div>
     <div class="board">
-        <div ng-repeat="rowCol in rowCols" class="board-space" ng-class="getBoardSpaceClasses(rowCol.row, rowCol.col)" row="{{rowCol.row}}" col="{{rowCol.col}}"></div>
-
-        <!--<div ng-repeat="col in cols" class="board-row show-for-large-up">
-            <div ng-repeat="row in rows" class="board-space-wrapper" ng-click="onClickBoardSpace(row, col)">
-                <div class="board-space" ng-class="getBoardSpaceClasses(row, col)"></div>
-            </div>
-        </div>
-        <div ng-repeat="row in rows" class="board-row show-for-medium-down">
-            <div ng-repeat="col in cols" class="board-space-wrapper" ng-click="onClickBoardSpace(row, col)">
-                <div class="board-space" ng-class="getBoardSpaceClasses(row, col)"></div>
-            </div>
-        </div>-->
+        <div ng-repeat="rowCol in rowCols" class="board-space" ng-class="getBoardSpaceClasses(rowCol.row, rowCol.col)"></div>
     </div>
     <div class="player-info-col">
         <div class="top-spacer"></div>
