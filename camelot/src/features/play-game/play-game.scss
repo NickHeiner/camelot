@@ -20,22 +20,42 @@
 		width: $wrapped-board-space-side-length;
 		padding-bottom: $wrapped-board-space-side-length;
 
-		background: blue;
+		$background-color: blue;
+		background: $background-color;
+
+		&:nth-child(odd) {
+			background: lighten($background-color, 10%);
+		}
 
 		&.hidden {
 			background: transparent;
 		}
 
 		&.goal {
-			background: green;
+			$background-color: green;
+			background: $background-color;
+
+			&:nth-child(odd) {
+				background: lighten($background-color, 10%);
+			}
 		}
 
 		&.active-move {
-			background: yellow;
+			$background-color: yellow;
+			background: $background-color;
+
+			&:nth-child(odd) {
+				background: lighten($background-color, 10%);
+			}
 		}
 
 		&.possible-move {
-			background: cyan;
+			$background-color: cyan;
+			background: $background-color;
+
+			&:nth-child(odd) {
+				background: lighten($background-color, 10%);
+			}
 		}
 
 		@mixin board-text() {
