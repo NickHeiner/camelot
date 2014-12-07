@@ -8,13 +8,17 @@
 	display: flex;
 
 	.board-space {
+		float: left;
+		position: relative;
+		margin: 0%;
+
 		/* This breaks on different screen sizes */
 		$board-side-length: 50px;
 
-		$wrapped-board-space-side-length: 93%;
+		$wrapped-board-space-side-length: (100%/17);
 
 		width: $wrapped-board-space-side-length;
-		height: $wrapped-board-space-side-length;
+		padding-bottom: $wrapped-board-space-side-length;
 		
 		background: blue;
 
@@ -42,28 +46,12 @@
 			display: inline-block;
 		}
 
-		&.knight {
-			@include board-text();
-		}
-
-		&.pawn {
-			@include board-text();
-		}
-
-		&.knight::before {
-			content: 'K';
-		}
-
-		&.pawn::before {
-			content: 'P';
-		}
-
 		&.friendly {
-			color: white;
+			background-color: white;
 		}
 
 		&.hostile {
-			color: black;
+			background-color: black;
 		}
 	}
 
