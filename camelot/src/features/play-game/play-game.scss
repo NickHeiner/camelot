@@ -58,10 +58,6 @@
 			}
 		}
 
-		@mixin board-text() {
-			font-size: 2.5em;
-		}
-
 		/* I have a very weak understanding of why this works. It's taken from http://stackoverflow.com/questions/20456694/grid-of-responsive-squares */
 		.content-outer-wrapper {
 			position: absolute;
@@ -81,6 +77,9 @@
 					@include full-size();
 					display: table-cell;
 					vertical-align: middle;
+					
+					/* This seems to be reasonable but I wonder if it's brittle. */
+					font-size: 2vw;
 				}
 			}
 		}
