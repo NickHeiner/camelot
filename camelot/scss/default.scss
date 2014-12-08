@@ -2,7 +2,10 @@
 $include-html-global-classes: false;
 $include-html-button-classes: false;
 
-$row-width: 90%;
+$row-width: 95%;
+
+/* I just randomly picked this upper bound as "when the game board starts to look shitty" */
+$medium-range: (40.063em, 900px); 
 
 @import 'foundation';
 
@@ -10,6 +13,11 @@ $show-row-borders: false;
 
 @mixin round-image() {
 	border-radius: 100%;
+}
+
+@mixin full-size() {
+	height: 100%;
+	width: 100%;
 }
 
 /* I happened to observe this once. Is this a constant? Is there a way we can be more responsive about it? Perhaps this should be a max- dimension. */
@@ -26,13 +34,23 @@ $header-height: $windows-live-profile-pic-size + 4px;
 .header {
 	height: $header-height;
 
+	@extend .hide-for-medium-down;
+
 	h1 {
 		line-height: $header-height;
 	}
 }
 
-.main-view {
-	height: 85%
+@media #{$small-up} {
+	.main-view {
+		height: 100%;
+	}
+}
+
+@media #{$large-up} {
+	.main-view {
+		height: 85%
+	}
 }
 
 /* Can we drop the .scss from the imports? */

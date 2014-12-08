@@ -3,92 +3,99 @@
 	$row-count: 12;
 	$col-count: 17;
 
-	width: 100%;
-	height: 100%;
-	
-	.board-row {
-		width: 100%;
-		height: 100%/$row-count;
-	}
+	@include full-size();
 
-	$board-width: 80%;
+	display: flex;
 
-	.board {
-		width: $board-width;
-		height: 100%;
-		float: left;
-	}
+	@mixin squares-per-row($squareCount) {
+		$wrapped-board-space-side-length: (100%/$squareCount);
 
-	.player-info-col {
-		width: (100-$board-width)/2;
-		height: 100%;
-		float: left;
-	}
-
-	/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
-	.top-spacer {
-		height: 38%;
-	}
-
-	.player-info-root {
-		height: 49%;
-	}
-
-	.board-space-wrapper {
-		width: (100%/$col-count);
-		height: 100%;
-		float: left;
+		width: $wrapped-board-space-side-length;
+		padding-bottom: $wrapped-board-space-side-length;
 	}
 
 	.board-space {
+		float: left;
+		position: relative;
+		margin: 0%;
+
 		/* This breaks on different screen sizes */
 		$board-side-length: 50px;
 
-		$wrapped-board-space-side-length: 93%;
+		$background-color: blue;
+		background: $background-color;
 
-		width: $wrapped-board-space-side-length;
-		height: $wrapped-board-space-side-length;
-		
-		background: blue;
+		&:nth-child(odd) {
+			background: lighten($background-color, 10%);
+		}
 
 		&.hidden {
 			background: transparent;
 		}
 
 		&.goal {
-			background: green;
+			$background-color: green;
+			background: $background-color;
+
+			&:nth-child(odd) {
+				background: lighten($background-color, 10%);
+			}
 		}
 
 		&.active-move {
-			background: yellow;
+			$background-color: yellow;
+			background: $background-color;
+
+			&:nth-child(odd) {
+				background: lighten($background-color, 10%);
+			}
 		}
 
 		&.possible-move {
-			background: cyan;
+			$background-color: cyan;
+			background: $background-color;
+
+			&:nth-child(odd) {
+				background: lighten($background-color, 10%);
+			}
 		}
 
-		@mixin board-text() {
-			font-size: 2.5em;
+		/* I have a very weak understanding of why this works. It's taken from http://stackoverflow.com/questions/20456694/grid-of-responsive-squares */
+		.content-outer-wrapper {
+			position: absolute;
+
+			$padding: 10%;
+			height: 100% - $padding * 2;
+			width: 100% - $padding * 2;
+			padding: $padding;
+
 			text-align: center;
-			vertical-align: middle;
-			line-height: $board-side-length;
-			display: inline-block;
+
+			.content-inner-wrapper {
+				@include full-size();
+				display: table;
+
+				.board-space-content {
+					@include full-size();
+					display: table-cell;
+					vertical-align: middle;
+					
+					/* This seems to be reasonable but I wonder if it's brittle. */
+					font-size: 2vw;
+				}
+			}
 		}
 
 		&.knight {
-			@include board-text();
+			.board-space-content::before {
+				content: 'K';
+			}
 		}
 
 		&.pawn {
-			@include board-text();
-		}
-
-		&.knight::before {
-			content: 'K';
-		}
-
-		&.pawn::before {
-			content: 'P';
+			.board-space-content::before {
+				content: 'P';
+			}
 		}
 
 		&.friendly {
@@ -98,5 +105,67 @@
 		&.hostile {
 			color: black;
 		}
+	}
+
+	@media #{$small-up} {
+
+		flex-direction: column;
+
+		.board {
+			@include grid-row();
+
+			width: 100%;
+			max-width: 100%;
+			height: 92%;
+
+			.board-space {
+				@include squares-per-row(11);
+			}
+		}
+
+		.player-info-wrapper {
+			@include grid-column(
+				$collapse: true,
+				$columns: 6
+			)
+		}
+
+		.move-button-wrapper {
+			@include grid-column(
+				$collapse: true,
+				$columns: 3
+			)
+		}
+	}
+
+	@media #{$large-up} { 
+		$board-width: 71%;
+
+		flex-direction: row;
+
+		.player-info-col {
+			width: (100-$board-width)/2;
+			height: 100%;
+		}
+
+		.board {
+			width: $board-width;
+			height: 100%;
+			float: left;
+
+			.board-space {
+				@include squares-per-row(17);
+			}
+		}
+
+		/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
+		.top-spacer {
+			height: 38%;
+		}
+
+		.player-info-root {
+			height: 49%;
+		}
+
 	}
 }

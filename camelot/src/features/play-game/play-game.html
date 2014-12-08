@@ -2,19 +2,25 @@
     <div class="player-info-col">
         <div class="top-spacer"></div>
         <div class="player-info-root" player-info player-id="ids.current" is-turn="isCurrentPlayerTurn" captured-pieces="capturePiecesOfPlayerId(ids.opponent)"></div>
-        <button ng-click="submitMove()" ng-disabled="disableSubmitMove()" class="win-type-x-large">Submit move</button>
+        <button ng-click="submitMove()" ng-disabled="disableSubmitMove()" class="win-type-x-large">
+            Submit <span class="show-for-medium-up">move</span>
+        </button>
     </div>
     <div class="board">
-        <div ng-repeat="col in cols" class="board-row">
-            <div ng-repeat="row in rows" class="board-space-wrapper" ng-click="onClickBoardSpace(row, col)">
-                <div class="board-space" ng-class="getBoardSpaceClasses(row, col)"></div>
+        <div ng-repeat="rowCol in rowCols" class="board-space" ng-class="getBoardSpaceClasses(rowCol.row, rowCol.col)">
+            <div class="content-outer-wrapper">
+                <div class="content-inner-wrapper">
+                    <div class="board-space-content"></div>
+                </div>
             </div>
         </div>
     </div>
     <div class="player-info-col">
         <div class="top-spacer"></div>
         <div player-info class="player-info-root" player-id="ids.opponent" is-turn="isOpponentTurn" captured-pieces="capturePiecesOfPlayerId(ids.current)"></div>
-        <button ng-click="clearMove()" ng-disabled="disableClearMove()" class="win-type-x-large">Reset move</button>
+        <button ng-click="clearMove()" ng-disabled="disableClearMove()" class="win-type-x-large">
+            Reset <span class="show-for-medium-up">move</span>
+        </button>
     </div>    
 </div>
 

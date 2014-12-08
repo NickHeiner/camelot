@@ -88,6 +88,14 @@ angularModule.controller('PlayGameCtrl', function ($scope, $routeParams, bindMod
 
         $scope.rows = _allBoardSpaces.pluck('row').unique().sortBy(_.identity).valueOf();
         $scope.cols = _allBoardSpaces.pluck('col').unique().sortBy(_.identity).valueOf();
+        $scope.rowCols = _($scope.rows).map(function (row) {
+            return _($scope.cols).map(function (col) {
+                return {
+                    row: row,
+                    col: col
+                };
+            }).valueOf();
+        }).flatten().sortBy(['col', 'row']).valueOf();
 
         function boardSpaceDoesNotExist(row, col) {
             return camelotQuery.getBoardSpace(game.gameState, row, col) === null;
