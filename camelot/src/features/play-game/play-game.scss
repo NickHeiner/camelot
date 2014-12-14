@@ -115,11 +115,16 @@
 			@include grid-row();
 
 			width: 100%;
-			max-width: 100%;
 			height: 92%;
 
 			.board-space {
-				@include squares-per-row(11);
+				@include squares-per-row(17);
+			}
+
+			transform: rotate(90deg);
+
+			.board-space-content {
+				transform: rotate(-90deg);
 			}
 		}
 
@@ -136,6 +141,17 @@
 				$columns: 3
 			)
 		}
+
+		$player-info-root-width: 50%;
+		.player-info-root {
+			width: $player-info-root-width;
+			float: left;
+		}
+
+		.game-flow-button {
+			width: (100% - $player-info-root-width);
+			height: 100%;
+		}
 	}
 
 	@media #{$large-up} { 
@@ -143,19 +159,21 @@
 
 		flex-direction: row;
 
-		.player-info-col {
-			width: (100-$board-width)/2;
-			height: 100%;
-		}
-
 		.board {
 			width: $board-width;
 			height: 100%;
 			float: left;
 
-			.board-space {
-				@include squares-per-row(17);
+			transform: rotate(0deg);
+
+			.board-space-content {
+				transform: rotate(0deg);
 			}
+		}
+
+		.player-info-section {
+			width: (100-$board-width)/2;
+			height: 100%;
 		}
 
 		/* The way I'm vertically aligning the player info col feels shitty but I'm not sure how else do to it. */
@@ -165,7 +183,12 @@
 
 		.player-info-root {
 			height: 49%;
+			float: none;
 		}
 
+		.game-flow-button {
+			width: 100%;
+			height: 13%;
+		}
 	}
 }

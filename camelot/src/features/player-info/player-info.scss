@@ -1,9 +1,5 @@
 ﻿.player-info {
 
-	@mixin hide() {
-		display: none;
-	}
-
 	@media #{$small-up} {
 
 		@include grid-row();
@@ -14,10 +10,6 @@
 				$columns: 4,
 				$collapse: true
 			);
-		}
-
-		.user-avatar {
-			@include hide();
 		}
 	}
 
@@ -30,10 +22,6 @@
 				@include grid-column(
 					$columns: 12
 				);
-			}
-
-			.user-name {
-				@include hide();
 			}
 		}
 	}
@@ -48,9 +36,6 @@
 		@include isTurnBorder(0);	
 
 		.user-avatar {
-			@include isTurnBorder(1);
-		}
-		p {
 			@include isTurnBorder(1);
 		}
 	}
